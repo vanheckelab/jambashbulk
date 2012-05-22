@@ -20,7 +20,7 @@
 
 
 // compile: gcc -lglut -lGL -lGLU originalfile.cpp -o goalfile
-
+// or : g++ -o jam2d jamBashbulk2.cpp
 
 // OpenGL functions
 void keyPressed(unsigned char key, int x, int y);
@@ -87,7 +87,8 @@ using namespace std;
     long double deltainit=0.0; // the initial aspect-ratio
     long double P0init=0.0;
     long double P0=0.0;	     // the target pressure
-    long double phiinit=0.80;   // the initial fill fraction (0.869 ^= P~0.01)
+    long double P0_mem=0.0;
+    long double phiinit=0.86;   // the initial fill fraction (0.869 ^= P~0.01)
     
     int countAlphaFlip = 0;
     int countDeltaFlip = 0;
@@ -217,7 +218,7 @@ using namespace std;
 	long double dampalpha = 0.9;
     long double dampdelta = 0.9;
 	long double damppress = 0.999;
-    
+    long double CG_step = 1;
     
     //unit cell properties
     long double lxx, lxy;		// x-/y- component of L_x (1st unit cell vector)
@@ -248,7 +249,7 @@ using namespace std;
     const long double CGOLD = 0.3819660; // golden ratio for brent
     const long double ZEPS = 1e-25; // for brent
     int ITMAXBRENT = 50; // maximum of iterations in brent
-    int ITMAX = 10; // maximum of iterations in frprmn
+    int ITMAX = 12; // maximum of iterations in frprmn
     const long double TOL = 1e-7; // tolerance passed to brent by linmin
     const long double AMIN = 1e-7; // starting step in linmin
     
@@ -258,7 +259,7 @@ using namespace std;
     int iterfrprmn; // number of iterations performed in frprmn
     long double fret; // return minimum value of frprmn + linmin
     long double ftol = 1e-17; // tolerance passed to frprmn()
-    long double ftolFrprmnBeforeFIRE = 1e-5;
+    long double ftolFrprmnBeforeFIRE = 1e-2;
     long double ftolFIRE = 1e-17; // tolerance passed to fire()
     int endcount = 0;
     
@@ -315,7 +316,7 @@ int main(int argc, char **argv){
 	
 	starttime = time(NULL);
     //srand(time(NULL));
-		
+
 	menu();	 
 	
 	while(!endprogram) execute(); // either this
@@ -333,17 +334,31 @@ int main(int argc, char **argv){
 	return 0;
 } // end main()
 
-
+//g++ -o jam2d jamBashbulk2.cpp
 void extractNandP (string foldername){
 	
 	int i = 0;
 	int digit = 0;
 	N = 0;
 	P0 = 0;
+
+	string comp2=foldername.substr(i,2);
 	
-	
+	size_t pos=foldername.rfind("Packings"); // Name of the folder containing all the other folders with packings
+	//cout << pos << endl;
+	i=pos+9;
+
+	//while(foldername[i] != 'N' && i<foldername.size()){
+//		i++;
+//		if(i > foldername.size()){
+//			cout << "Unexpected filename ERROR 2!" << endl;
+//			return;	
+//		}
+//	}
+	int i0=i;
+		//cout << foldername.substr(i)<<endl;
 	if(foldername[i] != 'N'){
-		cout << "Unexpected filename ERROR 1!" << endl;
+		cout << "Unexpected filename ERROR 1 : couldn't find N!" << endl;
 		return;
 	}
 	else {
@@ -352,30 +367,50 @@ void extractNandP (string foldername){
 			N = N * 10;
 			N = N + (foldername[i] - 48);
 			i++;
-			if(i > 10){
-				cout << "Unexpected filename ERROR 2!" << endl;
+			if(i-i0 > 10){
+				cout << "Unexpected filename ERROR 2 : N has too much digits!" << endl;
 				return;	
 			}
 		}
 		
-		particleNumberLength = i;
+//		cout << "Number o particles is : " << N <<endl;
+		particleNumberLength = i-i0; 
 		
-		digit = foldername[i+2]-48;
-		cout << digit << endl;
-		if(foldername[i+3] != 'e' || foldername[i+1] != 'P'){
-				cout << "Unexpected filename ERROR 3!" << endl;
-				return;				
+		
+	//	cout << digit << endl;
+		if(foldername[i+1] != 'P'){
+			cout << "Unexpected filename ERROR 3 : no P in title" << endl;
+			return;	
 		}
-		if(foldername[i+4] == '-'){
-			P0 = digit * 1.0 * pow(10, -1.0 * (foldername[i+5] - 48));
+
+		int j=i+2;
+		int power=1;
+		while (foldername[j]!='e') {
+			digit = digit*10 ;
+			digit=digit + foldername[j]-48;
+			power=power-1;
+			j++;
 		}
-		else if (foldername[i+4] == '+'){
-			P0 = digit * 1.0 * pow(10, +1.0 * (foldername[i+5] - 48));
+
+		
+		//if(foldername[i+3] != 'e' || foldername[i+1] != 'P'){
+//				cout << "Unexpected filename ERROR 3!" << endl;
+//				return;				
+//		}
+		
+
+		
+		if(foldername[j+1] == '-'){
+			P0 = digit * 1.0 * pow(10, -1.0 * (-power+foldername[j+2] - 48));
+		}
+		else if (foldername[j+1] == '+'){
+			P0 = digit * 1.0 * pow(10, +1.0 * (-power+foldername[j+2] - 48));
 		}
 
 	}
+		//cout << "Particlenumber N = " << N << endl << "Target pressure P0 = " << P0 << endl << endl;
 	
-	//	if(screenOutput) cout << "Particlenumber N = " << N << endl << "Target pressure P0 = " << P0 << endl << endl;
+//		if(screenOutput) cout << "Particlenumber N = " << N << endl << "Target pressure P0 = " << P0 << endl << endl;
 	
 }
 
@@ -616,7 +651,6 @@ void calcShearModulus(){
 	outG << "eta	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
 	outG.close();
 	
-	
 
 	outLog.open((char*)logFileName.c_str(), ios::trunc);
 	outLog.setf(ios::scientific,ios::floatfield);
@@ -805,7 +839,7 @@ void calcShearModulus(){
 	time ( &rawtime );
 	timeinfo = localtime ( &rawtime );
 	strftime (timebuffer,80,"%Y-%m-%d_%H-%M-%S",timeinfo);
-	
+	  
 	outLog.open((char*)logFileName.c_str(), ios::app);	
 	//logfile.open((char*)filenameString2.c_str(), ios::app);
 	
@@ -1410,9 +1444,11 @@ void simulationstep(){
     lxy = L*0.0;
     lyx = L*alpha;
     lyy = L*(1.0+delta);
-    
+    //iloop(N){cout << p[i] << "  " << p[i+N] << endl;}
+    //cout << "lx = " << lxx << "ly = " << lyy << endl;
+    //cout << endl;
     packIntoBoundaries();
-    
+    //cout << "marker" << endl;
 
     
 	if(programmode == 3 && iterationcountfire == 0) cumulativeNeighborchanges = 0;
@@ -1541,13 +1577,55 @@ void simulationstep(){
   if(programmode == 5)  {
   			  
   			  if(!frprmnconverged){
+  			  						//if (iterationcountfrprmnCUMULATIVE==0){
+  			  						//P0_mem=P0;
+  			  						//cout << P0 << endl;
+  			  						//P0=pow(P0_mem,2.0/3.0);
+  			  						//cout << P0 << endl;
+  			  						//}
+  			  						
                                    alphaOnOff = false;
                                    deltaOnOff = false;
                                    pressOnOff = false;
+                                   
+                                   
 
-			  					   frprmn(N, &fret, energy);	  				
+			  					   frprmn(N, &fret, energy);
+			  					   //alphaOnOff = true;
+                                   //deltaOnOff = true;
+                                   //pressOnOff = true;
+			  					  	
+			  					   //cout << Phelper << endl;
+			  					   //cout << "CG-" <<iterationcountfrprmnCUMULATIVE << endl;
+			  					  //cout << "step : " << CG_step << "   U = "<< U<<"   dH = " << energyDiffStep;
+			  					   //cout <<"   gradient : " << ggloc <<endl;
+			  					   //cout << "G_alph : "<< xihelper[2*N+0];
+			  					   //cout << "   G_bet : "<< xihelper[2*N+1];
+			  					   //cout << "   G_L : "<< xihelper[2*N+2];
+			  					    //cout << endl;
+			  					   
+//			  					   iloop(N){ cout << p[i] ;}
+//			  					   cout << endl;
+//								   iloop(N){ cout << p[i+N] ;}
+//								   cout << endl;
+								   //cout <<"alpha = " << p[2*N] <<" delta = "<< p[2*N] << endl;
+
+								   								
               }
   			  else {
+					if (iterationcountfire == 0){
+					
+                    //energy() ;
+			   		//HLastFunctionCall= Uhelper + P0*Lhelper*Lhelper;
+			   		//P0=P0_mem;
+			   		//energy();
+			   		//gradientcalc();
+			   		
+			   		
+			   		//iloop(N+1){ cout << v[i] << "   " << v[i+N] << endl; }
+			   		//dt=fabs(CG_step)+1e-10;
+			   		}
+			   		//cout <<"FIRE : dH  "<< enthalpieDiffStep << endl ;
                    
                    dofOnOff = true;
                    
@@ -1564,6 +1642,7 @@ void simulationstep(){
 		           
                    
                    Pold = Phelper;
+                   //cout << Phelper << endl;
                                        
                    if(dofOnOff){ 
                             
@@ -1575,8 +1654,9 @@ void simulationstep(){
                             deltaOnOff = false;
                             pressOnOff = false;
                    } // end else             
-                
+					//cout << dt << endl;
 			  	   	fire();
+			  	   	//cout << H-HLastFunctionCall << "  to comp w :  "<< fabs(H)+fabs(HLastFunctionCall)+ZEPS << endl;
 			  	   	
           if (2.0*fabs(H-HLastFunctionCall) < ftolFIRE*(fabs(H)+fabs(HLastFunctionCall)+ZEPS)){
 			        
@@ -1826,6 +1906,8 @@ void simulationstep(){
 
 	M[N] = M[N+1] = N*N;
 	M[N+2] = sqrt(N);
+	
+
 
 	
 	if (2.0*fabs(H-HLastFunctionCall) < 1e-14 * (fabs(H)+fabs(HLastFunctionCall)+ZEPS)){
@@ -1884,7 +1966,7 @@ void simulationstep(){
 // menu
 void menu(){
 	
-	
+
 	iterationcountSimStep = 0;
 	iterationcountfrprmn = 0;
 	iterationcountfire = 0;
@@ -2154,15 +2236,15 @@ void fire(){
 	beta = betastart;
 	
 	
-	
+	//cout << iterationcountfire << endl;
 	
 	while(itercount < 1000){
 	    
 	    totaliterationcount++;
 	    
-
+		
         Uold = Uhelper;
-		Hold = H;
+		Hold = Uhelper+ P0*Lhelper*Lhelper;
 		
 		sxyOld = sxy;
 
@@ -2171,7 +2253,9 @@ void fire(){
 		
     
         H = Uhelper + P0*Lhelper*Lhelper;
+       //if (iterationcountfire == 0) cout << H << " fire begin   " <<H- HLastFunctionCall  << endl;	
         	
+        
 		if(programmode == 3) calcSysPara();
 	
 		
@@ -2212,7 +2296,7 @@ void fire(){
 		
 		
 		double radiusFraction = 1e-5;
-    
+    	//cout << xihelper[2*N+2]<<endl;
 		if(alphaOnOff && (fabs(Phelper-P0)/P0 < 5e-1) ){
 			v[2*N] = v[2*N]*dampalpha - xihelper[2*N]/M[N]*dt; 		// damping prevents too large changes
 			if(v[2*N]*Lhelper*dt > radiusFraction) v[2*N] = radiusFraction / Lhelper / dt;
@@ -2251,7 +2335,7 @@ void fire(){
 			
 		//cout << v[2*N+2] << ", " << xihelper[2*N+2] << ", " << damppress << ", " << M[N+2] << ", " << dt << endl;
 		//if(stop != 'x') cin >> stop;		
-		
+			
 		iloop(N){
 			
 			v[i] = v[i]*damp - xihelper[i]/M[i]*dt; 		// integrate accelerations to find velocities
@@ -2269,9 +2353,19 @@ void fire(){
 			phelper[N+i] = p[N+i] =(phelper[N+i] + v[N+i]*dt)*frac;
 
 		} 		
-		
+		long double vimaxloc;
+		long double indexmaxloc;
+//		iloop(2*N+1){
+	//			if(fabs(v[i+1])>fabs(v[i])) {
+		//			vimaxloc=v[i+1];       
+			//		indexmaxloc=i+1;
+				//				}
+					//}
+					//cout << "max gradient component " << indexmaxloc ;
+					//cout << "  , value : " << vimaxloc <<endl;
 		 
 ////////////
+		
      if(dofOnOff){
        
         if (xihelper[2*N]*v[2*N] > 0){
@@ -2312,6 +2406,7 @@ void fire(){
 		iterPosPower++;
 		iterationcountfire++;
 		itercount++;
+		//cout <<"loop end : H = "<< H << "  dH = "<< H-Hold << endl;
 		
 	}// end while
 	
@@ -2408,7 +2503,7 @@ long double brent(long double ax, long double bx, long double cx, long double (*
 	fw=fv=fx=(*f)(x);
 	for(iter=1;iter<=ITMAXBRENT; iter++){
 		iterationcountbrent++;
-		
+		//cout<< iterationcountbrent <<endl;
 		xm = 0.5 * (a+b);
 		tol2=2.0*(tol1=tol*fabs(x)+ZEPS);
 		if(fabs(x-xm) <= (tol2-0.5*(b-a))){
@@ -2493,7 +2588,7 @@ void linmin(int n, long double *fret, long double (*func)()){
 
 	// cout << "xmin = " << xmin << "             (in linmin())" << endl;
 	iloop(2*N+3){ p[i] += xi[i]*xmin; } // move by gradient*xmin to the 1D-minimum
-	
+	CG_step=xmin;
 	return;	
 } // end linmin
 
@@ -2501,9 +2596,14 @@ void linmin(int n, long double *fret, long double (*func)()){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // f1dim
 long double f1dim(long double x){
-
+	long double Uloc;
+	
 	iloop(2*N+3){ phelper[i] = p[i]+x*xi[i]; }  // move by gradient*x ...
-	return energy();						   // ... and return the energy of the new configuration
+	energy();
+	Uloc=Uhelper;
+	if(pressOnOff) Uloc=Uloc + P0*Lhelper*Lhelper;
+	
+	return 		Uloc;				   // ... and return the energy of the new configuration
 } // end f1dim
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2517,7 +2617,10 @@ void frprmn(int n, long double *fret, long double (*func)()){
 	
 	iloop(2*N+3){ phelper[i] = p[i]; }
 	(*func)(); // func = energy does not need inputvector
-	fp=Uhelper; 		
+	fp=Uhelper; 
+		
+	if(pressOnOff) fp=fp + P0*Lhelper*Lhelper;	
+	energy();
 	gradientcalc();
 	
 	iloop(2*N+3){
@@ -2526,13 +2629,15 @@ void frprmn(int n, long double *fret, long double (*func)()){
 	
 	
 	for(its=1; its<=ITMAX; its++){
+		packIntoBoundaries();
 		iterationcountfrprmn++;
 		iterationcountfrprmnCUMULATIVE++;
 		totaliterationcount++;
 	
 		iterfrprmn = its;
+		
 		linmin(n, fret, func);
-		//cout << "U = " << Uhelper << endl;
+		//cout << "H = " << fp << endl;
 		energyDiffStepOld = energyDiffStep;
 		energyDiffStep = (*fret-fp);
 		
@@ -2563,19 +2668,21 @@ void frprmn(int n, long double *fret, long double (*func)()){
 				   cout << "Conjugate gradient converged!" << endl;
 				   //				   cout << "EnergyDiffStep/U= "<< energyDiffStep/(*fret) << ", last: " << energyDiffStepOld/(*fret) << endl;
 			   }
+			  
 			   frprmnconverged = true;
 			   return;
            }
 		} else endcount = 0;
 		fp=*fret;
+		energy();
 		gradientcalc();
 		iloop(2*N+3){ xi[i] = xihelper[i]; }
 		dgg=gg=0.0;
 		
 		iloop(2*N+3){
 			gg += g[i]*g[i];
-			// dgg += xi[i]*xi[i]; // Fletcher-Reeves
-			dgg += (xi[i] + g[i])*xi[i]; // Polak-Ribiere
+			dgg += xi[i]*xi[i]; // Fletcher-Reeves
+			//dgg += (xi[i] + g[i])*xi[i]; // Polak-Ribiere
 		}
 		
 		if(gg == 0.0){
@@ -2588,8 +2695,12 @@ void frprmn(int n, long double *fret, long double (*func)()){
 			g[i] = -xi[i];
 			xi[i] = h[i] = g[i]+gam*h[i];
 		}		
+		H=Uhelper+P0*Lhelper*Lhelper;
+		
 		
 	}
+	
+
 	//	if(screenOutput) cout << "Too many iterations in frprmn!" << endl;
 	return;
 } // end frprmn
@@ -2636,6 +2747,7 @@ void resethelpervars(){
     lxyhelper = Lhelper*0.0;
     lyxhelper = Lhelper*alphahelper;
     lyyhelper = Lhelper*(1.0+deltahelper);
+    
 
     
 
@@ -2727,12 +2839,15 @@ void gradientcalc(){
 	                xihelper[N+j] -= component; 
 	                
                     
-                    if(alphaOnOff) xihelper[2*N] += -2*term1*Lhelper*xij[j*N+i]*ny[j*N+i];
+                    if(alphaOnOff) xihelper[2*N] += -2*term1*Lhelper*xij[j*N+i]*ny[j*N+i];                   
                     if(deltaOnOff) xihelper[2*N+1] += -2*term1*Lhelper*(xij[j*N+i]*nx[j*N+i]*(-1.0/((1.0+delta)*(1.0+delta)))+yij[j*N+i]*ny[j*N+i]);
                 	Phelper += 2*term1*rij[j*N+i]*rij[j*N+i]; 
 				} // end if
         } // end jloop    
-    }// end iloop          
+    }
+    
+
+    // end iloop          
           		
     
     // normalize
@@ -2742,8 +2857,9 @@ void gradientcalc(){
     
     
     if(pressOnOff){ 
+        //if(!frprmnconverged){
+         //cout << "P0 = " << P0 << "  , and P = "<<Phelper << endl     ; 
         
-               
 		//xihelper[2*N+2] += 2*Lhelper*(P0 - Phelper);
 		xihelper[2*N+2] = 2*Lhelper*(P0 - Phelper);
 		//if(xihelper[2*N+2] > 0.2) xihelper[2*N+2] = 0.2;
@@ -3387,6 +3503,7 @@ void readPositionFile(){
 ////////////////////////////////////////////////////////////////////////
 // writePositionFile
 inline void writePositionFile(){
+
 	//char filename[256];
 	time_t rawtime;
 	struct tm *timeinfo;
@@ -3399,15 +3516,18 @@ inline void writePositionFile(){
 	
 	filepath.append("/");
 	
-	
-	
 	createFileName();
+	
+//	cout << "filenameString at step 1 : "<< endl;
+//	cout << filenameString << endl;
+	
 	filepath.append(filename);
 	
 	ofstream outfile;
-
+//	cout << filepath << endl;
 	//outfile.open( "jamstate.txt", ios::trunc);
 	if(programmode == 5) outfile.open((char*)filepath.c_str(), ios::trunc);
+	
 	//else outfile.open( "jamstate.txt" , ios::trunc);
 	if(! outfile){  
        if(screenOutput) cout<<"Cannot open output file!" << endl;
@@ -3464,7 +3584,7 @@ inline void writePositionFile(){
 	
 	
 	
-	
+
 	//string filenameString;
 	char buffer;
 	string bufferString;
@@ -3496,25 +3616,39 @@ inline void writePositionFile(){
 	timefile << "t = " << timediff1 << ", fire = " << totaliterationcount << ", alpha = " << alphahelper << ", delta = " << deltahelper << ", phi = " << phi << ", Z = " << Z << ", dH/H = " << (H-HLastFunctionCall)/H << ", s_xy = " << sxy << ", P = " << P << endl;
 	timefile.close();
 */
+	
 
+	
 	string logFileNamePackings;
 	logFileNamePackings = filenameString;
-	logFileNamePackings.erase(particleNumberLength + 6, 5);
+//	size_t sz=logFileNamePackings.size();
+//	logFileNamePackings.erase(sz-9,5);
+
 	logFileNamePackings.insert(0, "log");
+
 	logFileNamePackings.insert(0, nameOfWorkingDirectory + "/");
+
 	
     ofstream logfile;
-    if(numberOfPackings == numberOfPackingsStartValue){
-	  logfile.open((char*)logFileNamePackings.c_str(), ios::app);
 	
-	  logfile << "seed" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
-	  logfile << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
-	  logfile << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
-	  logfile << "	#FIRE" << "	#CG" << "	gg" << " creation-date"  << endl;
-    
-      logfile.close();
-    }
-    
+
+	
+	
+//    if(numberOfPackings == numberOfPackingsStartValue){
+//	  logfile.open((char*)logFileNamePackings.c_str(), ios::app);
+//		int position=logfile.tellp();
+//		if(position==0){
+//		cout << "position" << endl;
+//		cout << logfile.tellp() << endl;
+		
+//	  logfile << "seed" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
+////	  logfile << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
+//	  logfile << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
+//	  logfile << "	#FIRE" << "	#CG" << "	gg" << "total runtime" <<" creation-date"  << endl;
+//		}
+//      logfile.close();
+ //   }
+//    
 	long double maxGrad = 0;
 	iloop(2*N){
 		if(fabs(xihelper[i]) > maxGrad) maxGrad = fabs(xihelper[i]);
@@ -3523,10 +3657,10 @@ inline void writePositionFile(){
 	logfile.open((char*)logFileNamePackings.c_str(), ios::app);	
 	//logfile.open((char*)filenameString2.c_str(), ios::app);
 	
-    logfile << numberOfPackings << "	" << N << "	" << P0 << "	" << P << "	" << alpha << "	" << delta;
+    	logfile << numberOfPackings << "	" << N << "	" << P0 << "	" << P << "	" << alpha << "	" << delta;
 	  logfile  << "	" << 	L  << "	" << phi << "	" << Z << "	" << N-Ncorrected << "	" << sxx << "	" << syy;
 	  logfile  << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	" << dH << "	" << timediff1;
-	  logfile  << "	" << iterationcountfire << "	" << iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	" <<  timebuffer  << endl;
+	  logfile  << "	" << iterationcountfire << "	" << iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	" << timediff1 << "       " << timebuffer  << endl;
 	
 	logfile.close();
 	
@@ -3743,21 +3877,41 @@ inline void createFileName(){
 	
 	if(screenOutput) cout << "FilenameString: " << filenameString << endl;
 	
-	filenameString.append(nameOfWorkingDirectory);
+	int i = 0;
+	
+	string filebase = nameOfWorkingDirectory ;
+	
+	//cout << filebase << endl; 
+	
+	while(nameOfWorkingDirectory[i] != 'N'){
+		i++;
+		filebase=nameOfWorkingDirectory.substr(i);
+//		cout << i << endl;
+//		cout << filebase << endl;
+		
+		if(i > nameOfWorkingDirectory.size()){
+			cout << "Unexpected filename ERROR 2!" << endl;
+			return;	
+		}
+	}
+	
+	
+//	filenameString.append(nameOfWorkingDirectory);
+	filenameString.append(filebase);
 	filenameString.append("~");
 	
-	if(screenOutput) cout << filenameString << endl;
+//	if(screenOutput) cout << filenameString << endl;
 	
 	filenameString.push_back(namebuffer[0]);
 	filenameString.push_back(namebuffer[1]);
 	filenameString.push_back(namebuffer[2]);
 	filenameString.push_back(namebuffer[3]);
 	
-	if(screenOutput) cout << filenameString << endl;
+//	if(screenOutput) cout << filenameString << endl;
 	
 	filenameString.append(".txt");
 	
-	if(screenOutput) cout << filenameString << endl;
+//	if(screenOutput) cout << filenameString << endl;
 	
 	filename = (char*)filenameString.c_str();
 	if(screenOutput) cout << filename << endl;
