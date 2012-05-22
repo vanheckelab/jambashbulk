@@ -1,0 +1,44 @@
+#!/bin/sh
+#### Parameter file that Shears packings ####
+
+#####choose mode#####
+#mode=1           # create DEFAULT jammed packing
+#mode=2          # create NON-default jammed packing
+#mode=3          # apply simple shear (rearrangements)
+mode=4          # apply simple shear (fixed step size)
+#mode=5          # apply compression (rearrangements)
+#mode=6          # apply compression (fixed step size)
+#mode=8          # DISPLAY system state
+#####end choose mode#####
+
+#####choose style#####
+#style=1          # use CURRENT particle distribution
+#style=2           # use RANDOM particle distribution
+style=3          # read particle distribution from file
+#style=4          # read particle distribution from file (NEW target pressure)
+#style=5          # open file by name
+#####end choose style#####
+
+#####specify parameter#####
+ncon=100                    # number of packings to be created;
+n=0                         # starting seed number; start from 0
+run_dir=N32~P1e-1           ## IMPORTANT ## when supplying a folder name, the folder has to be already made and in the directory where the executable is being run. the code reads out the particle number and the target pressure from the name of the folder. the syntax in the name has to be N???~P???? where after N we have particle number (at the moment MAX is 9999 particles in a packing), and after P we have pressure, written in the scientific notation, e.g. 1e-1, 5.2e-2 etc.
+strainGoal=0.1              # if mode = 4; maximum strain of the box; eg. 0.1 = 10% of the length L of the box
+strainStepsNumber=1024      # if mode = 4; number of strain steps taken to achieve the maximum strain
+
+#### run the code ### ##IMPORTANT## code is compiled with for example: g++ -O3 -o jam2D jamBashbulk.cpp
+
+/WorkingDirectory/bin/jam2Djo << EOF
+
+$run_dir
+$mode
+$ncon
+$n
+$strainGoal
+$strainStepsNumber
+$style
+
+EOF
+
+
+exit 0;
