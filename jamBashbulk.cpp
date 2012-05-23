@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 // The following header files and functions have to be 
 // included for OpenGL to work.
@@ -48,7 +49,7 @@ using namespace std;
     int Ncorrected;
     const long double k = 1.0; // spring const. with respect to particle overlap
 
-	const bool screenOutput = false;
+    bool screenOutput = false;
     
     char stop; // this variable waits for user input and halts the
 		 // computation.
@@ -314,6 +315,10 @@ void checkFolderName(string foldername);
 int main(int argc, char **argv){
     char stop; // at the end of main() any key has to be pressed to close the program
 	
+    if ((argc == 2) and (strcmp(argv[1], "-screen") == 0)) {
+	screenOutput = true;
+    }
+
 	starttime = time(NULL);
     //srand(time(NULL));
 
