@@ -3118,7 +3118,7 @@ inline void createFileName() {
 	if (screenOutput)
 		cout << "FilenameString: " << filenameString << endl;
 
-	int i = 0;
+	unsigned int i = 0;
 
 	string filebase = nameOfWorkingDirectory;
 
