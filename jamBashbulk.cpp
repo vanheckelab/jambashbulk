@@ -2315,7 +2315,6 @@ void resethelpervars() {
 ///////////////////////////////////////////////////////////////////////////////////////////
 // energy
 long double energy() {
-
 	resethelpervars();
 
 	// calculate distances and overlaps
@@ -2326,15 +2325,6 @@ long double energy() {
 			if (neighbors[j * N + i]) { // avoid selfinteraction
 
 				particledistance(i, j);
-
-				// symmetrize/ antisymmetrize matrices
-				/*
-				 xij[i*N+j] = -xij[j*N+i];
-				 yij[i*N+j] = -yij[j*N+i];
-				 nx[i*N+j] = -nx[j*N+i];
-				 ny[i*N+j] = -ny[j*N+i];
-				 rij[i*N+j] = rij[j*N+i];
-				 */
 
 				dij[j * N + i] = R[i] + R[j] - rij[j * N + i];
 
@@ -2353,7 +2343,6 @@ long double energy() {
 		trueneighbors[i * N + i] = false;
 	} // end iloop
 
-	//Uhelper += 1e-30;
 	return Uhelper;
 } // end energy
 
