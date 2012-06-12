@@ -2530,8 +2530,6 @@ void initializeSimulation() {
 void calcSysPara() {
 	long double term1;
 
-	//vector <int> numberOfDirectNeighbors;
-	//vector <bool> isRattler;
 	int numberOfRattlerChanges = 1;
 
 	long double Z2 = 0;
@@ -2578,56 +2576,38 @@ void calcSysPara() {
 
 					if (trueneighbors[j * N + i]) {
 						if (!isRattler[j]) {
-							numberOfDirectNeighbors[i] += 1; //if(!isRattler[j] && !isRattler[i])
-							//numberOfDirectNeighbors[j] += 1;
+							numberOfDirectNeighbors[i] += 1;
 							Z2 += 1;
 						}
 
 					}
-					//cout << trueneighbors[j*N+i];
-
 				}
-				//cout << endl;
+
 				if (numberOfDirectNeighbors[i] < 3 && !isRattler[i]) {
 					isRattler[i] = true;
 					numberOfRattlerChanges++;
-					//cout << "Rattler found!" << endl;
 				}
 
 			}
-			//cout << endl << endl;
 		} // end while
 		Ncorrected = 0;
 		iloop(N) {
 			if (!isRattler[i])
 				Ncorrected++;
-			//cout << numberOfDirectNeighbors[i] << endl;
 		}
-		//    if(screenOutput) cout << "N = " << N << ", Ncorrected = " << Ncorrected << ", Z = " << 2*Z/(N*1.0) << ", Zcorrected = " << 2*Z/(Ncorrected*1.0 + 1e-16) << endl;
-		//    if(screenOutput) cout << "Z2 = " << Z2 << endl;
-
-		/*
-		 iloop(N){
-		 //cout << "Point 0" << endl;
-		 if(isRattler[i]) resolveRattler(i);	// locally equilibrate all rattlers and get rid of contacs
-		 }
-		 */
-
 	} // end if(fireconverged)
 	else
 		Ncorrected = N;
 
 	// normalize
 	phi = phi / (L * L);
-	//Z = 2*Z/(N*1.0);
+
 	Z = 2 * Z / (Ncorrected * 1.0 + 1e-16);
 	P = P / (L * L) / 2.0;
 	sxx = sxx / (L * L);
 	syy = syy / (L * L);
 	sxy = sxy / (L * L);
 	syx = syx;
-
-	//cout << "Point 2" << endl;
 
 	return;
 } // end calcSysPara
