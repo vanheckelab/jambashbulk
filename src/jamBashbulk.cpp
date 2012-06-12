@@ -14,8 +14,7 @@
 using namespace std;
 
 // definitions:
-//permutation procedure
-#define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
+
 //loops
 #define iloop(upperbound) for(int i = 0; i < upperbound; i++)
 #define jloop(upperbound) for(int j = 0; j < upperbound; j++)
@@ -1851,9 +1850,13 @@ void fire() {
 // OUT: long double *ax, *bx, *cx
 //      long double *fa, *fb, *fc
 //
+
+#define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
+
 void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
 		long double *fb, long double *fc, long double (*func)(long double)) {
 
+	//permutation procedure
 	long double ulim, u, r, q, fu, dum;
 	int numberOfIterations = 0;
 
@@ -1917,12 +1920,16 @@ void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
 	  //      if(screenOutput) cout << "Number of iterations in mnbrak(): " << numberOfIterations << endl;
 
 }
+#undef SHFT
+
 // end mnbrak
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // brent
 // Brent's method (see http://en.wikipedia.org/wiki/Brent's_method )
+
+#define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
 long double brent(long double ax, long double bx, long double cx,
 		long double (*f)(long double), long double tol, long double *xmin) {
 	int iter;
@@ -1996,7 +2003,11 @@ long double brent(long double ax, long double bx, long double cx,
 	}
 	*xmin = x;
 	return fx;
-} // end brent
+}
+
+#undef SHFT
+
+// end brent
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
