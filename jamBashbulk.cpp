@@ -2986,13 +2986,8 @@ inline void writePositionFile() {
 	outfile.close();
 	outfile.close();
 
-	char buffer;
-	string bufferString;
-	long double number, teni, teni1;
-	int digit;
-	char *filenametime;
-
 	string logFileNamePackings;
+
 	logFileNamePackings = filenameString;
 
 	logFileNamePackings.insert(0, "log");
