@@ -1215,27 +1215,8 @@ void checkNeighborChanges(int& addedContacts, int& removedContacts,
 					removedContacts++;
 				}
 			}
-
-			/*
-			 if(trueneighborChanges[j*N+i] > 0){
-			 //addedContacts++;
-			 out << "	" << "+(" << i << ", " << j << ")";
-			 neighborChanges++;
-			 }
-			 if(trueneighborChanges[j*N+i] < 0){
-			 //removedContacts++
-			 out << "	" << "-(" << i << ", " << j << ")";
-			 neighborChanges++;
-			 }
-			 */
-
-			//rattlerChanges = false;
-			//} // end if(!isRattler[j] && !isRattler[i])
-			//else rattlerChanges = true;
 		}
 	}
-	//contactChanges = out.str();
-
 } // end checkNeighborChanges
 
 ////////////////////////////////////////////////////////////////////////
