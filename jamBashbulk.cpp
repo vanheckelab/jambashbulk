@@ -1974,6 +1974,19 @@ void fire() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // mnbrak
+// Given two initial points and a function, the algorithm finds another point such that
+// a bracketing triple is formed.
+//
+// Returns (ax, bx, cx) such that ax < bx < cx   and  f(ax) > f(bx) < f(cx)
+// Returns (fa, fb, fc) = f(ax), f(bx), f(cx)
+//
+// IN: long double *ax, *bx               two initial points
+//     long double (*func)(long double)  (i.e. a pointer to a function that takes
+//                                          one long double argument and returns
+//                                          one long double value)
+// OUT: long double *ax, *bx, *cx
+//      long double *fa, *fb, *fc
+//
 void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
 		long double *fb, long double *fc, long double (*func)(long double)) {
 
