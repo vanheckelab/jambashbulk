@@ -1,3 +1,5 @@
+//g++ -O3 -o jam2d jamBashbulk2.cpp
+
 // std libraries
 #include <iostream>
 #include <vector>
@@ -286,14 +288,11 @@ void checkFolderName(string foldername);
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
-	char stop; // at the end of main() any key has to be pressed to close the program
-
 	if ((argc == 2) and (strcmp(argv[1], "-screen") == 0)) {
 		screenOutput = true;
 	}
 
 	starttime = time(NULL);
-	//srand(time(NULL));
 
 	menu();
 
@@ -303,7 +302,6 @@ int main(int argc, char **argv) {
 	return 0;
 } // end main()
 
-//g++ -o jam2d jamBashbulk2.cpp
 void extractNandP(string foldername) {
 
 	int i = 0;
