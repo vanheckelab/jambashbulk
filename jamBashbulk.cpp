@@ -2150,19 +2150,14 @@ void linmin(int n, long double *fret, long double (*func)()) {
 	int j;
 	long double xx, xmin, fx, fb, fa, bx, ax;
 
-	//ncom = n;
 	// pcom, xicom are global row-matrices
 	nrfunc = func;
-
-	//pcom = p;
-	//xicom = xi;
 
 	ax = 0.0;
 	xx = AMIN;
 	mnbrak(&ax, &xx, &bx, &fa, &fx, &fb, f1dim);
 	*fret = brent(ax, xx, bx, f1dim, TOL, &xmin);
 
-	// cout << "xmin = " << xmin << "             (in linmin())" << endl;
 	iloop(2*N+3) {
 		p[i] += xi[i] * xmin;
 	} // move by gradient*xmin to the 1D-minimum
