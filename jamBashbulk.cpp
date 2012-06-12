@@ -9,27 +9,6 @@
 #include <time.h>
 #include <string.h>
 
-// The following header files and functions have to be
-// included for OpenGL to work.
-
-/*
- #include <GL/glut.h>    // Header File For The GLUT Library
- #include <GL/gl.h>      // Header File For The OpenGL32 Library
- #include <GL/glu.h>     // Header File For The GLu32 Library
- #include <unistd.h>     // Header file for sleeping.
- #include </usr/include/GL/glext.h>
-
-
- // compile: gcc -lglut -lGL -lGLU originalfile.cpp -o goalfile
- // or : g++ -o jam2d jamBashbulk2.cpp
-
- // OpenGL functions
- void keyPressed(unsigned char key, int x, int y);
- void DrawGLScene();
- void ReSizeGLScene(int Width, int Height);
- void InitGL(int Width, int Height);
- */
-
 using namespace std;
 
 // definitions:
@@ -321,15 +300,6 @@ int main(int argc, char **argv) {
 
 	while (!endprogram)
 		execute(); // either this
-	//initializeOpenGL(argc, argv);   // OR this
-
-	/*
-	 if(screenOutput){
-	 cout << "Press ANY key + ENTER to end program: ";
-	 cin >> stop;
-	 cout << "\n";
-	 }
-	 */
 
 	return 0;
 } // end main()
@@ -1600,7 +1570,6 @@ void simulationstep() {
 			 }
 			 */
 			//else neighborIterationCorrection = 0;
-
 			Pold = Phelper;
 			//cout << Phelper << endl;
 
@@ -1900,7 +1869,6 @@ void simulationstep() {
 
 	//cout << v[2*N+2] << ", " << xi[2*N+2] << ", " << damppress << endl;
 	//cin >> stop;
-
 	iterationcountmnbrak = iterationcountbrent = iterationcountfrprmn = 0;
 	iterationcountSimStep++;
 
@@ -2381,7 +2349,7 @@ void fire() {
 
 	} // end while
 
-	  //cout << "In FIRE: H-Hold = " << H - Hold << endl;
+	//cout << "In FIRE: H-Hold = " << H - Hold << endl;
 
 } // end FIRE
 
@@ -3990,277 +3958,3 @@ void checkFolderName(string foldername) {
 
 	return;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-//OPEN GL part:  ///////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//OPEN GL part:  ///////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//OPEN GL part:  ///////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//OPEN GL part:  ///////////////////////////////////////////////////////////////
-
-/*
- void inline initializeOpenGL(int argc, char **argv){
-
- glutInit(&argc, argv);
-
-
- glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH);
-
-
- glutInitWindowSize(640, 480);
-
-
- glutInitWindowPosition(0, 0);
-
-
- window = glutCreateWindow("2-dimensional jammed packing simulator");
-
-
- glutDisplayFunc(&DrawGLScene);
-
-
- // glutFullScreen();
-
-
- glutIdleFunc(&DrawGLScene);
-
-
- glutReshapeFunc(&ReSizeGLScene);
-
-
- glutKeyboardFunc(&keyPressed);
-
-
- InitGL(1000, 800);
-
-
- glutMainLoop();
-
- } // end initializeOpenGL
-
- ////////////////////////////////////////////////////////////////////////////////
- ////////////////////////////////////////////////////////////////////////////////
-
- void InitGL(int Width, int Height)	        // We call this right after our OpenGL window is created.
- {
- glClearColor(1.0f, 1.0f, 1.0f, 0.0f);		// This Will Clear The Background Color To Black
- glClearDepth(1.0);				// Enables Clearing Of The Depth Buffer
- glDepthFunc(GL_LESS);				// The Type Of Depth Test To Do
- glEnable(GL_DEPTH_TEST);			// Enables Depth Testing
- glShadeModel(GL_SMOOTH);			// Enables Smooth Color Shading
-
- glMatrixMode(GL_PROJECTION);
- glLoadIdentity();				// Reset The Projection Matrix
-
- gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);	// Calculate The Aspect Ratio Of The Window
-
- glMatrixMode(GL_MODELVIEW);
- }
-
-
- void ReSizeGLScene(int Width, int Height)
- {
- if (Height==0)				// Prevent A Divide By Zero If The Window Is Too Small
- Height=1;
-
- glViewport(0, 0, Width, Height);		// Reset The Current Viewport And Perspective Transformation
-
- glMatrixMode(GL_PROJECTION);
- glLoadIdentity();
-
- gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);
- glMatrixMode(GL_MODELVIEW);
- }
-
-
- void keyPressed(unsigned char key, int x, int y)
- {
-
- usleep(100);
-
-
- if (key == ESCAPE || endprogram == true)
- {
-
- glutDestroyWindow(window);
- if(screenOutput) cout << window << endl;
-
- endtime = time(NULL); // clock function runtime
- timediff1 = endtime-starttime;
-
- if(screenOutput) cout << endl;
- if(screenOutput) cout << "Number of iterations: " << iterationcountSimStep  << endl;
- if(screenOutput) cout << "Total runtime is " << timediff1 << " seconds." << endl;
-
- if(screenOutput) cout << endl;
-
- //        writePositionFile();
-
-
- //return;
- }
- }
-
-
- void DrawGLScene()
- {
- int d_angle = 10;
- long double dijMax=0.0;
- iloop(2*N+2){ phelper[i] = p[i]; }
- energy();
-
-
-
- glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// Clear The Screen And The Depth Buffer
- glLoadIdentity();				// Reset The View
-
- glEnable(GL_LINE_SMOOTH);
- glTranslatef(-L*(1+alpha)/2.0,-L/2.0,-3.0*L*(1.0+delta));		// move windows screen
- //glTranslatef(0,0,-2.0*L*(1.0+delta));
-
- for(int i=0; i<N; i++){
- for(int j=0; j<N; j++){
- if(dij[j*N+i]>dijMax) dijMax = dij[j*N+i];
- }
-
- }
-
- for(int i=0; i<N; i++){
- //draw colored circle
-
- glColor3f(0.0f, 1.0f, 0.0f);
-
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i] + sin(angle*angle2rad) * R[i], p[N+i] + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
-
- /////////////////////////
- // all neighboring unit cells
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]+lxx + sin(angle*angle2rad) * R[i], p[N+i]+lxy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]-lxx + sin(angle*angle2rad) * R[i], p[N+i]-lxy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]+lyx + sin(angle*angle2rad) * R[i], p[N+i]+lyy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
-
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]-lyx + sin(angle*angle2rad) * R[i], p[N+i]-lyy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]+lxx+lyx + sin(angle*angle2rad) * R[i], p[N+i]+lxy+lyy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]+lxx-lyx + sin(angle*angle2rad) * R[i], p[N+i]+lxy-lyy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]-lxx+lyx + sin(angle*angle2rad) * R[i], p[N+i]-lxy+lyy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
- glColor3f(0.5f, 0.5f, 0.5f);
- glBegin(GL_LINE_LOOP);
- for (int angle=0; angle < 361; angle+=d_angle){
- glVertex3f(p[i]-lxx-lyx + sin(angle*angle2rad) * R[i], p[N+i]-lxy-lyy + cos(angle*angle2rad) * R[i], 0.0f);
- }
- glEnd();
-
-
- /////////////////////////////////////////// force lines
-
-
- for(int j=0; j<i; j++){
- if(trueneighbors[j*N+i]){
- glColor3f(dij[j*N+i]/dijMax, 0.0f, 1.0-dij[j*N+i]/dijMax);
- glLineWidth(1.0+10.0*dij[j*N+i]/dijMax);
- glBegin(GL_LINES);
- glVertex3f(p[i], p[N+i], 0.0f); glVertex3f(p[j]+nx[j*N+i]*lxx+ny[j*N+i]*lyx, p[N+j]+nx[j*N+i]*lxy+ny[j*N+i]*lyy, 0.0f);
- glEnd();
-
- glColor3f(1.0, 1.0, 0.3);
- //glLineWidth(1.0+10.0*dij[j*N+i]/dijMax);
- glBegin(GL_LINES);
- glVertex3f(p[i]-nx[j*N+i]*lxx-ny[j*N+i]*lyx, p[N+i]-nx[j*N+i]*lxy-ny[j*N+i]*lyy, 0.0f); glVertex3f(p[j], p[N+j], 0.0f);
- glEnd();
-
- }
- }// end FOR
-
-
-
- glLineWidth(2.0);
-
-
-
- }//end FOR
-
- glBegin(GL_LINES);
- glColor3f(1.0f, 0.0f, 0.0f);
- glVertex3f(0.0f, 0.0f, 0.0f); glVertex3f(lxx, lxy, 0.0f);
- glEnd();
-
- glBegin(GL_LINES);
- glColor3f(1.0f, 0.0f, 0.0f);
- glVertex3f(0.0f, 0.0f, 0.0f); glVertex3f(lyx, lyy, 0.0f);
- glEnd();
-
- glBegin(GL_LINES);
- glColor3f(1.0f, 0.0f, 0.0f);
- glVertex3f(lyx, lyy, 0.0f); glVertex3f(lxx+lyx, lxy+lyy, 0.0f);
- glEnd();
-
- glBegin(GL_LINES);
- glColor3f(1.0f, 0.0f, 0.0f);
- glVertex3f(lxx, lxy, 0.0f); glVertex3f(lxx+lyx, lxy+lyy, 0.0f);
- glEnd();
-
-
- execute();
-
-
-
-
-
-
- // since this is long double buffered, swap the buffers to display what just got drawn.
- glutSwapBuffers();
-
- return;
- }
- //////////////////////////////////////////////////// end OPEN GL
-
- */
-
