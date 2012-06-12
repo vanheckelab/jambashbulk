@@ -3728,27 +3728,11 @@ inline void writeMultiplePackings(string name) {
 /// void packIntoBoundaries()
 void packIntoBoundaries() {
 	iloop(N) {
-		/*
-		 while(p[N+i] < ( 0 )){
-		 p[N+i] += lyy;
-		 p[i] +=lyx;
-		 }
-		 while(p[N+i] > ( lyy )){
-		 p[N+i] -= lyy;
-		 p[i] -= lyx;
-		 }
-
-		 while(p[i] < ( 0 + p[N+i]*lyx/lyy )) p[i] += lxx;
-		 while(p[i] > ( lxx + p[N+i]*lyx/lyy )) p[i] -= lxx;
-		 */
-
 		while (p[N + i] < (0)) {
 			p[N + i] += lyy;
-			//p[i] +=lyx;
 		}
 		while (p[N + i] > (lyy)) {
 			p[N + i] -= lyy;
-			//p[i] -= lyx;
 		}
 
 		while (p[i] < (0 + p[N + i] * lyx / lyy))
