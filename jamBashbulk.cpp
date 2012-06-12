@@ -366,7 +366,7 @@ string ParticleAndPressureString() {
 	string bufferString;
 	long double number, teni, teni1;
 	int digit;
-	//char *filename; // made global
+
 	int phiInt;
 	long double pressureHelper = P0;
 	int pressureExponent = 0;
@@ -379,7 +379,6 @@ string ParticleAndPressureString() {
 
 	int pressuredigit;
 
-	//itoa (N,buffer,10);
 	number = N;
 	for (int i = 5; i > 0; i--) {
 		teni = pow(10, i * 1.0);
@@ -395,7 +394,6 @@ string ParticleAndPressureString() {
 	while (pressureHelper * 1.01 < 1.0) {
 		pressureExponent++;
 		pressureHelper *= 10.0;
-		//cout << pressureHelper << endl;
 	}
 
 	pressuredigit = pressureHelper / 1;
@@ -411,7 +409,7 @@ string ParticleAndPressureString() {
 	Name.append(PressureString2);
 
 	return Name;
-}
+} // ParticleAndPressureString
 
 ////////////////////////////////////////////////////////////////////////////////
 // execute()
