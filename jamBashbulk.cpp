@@ -2465,13 +2465,6 @@ void initializeSimulation() {
 	lyx = L * alpha;
 	lyy = L * (1.0 + delta);
 
-	/*
-	 //packingNameNumber++;
-	 srand(numberOfPackings+1);
-	 cout << numberOfPackings << ", " << rand() << endl;
-	 cin >> stop;
-	 */
-
 	srand(currentPackingNumber + 1);
 
 	// set initial particle positions and properties
@@ -2497,7 +2490,7 @@ void initializeSimulation() {
 
 	// calculate the current fill fraction phi
 	frac = sqrt(phi / (phiinit)); // sqrt-ratio of desired fill fraction and actual
-	// frac = sqrt(P0/P);
+
 	L *= frac; // scale the boxlength accordingly
 	iloop(2*N) {
 		p[i] *= frac; // scale all the particle positions accordingly
@@ -2514,7 +2507,7 @@ void initializeSimulation() {
 	iloop(N) {
 		if (R[i] > Rmax)
 			Rmax = R[i]; // determine the largest particle radius in the packing
-		// (for neighbor determination)
+		                 // (for neighbor determination)
 	}
 
 	iloop(N) {
