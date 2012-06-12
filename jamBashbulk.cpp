@@ -261,8 +261,6 @@ static void calcShearModulus();
 static void calcBulkModulus();
 static void checkNeighborChanges(int& addedcontacts, int& removedcontacts,
 		int& neighborChanges, int& neighborChangesLast);
-static void resolveRattler(int rattlerElement);
-static string ParticleAndPressureString();
 static void extractNandP(string foldername);
 static void checkFolderName(string foldername);
 
@@ -342,56 +340,6 @@ void extractNandP(string foldername) {
 
 	}
 } // extractNandP
-
-string ParticleAndPressureString() {
-
-	char buffer;
-	string bufferString;
-	long double number, teni, teni1;
-	int digit;
-
-	long double pressureHelper = P0;
-	int pressureExponent = 0;
-	bool leadingZero = true;
-
-	string Name = "";
-	string ParticleNumberString = "N";
-	string PressureString1 = "P";
-	string PressureString2 = "e-";
-
-	int pressuredigit;
-
-	number = N;
-	for (int i = 5; i > 0; i--) {
-		teni = pow(10, i * 1.0);
-		teni1 = pow(10, i - 1.0);
-		digit = fmod(number, teni) / (teni1);
-		if (digit > 0)
-			leadingZero = false;
-		buffer = digit + 48;
-		if (digit >= 0 && !leadingZero)
-			ParticleNumberString.push_back(buffer);
-	}
-
-	while (pressureHelper * 1.01 < 1.0) {
-		pressureExponent++;
-		pressureHelper *= 10.0;
-	}
-
-	pressuredigit = pressureHelper / 1;
-
-	buffer = pressureExponent + 48;
-
-	PressureString1.push_back(pressuredigit + 48);
-	PressureString2.push_back(buffer);
-
-	Name.append(ParticleNumberString);
-	Name.append("~");
-	Name.append(PressureString1);
-	Name.append(PressureString2);
-
-	return Name;
-} // ParticleAndPressureString
 
 ////////////////////////////////////////////////////////////////////////////////
 // execute()
@@ -2529,45 +2477,6 @@ void calcSysPara() {
 
 	return;
 } // end calcSysPara
-
-void resolveRattler(int rattlerElement) {
-
-	vector<bool> bufferneighbors;
-	bufferneighbors.reserve(N * N);
-
-	iloop(N) {
-		jloop(i) {
-			bufferneighbors[j * N + i] = neighbors[j * N + i];
-
-			if ((i == rattlerElement || j == rattlerElement)
-					&& neighbors[j * N + i] == true) {
-				neighbors[j * N + i] = true;
-			} else
-				neighbors[j * N + i] = false;
-		}
-	}
-
-	while (numberOfDirectNeighbors[rattlerElement] > 0
-			&& numberOfDirectNeighbors[rattlerElement] < 3) {
-		phelper[rattlerElement] = p[rattlerElement];
-		phelper[rattlerElement + N] = p[rattlerElement + N];
-
-		energy();
-		gradientcalc();
-
-		p[rattlerElement] -= xihelper[rattlerElement];
-		p[rattlerElement + N] -= xihelper[rattlerElement + N];
-
-	}
-
-	iloop(N) {
-		jloop(i) {
-			neighbors[j * N + i] = bufferneighbors[j * N + i];
-		}
-	}
-
-	return;
-} // resolveRattler
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
