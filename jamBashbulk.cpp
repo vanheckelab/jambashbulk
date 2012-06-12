@@ -2629,13 +2629,8 @@ void resolveRattler(int rattlerElement) {
 		}
 	}
 
-	//cout << "Point 1" << endl;
-
 	while (numberOfDirectNeighbors[rattlerElement] > 0
 			&& numberOfDirectNeighbors[rattlerElement] < 3) {
-
-		//cout << xihelper[rattlerElement] << ", " << numberOfDirectNeighbors[rattlerElement]  << endl;
-
 		phelper[rattlerElement] = p[rattlerElement];
 		phelper[rattlerElement + N] = p[rattlerElement + N];
 
@@ -2647,8 +2642,6 @@ void resolveRattler(int rattlerElement) {
 
 	}
 
-	//cout << "Point 4" << endl;
-
 	iloop(N) {
 		jloop(i) {
 			neighbors[j * N + i] = bufferneighbors[j * N + i];
@@ -2656,7 +2649,7 @@ void resolveRattler(int rattlerElement) {
 	}
 
 	return;
-}
+} // resolveRattler
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
