@@ -1565,22 +1565,6 @@ void menu() {
 
 	string fileToOpen = "";
 
-	/*
-	 cout << endl;
-	 cout << "Please choose a program mode." << endl;
-	 cout << "1 = conjugate gradient reordering, FIXED unit cell."<< endl;
-	 cout << "2 = conjugate gradient reordering, DEFORMABLE unit cell."<< endl;
-	 cout << "3 = apply simple shear"<< endl;
-	 cout << "4 = FIRE algorithm" << endl;
-
-	 cout << "5 = create numerous (deformed) relaxed packings." << endl;
-	 cout << "6 = create random packing." << endl;
-	 cout << "7 = DISPLAY system state." << endl;
-	 cout << "8 = WRITE system state to file." << endl;
-
-	 cout << "9 = EXIT program"<< endl;
-	 */
-
 	if (screenOutput)
 		cout << "Please specify WORKING DIRECTORY." << endl;
 	cin >> nameOfWorkingDirectory;
@@ -1748,7 +1732,6 @@ void menu() {
 
 	case 9:
 		endprogram = true;
-		//glutDestroyWindow(window);
 		return;
 		break;
 
@@ -1777,7 +1760,6 @@ void menu() {
 
 		initializeSimulation();
 		resethelpervars();
-		// iloop(N) cout << "[" << p[i] << ", " << p[N+i] << "]" << endl;
 		break;
 	case 3:
 		readPositionFile();
@@ -1802,7 +1784,7 @@ void menu() {
 		break;
 
 	case 9:
-		endprogram = true; //glutDestroyWindow(window);
+		endprogram = true;
 		break;
 
 	}
