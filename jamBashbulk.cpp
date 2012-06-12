@@ -250,10 +250,7 @@ long double dU, dH;
 void execute();
 void initializeSimulation();
 void initializeArrays();
-void initializeOpenGL(int argc, char **argv);
 void simulationstep(); // this is where the simulation is performed
-long double testfunction(long double value);
-long double energyfunc();
 void particledistance(int i, int j);
 void resethelpervars();
 long double energy();
