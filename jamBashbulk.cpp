@@ -2277,10 +2277,7 @@ void particledistance(int i, int j) {
 	xij[j * N + i] = phelper[j] - phelper[i] + ny[j * N + i] * lyxhelper;
 	yij[j * N + i] = phelper[N + j] - phelper[N + i]
 			+ ny[j * N + i] * lyyhelper;
-	/*
-	 xij[j*N+i] = phelper[j]-phelper[i]+nx[j*N+i]*lxxhelper+ny[j*N+i]*lyxhelper;
-	 yij[j*N+i] = phelper[N+j]-phelper[N+i]+nx[j*N+i]*lxyhelper+ny[j*N+i]*lyyhelper;
-	 */
+
 	nx[j * N + i] = -floor((xij[j * N + i] + lxxhelper * 0.5) / lxxhelper);
 
 	xij[j * N + i] = phelper[j] - phelper[i] + nx[j * N + i] * lxxhelper
