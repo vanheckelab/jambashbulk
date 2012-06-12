@@ -247,7 +247,6 @@ long double dU, dH;
 // function declarations:
 void execute();
 void initializeSimulation();
-void userinput();
 void initializeArrays();
 void initializeOpenGL(int argc, char **argv);
 void simulationstep(); // this is where the simulation is performed
@@ -2841,10 +2840,6 @@ void initializeSimulation() {
 	dtmax = 0.1;
 	dt = dtmax;
 
-	// set simulation parameters
-	if (programmode != 3 && currentPackingNumber == firstPackingNumber)
-		userinput();
-
 	if (currentPackingNumber == firstPackingNumber) {
 		// size all the dynamic 'vector' arrays according to the particle number N
 		dij.reserve(N * N);
@@ -3920,23 +3915,6 @@ void initializeArrays() {
 	if (test)
 		cout << "test0003: initializeArrays-END" << endl;
 	return;
-}
-
-void userinput() {
-	/*
-	 // set simulation parameters
-	 if(screenOutput) cout << "Please insert parameters:" << endl;
-	 if(screenOutput) cout << "number of particles = ";
-	 cin >> N;
-	 if(screenOutput) cout << "long double alpha = ";
-	 cin >> alphainit;
-	 if(screenOutput) cout << "long double delta = ";
-	 cin >> deltainit;
-	 if(pressOnOffInit){
-	 if(screenOutput) cout << "long double P0 = ";
-	 cin >> P0;
-	 }
-	 */
 }
 
 void checkFolderName(string foldername) {
