@@ -2349,7 +2349,6 @@ long double energy() {
 //////////////////////////////////
 // gradientcalc
 void gradientcalc() {
-	long double frac;
 	long double component;
 	long double term1;
 	// calculate gradient and energy
