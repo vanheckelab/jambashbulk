@@ -312,18 +312,11 @@ void extractNandP(string foldername) {
 	string comp2 = foldername.substr(i, 2);
 
 	size_t pos = foldername.rfind("Packings"); // Name of the folder containing all the other folders with packings
-	//cout << pos << endl;
+
 	i = pos + 9;
 
-	//while(foldername[i] != 'N' && i<foldername.size()){
-	//		i++;
-	//		if(i > foldername.size()){
-	//			cout << "Unexpected filename ERROR 2!" << endl;
-	//			return;
-	//		}
-	//	}
 	int i0 = i;
-	//cout << foldername.substr(i)<<endl;
+
 	if (foldername[i] != 'N') {
 		cout << "Unexpected filename ERROR 1 : couldn't find N!" << endl;
 		return;
@@ -340,10 +333,8 @@ void extractNandP(string foldername) {
 			}
 		}
 
-		//		cout << "Number o particles is : " << N <<endl;
 		particleNumberLength = i - i0;
 
-		//	cout << digit << endl;
 		if (foldername[i + 1] != 'P') {
 			cout << "Unexpected filename ERROR 3 : no P in title" << endl;
 			return;
@@ -358,11 +349,6 @@ void extractNandP(string foldername) {
 			j++;
 		}
 
-		//if(foldername[i+3] != 'e' || foldername[i+1] != 'P'){
-		//				cout << "Unexpected filename ERROR 3!" << endl;
-		//				return;
-		//		}
-
 		if (foldername[j + 1] == '-') {
 			P0 = digit * 1.0
 					* pow(10, -1.0 * (-power + foldername[j + 2] - 48));
@@ -372,11 +358,7 @@ void extractNandP(string foldername) {
 		}
 
 	}
-	//cout << "Particlenumber N = " << N << endl << "Target pressure P0 = " << P0 << endl << endl;
-
-	//		if(screenOutput) cout << "Particlenumber N = " << N << endl << "Target pressure P0 = " << P0 << endl << endl;
-
-}
+} // extractNandP
 
 string ParticleAndPressureString() {
 
