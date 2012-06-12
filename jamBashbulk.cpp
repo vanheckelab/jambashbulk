@@ -2518,9 +2518,6 @@ void initializeSimulation() {
 		}
 	}
 
-	int ITMAXBRENT = max(100, 2 * N); // maximum of iterations in brent
-	int ITMAX = 5; // maximum of iterations in frprmn
-
 	dtmax = dtmaxinit;
 	dofOnOff = false;
 
