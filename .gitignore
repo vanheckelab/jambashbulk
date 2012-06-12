@@ -1,3 +1,5 @@
 Packings
-jam2D
-jam2D_d
+bin
+.project
+.cproject
+.pydevproject
