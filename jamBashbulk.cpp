@@ -1223,8 +1223,6 @@ void checkNeighborChanges(int& addedContacts, int& removedContacts,
 // Simulation step
 void simulationstep() {
 	long double fret;
-	long double frac;
-	int neighborIterationCorrection;
 
 	time_t rawtime1;
 
