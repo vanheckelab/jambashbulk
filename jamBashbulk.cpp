@@ -3107,18 +3107,7 @@ void packIntoBoundaries() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // createFileName
 inline void createFileName() {
-
-	char buffer;
-	string bufferString;
-	long double number, teni, teni1;
-	int digit;
-	int phiInt;
-
-	time_t rawtime;
-	struct tm *timeinfo;
-	char timebuffer[80];
 	char namebuffer[4];
-
 	filenameString = "";
 
 	namebuffer[0] = 48 + (((currentPackingNumber) / 1000) % 10);
