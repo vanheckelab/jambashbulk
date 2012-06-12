@@ -3617,7 +3617,6 @@ inline void writePositionFile() {
 ////////////////////////////////////////////////////////////////////////
 // writeMultiplePackings
 inline void writeMultiplePackings(string name) {
-	//char filename[256];
 	time_t rawtime;
 	struct tm *timeinfo;
 	char timebuffer[80];
@@ -3625,14 +3624,10 @@ inline void writeMultiplePackings(string name) {
 	timeinfo = localtime(&rawtime);
 	strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
 
-	//createFileName();
-
 	ofstream outfile;
 
-	//outfile.open( "jamstate.txt", ios::trunc);
-	//if(programmode == 5) outfile.open( filename , ios::trunc);
 	outfile.open((char*) name.c_str(), ios::app);
-	//outfile.open( "jamstate.txt" , ios::trunc);
+
 	if (!outfile) {
 		if (screenOutput)
 			cout << "Cannot open output file!" << endl;
@@ -3655,7 +3650,7 @@ inline void writeMultiplePackings(string name) {
 	alpha = p[2 * N];
 	delta = p[2 * N + 1];
 	L = p[2 * N + 2];
-	//    if(screenOutput) cout << "L = " << L << endl;
+
 	lxx = L / (1.0 + delta);
 	lxy = L * 0.0;
 	lyx = L * alpha;
@@ -3665,20 +3660,6 @@ inline void writeMultiplePackings(string name) {
 			<< " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
 			<< Phelper << " ,P0= " << P0 << " ," << endl;
 
-	//outfile << "L = " << Lhelper << ", phi = " << phi << endl;
-	/*
-	 outfile << "[";
-	 for(int i=0; i<2*N+2; i++){
-	 outfile << p[i] << ", ";
-	 }
-	 outfile << p[2*N+2] << "],";
-	 outfile << endl << endl;
-	 outfile << "R = [";
-	 for(int i=0; i<N-1; i++){
-	 outfile << R[i] << ", ";
-	 }
-	 outfile << R[N-1] << "],";
-	 */
 	outfile << "{" << endl;
 	iloop(N) {
 		outfile << p[i] << " ,	" << p[N + i] << " ,	" << R[i] << " ,	" << endl;
@@ -3688,40 +3669,9 @@ inline void writeMultiplePackings(string name) {
 
 	outfile.close();
 
-	/*
-	 string filenameString;
-	 char buffer;
-	 string bufferString;
-	 long double number, teni, teni1;
-	 int digit;
-	 char *filenametime;
-
-
-
-	 filenameString = "timefile";
-
-	 number = N;
-	 for(int i=5; i>0; i--){
-	 teni = pow(10,i*1.0);
-	 teni1 = pow(10,i-1.0);
-	 digit = fmod(number,teni)/(teni1);
-	 buffer = digit+48;
-	 bufferString = buffer;
-	 filenameString.append(bufferString);
-	 }
-	 filenameString.append(".txt");
-	 filenametime = (char*)filenameString.c_str();
-
-	 ofstream timefile;
-	 timefile.open(filenametime, ios::app);
-	 timefile << timediff1 << endl;
-	 timefile.close();
-	 */
-
 	return;
 }
-
-// end writeBackupNamedFile
+// end writeMultiplePackings
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
