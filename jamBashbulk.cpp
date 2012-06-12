@@ -2188,7 +2188,7 @@ long double f1dim(long double x) {
 // see http://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method
 void frprmn(int n, long double *fret, long double (*func)()) {
 	// most input variable are global, dfunc is done in gradienU
-	int j, its;
+	int its;
 	int endcount = 0;
 	long double gam, fp, dgg;
 
