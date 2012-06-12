@@ -2147,7 +2147,6 @@ long double SIGN(long double a, long double b) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // linmin
 void linmin(int n, long double *fret, long double (*func)()) {
-	int j;
 	long double xx, xmin, fx, fb, fa, bx, ax;
 
 	// pcom, xicom are global row-matrices
