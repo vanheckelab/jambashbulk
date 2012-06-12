@@ -274,7 +274,7 @@ void fire();
 void calcShearModulus();
 void calcBulkModulus();
 void checkNeighborChanges(int& addedcontacts, int& removedcontacts,
-		int& neighborChanges, int& neighborChangesLast, string& contactChanges);
+		int& neighborChanges, int& neighborChangesLast);
 void resolveRattler(int rattlerElement);
 string ParticleAndPressureString();
 void extractNandP(string foldername);
@@ -505,7 +505,6 @@ void calcShearModulus() {
 	struct tm *timeinfo;
 	char timebuffer[80];
 
-	string contactChanges = "";
 	ofstream outG;
 	ofstream outLog;
 	ofstream outFirst;
@@ -680,7 +679,7 @@ void calcShearModulus() {
 			}
 
 			checkNeighborChanges(addedContacts, removedContacts,
-					neighborChanges, neighborChangesLast, contactChanges);
+					neighborChanges, neighborChangesLast);
 
 			if (neighborChangesLast != 0)
 				pastContactChange = true;
@@ -834,7 +833,6 @@ void calcBulkModulus() {
 	struct tm *timeinfo;
 	char timebuffer[80];
 
-	string contactChanges = "";
 	ofstream outG;
 	ofstream outLog;
 	ofstream outFirst;
@@ -1051,7 +1049,7 @@ void calcBulkModulus() {
 			}
 
 			checkNeighborChanges(addedContacts, removedContacts,
-					neighborChanges, neighborChangesLast, contactChanges);
+					neighborChanges, neighborChangesLast);
 
 			if (neighborChangesLast != 0)
 				pastContactChange = true;
@@ -1179,8 +1177,7 @@ void calcBulkModulus() {
 ////////////////////////////////////////////////////////////////////////
 // checkNeighborChanges()
 void checkNeighborChanges(int& addedContacts, int& removedContacts,
-		int& neighborChanges, int& neighborChangesLast,
-		string& contactChanges) {
+		int& neighborChanges, int& neighborChangesLast) {
 	stringstream out(stringstream::out);
 
 	int trueneighborChangesLast = 0;
