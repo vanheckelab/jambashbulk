@@ -2657,19 +2657,16 @@ void resolveRattler(int rattlerElement) {
 ////////////////////////////////////////////////////////////////////////
 // readPositionFile
 void readPositionFile() {
-
-	long double frac;
 	char c = 'x', clast = 'x', clastlast = 'x';
 
-	int i = 0, j = 0;
+	int i = 0;
 	bool initializeNow = false;
 
 	int decimal = 0;
 	long double helperchar = 0.0;
 	bool isnegative = false;
-	int numofrightbrackets = 0;
+
 	bool posRead = false;
-	bool radRead = false;
 	bool Nread = false;
 	bool L1read = false;
 	bool L2read = false;
@@ -2677,6 +2674,9 @@ void readPositionFile() {
 	string filepath = nameOfWorkingDirectory + "/";
 
 	long double L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
+/* jamBashbulk.cpp:2679:25: warning: variable ‘L1y’ set but not used [-Wunused-but-set-variable]
+ * Weird!
+ */
 
 	ifstream infile;
 
