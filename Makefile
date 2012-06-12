@@ -1,21 +1,42 @@
+src = src
+bin = bin
+
 opts = -Wall -Wextra
 o3opts = $(opts) -O3
 dopts = $(opts) -g
 
-all: debug o3
+srcfiles = $(src)/jamBashbulk.cpp
 
-debug: jam2D_d
-o3: jam2D
-win: jam2D.exe
+binary = $(bin)/jam2D
+binary_d = $(binary)_d
 
-jam2D: jamBashbulk.cpp
-	g++ $(o3opts) -o jam2D jamBashbulk.cpp
+all: $(binary) $(binary_d)
 
-jam2D_d: jamBashbulk.cpp
-	g++ $(dopts) -o jam2D_d jamBashbulk.cpp	
+clean: $(bin)
+	rm -rf $(bin)
 
-jam2D.exe: jamBashbulk.cpp
-	i586-mingw32msvc-g++ $(o3opts) -o jam2D.exe jamBashbulk.cpp
+# normal binaries (-O3 and debug)
 
-clean:
-	rm -f jam2D_d jam2D
+$(binary):  $(bin) $(srcfiles)
+	g++ $(o3opts) -o $(bin)/jam2D $(srcfiles)
+
+$(binary_d):  $(bin) $(srcfiles)
+	g++ $(dopts) -o $(bin)/jam2D_d $(srcfiles)
+
+$(bin):
+	mkdir -p $(bin)
+
+
+# specials
+
+# win32
+
+binary_exe = $(binary).exe
+win32: $(binary_exe)
+
+$(binary_exe): $(bin) $(srcfiles)
+	i586-mingw32msvc-g++ $(o3opts) -o $(bin)/jam2D.exe $(srcfiles)
+
+# dll to work from python
+dll: $(bin) $(src)/j2d_dll.cpp $(srcfiles)
+	g++ -shared -Wl,-soname,j2d_dll.so -o $(bin)/j2d_dll.so $(src)/j2d_dll.cpp
