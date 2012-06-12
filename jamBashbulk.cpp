@@ -1231,27 +1231,21 @@ void simulationstep() {
 	timediff2 = time(NULL);
 	distanceCalcs = 0.0;
 
-	//p[2*N] = fmod(p[2*N], 1.0);
-
 	alpha = p[2 * N];
 	delta = p[2 * N + 1];
 	L = p[2 * N + 2];
-	//    if(screenOutput) cout << "L = " << L << endl;
+
 	lxx = L / (1.0 + delta);
 	lxy = L * 0.0;
 	lyx = L * alpha;
 	lyy = L * (1.0 + delta);
-	//iloop(N){cout << p[i] << "  " << p[i+N] << endl;}
-	//cout << "lx = " << lxx << "ly = " << lyy << endl;
-	//cout << endl;
+
 	packIntoBoundaries();
-	//cout << "marker" << endl;
 
 	if (programmode == 3 && iterationcountfire == 0)
 		cumulativeNeighborchanges = 0;
-	//if(programmode == 3) cumulativeNeighborchanges = 0;
 
-	if ((programmode == 5) && frprmnconverged && Rneighbor / Rmax < 2.41) { // && fabs(sxy/sxx) < 1e-4){
+	if ((programmode == 5) && frprmnconverged && Rneighbor / Rmax < 2.41) {
 		if ((iterationcountfire % 10000) == 0) {
 
 			trueneighborNumberOld = trueneighborNumber;
@@ -1283,13 +1277,9 @@ void simulationstep() {
 							&& !isRattler[j])
 						trueneighborNumber++;
 				}
-
 			}
-
-			//writeNamedFile("jamstate.txt");
 		}
 	} else {
-
 		trueneighborNumberOld = trueneighborNumber;
 		trueneighborNumber = 0;
 		consideredNeighborNumber = 0;
@@ -1341,10 +1331,7 @@ void simulationstep() {
 					+ (RneighborFrprmnLast - 2.4 * Rmax)
 							/ pow(2.0, (iterationcountfire) * 0.001);
 
-			//else Rneighbor = 2.4*Rmax+0.1*L/pow(2.0,iterationcountfire*0.001);
 		}
-		//if(fabs(P0 - Phelper)/P0 > (1-1e-8) || phi < 0.84) Rneighbor = 3 * L;
-		//if(!dofOnOff) RneighborFrprmnLast = Rneighbor;
 	}
 
 	if (programmode == 7) {
@@ -1360,13 +1347,8 @@ void simulationstep() {
 		Rneighbor = 3.5 * Rmax;
 	}
 
-	//if(iterationcountSimStep == 0) cout << "Rneighbor = " << Rneighbor/Rmax << " *Rmax" << endl;
-
 	cumulativeNeighborchanges += fabs(
 			trueneighborNumber - trueneighborNumberOld);
-	//cout << "consideredNeighborNumber = "<< consideredNeighborNumber  << ", cumulativeNeighborchanges = " << cumulativeNeighborchanges << endl;
-
-	/////
 
 	if (programmode == 1 && programmode == 2) {
 		frprmn(N, &fret, energy);
@@ -1374,67 +1356,16 @@ void simulationstep() {
 			converged = true;
 	}
 	if (programmode == 5) {
-
 		if (!frprmnconverged) {
-			//if (iterationcountfrprmnCUMULATIVE==0){
-			//P0_mem=P0;
-			//cout << P0 << endl;
-			//P0=pow(P0_mem,2.0/3.0);
-			//cout << P0 << endl;
-			//}
-
 			alphaOnOff = false;
 			deltaOnOff = false;
 			pressOnOff = false;
 
 			frprmn(N, &fret, energy);
-			//alphaOnOff = true;
-			//deltaOnOff = true;
-			//pressOnOff = true;
-
-			//cout << Phelper << endl;
-			//cout << "CG-" <<iterationcountfrprmnCUMULATIVE << endl;
-			//cout << "step : " << CG_step << "   U = "<< U<<"   dH = " << energyDiffStep;
-			//cout <<"   gradient : " << ggloc <<endl;
-			//cout << "G_alph : "<< xihelper[2*N+0];
-			//cout << "   G_bet : "<< xihelper[2*N+1];
-			//cout << "   G_L : "<< xihelper[2*N+2];
-			//cout << endl;
-
-			//			  					   iloop(N){ cout << p[i] ;}
-			//			  					   cout << endl;
-			//								   iloop(N){ cout << p[i+N] ;}
-			//								   cout << endl;
-			//cout <<"alpha = " << p[2*N] <<" delta = "<< p[2*N] << endl;
-
 		} else {
-			if (iterationcountfire == 0) {
-
-				//energy() ;
-				//HLastFunctionCall= Uhelper + P0*Lhelper*Lhelper;
-				//P0=P0_mem;
-				//energy();
-				//gradientcalc();
-
-				//iloop(N+1){ cout << v[i] << "   " << v[i+N] << endl; }
-				//dt=fabs(CG_step)+1e-10;
-			}
-			//cout <<"FIRE : dH  "<< enthalpieDiffStep << endl ;
-
 			dofOnOff = true;
 
-			/*
-			 if( fabs(Phelper-Pold)/Phelper < 1e-2) dofcriterium++;
-			 else dofcriterium = 0;
-			 if(dofOnOff) dofcriterium = 0;
-			 if(dofcriterium > 1){
-			 dofOnOff = true;
-			 neighborIterationCorrection = iterationcountfire;
-			 }
-			 */
-			//else neighborIterationCorrection = 0;
 			Pold = Phelper;
-			//cout << Phelper << endl;
 
 			if (dofOnOff) {
 
@@ -1449,46 +1380,25 @@ void simulationstep() {
 				deltaOnOff = false;
 				pressOnOff = false;
 			} // end else
-			  //cout << dt << endl;
+
 			fire();
-			//cout << H-HLastFunctionCall << "  to comp w :  "<< fabs(H)+fabs(HLastFunctionCall)+ZEPS << endl;
 
 			if (2.0 * fabs(H - HLastFunctionCall)
 					< ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
-
-				/*
-				 if(pressOnOffInit){
-				 if (fabs(Phelper-P0)/P0 < 1e-4) endcount++;
-				 }
-				 else endcount ++;
-				 */
-
 				if (fabs(sxy) < 1e-15) {
 
 					if (screenOutput)
 						cout << "FIRE algorithm converged!" << endl;
 					fireconverged = true;
-
-					//energyDiffStepOld = energyDiffStep;
-					//energyDiffStep = (Uhelper-Uold);
-					if (screenOutput) {
-						//				       cout << "EnergyDiffEnd/U (+ftol)= "<< energyDiffStep/ Uhelper + ftolFIRE << ", last: " << energyDiffStepOld/Uhelper << endl;
-						//				       cout << "sigma_xy = " << sxy << endl;
-						//				       cout << "Uhelper = " << Uhelper << ", Uold = " << Uold << endl;
-					}
-					//       return;
 				}
 			} else
 				endcount = 0;
-
-			//iterationcountFIRE++;
 		} // end else
 		if (fireconverged)
 			converged = true;
 	}
 
 	if (programmode == 3) {
-
 		dofOnOff = false;
 		alphaOnOff = false;
 		deltaOnOff = false;
@@ -1502,21 +1412,11 @@ void simulationstep() {
 		fire();
 
 		if (2.0 * fabs(H - HLastFunctionCall)
-				< 1e-13 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) { //  && iterationcountfire > 2500
-				//if (2.0*fabs(Uhelper-UhelperLastFunctionCall) < 1e2 * ftolFIRE*(fabs(Uhelper)+fabs(UhelperLastFunctionCall)+ZEPS)){
+				< 1e-13 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
 
 			if (screenOutput)
 				cout << "FIRE algorithm converged!" << endl;
 			fireconverged = true;
-
-			//energyDiffStepOld = energyDiffStep;
-			//energyDiffStep = (Uhelper-Uold);
-			if (screenOutput) {
-				//				       cout << "EnergyDiffEnd/U (+ftol)= "<< energyDiffStep/ Uhelper + ftolFIRE << ", last: " << energyDiffStepOld/Uhelper << endl;
-				//				       cout << "sigma_xy = " << sxy << endl;
-				//				       cout << "Uhelper = " << Uhelper << ", Uold = " << Uold << endl;
-			}
-			//       return;
 		}
 
 		if (fireconverged) {
@@ -1525,16 +1425,6 @@ void simulationstep() {
 		}
 	}
 
-	//if(UhelperLastFunctionCall <= Uhelper && P > P0) dtmax *= 0.95;
-
-	/*
-	 if(HLastFunctionCall <= H ){
-	 if(dtmax > dtmin) dtmax *= 0.95;
-	 }
-	 else if(dtmax < 0.1) dtmax *= 1.001;
-	 */
-
-	//H = Uhelper + P0*L*L;
 	calcSysPara();
 
 	if (fireconverged) {
@@ -1572,87 +1462,13 @@ void simulationstep() {
 
 	time(&rawtime1);
 
-	/*   if(screenOutput){
-	 cout << endl;
-	 cout << "___________________________________________________________________" << endl;
-
-	 cout << ctime(&rawtime1) << " : " << endl;
-	 cout << "# of iterations: mnbrak= " << iterationcountmnbrak << ", brent= " << iterationcountbrent << ", frprmn= " << iterationcountfrprmn << ", FIRE= " << iterationcountfire<< endl;
-	 cout << "Rneighbor = " << Rneighbor/Rmax << " *Rmax" << endl;
-	 cout << "Trueneighbornumber = " << trueneighborNumber << ", Neighborchanges = " << trueneighborNumber - trueneighborNumberOld << endl;
-	 cout << "consideredNeighborNumber = "<< consideredNeighborNumber  << ", cumulativeNeighborchanges = " << cumulativeNeighborchanges << endl;
-	 cout << "iteration time: " << time(NULL)-timediff2 << " s "<< endl;
-	 cout << "# of distanceCalcs = " << distanceCalcs << endl << endl;
-	 cout << "dt = " << dt << ", dtmax = " << dtmax << endl;
-	 cout << "beta = " << beta << endl << endl;
-
-	 cout << "phi= " << phi <<  ", U/V= " << Uhelper/L/L << ", H/V= " << H/L/L << ", Z= " << Z << ", P= " << P << endl;
-	 cout << "U = " << Uhelper << ", H = " << H << "Uold = " << Uold << ", Hold = " << Hold << endl;
-
-	 cout << "stress = sxx, sxy=syx, syy: " << sxx << ", " << sxy << ", " << syy  << endl << endl;
-
-	 cout << "alpha= " << p[2*N] << ",    delta= " << p[2*N+1] << ",   L = " << p[2*N+2] << endl;
-	 cout << "dalpha= " << v[2*N]*dt << ",  ddelta= " << v[2*N+1]*dt << ",    dL = " << v[2*N+2]*dt << endl;
-	 cout << "ddalpha= " << -xihelper[2*N]*dt/M[N] << ",  dddelta= " << -xihelper[2*N+1]*dt/M[N+1] << ",    ddL = " << -xihelper[2*N+2]*dt/M[N+2] << endl;
-	 cout << "dampalpha = " << dampalpha << ",   dampdelta = " << dampdelta << ",     dampL = " << damppress << endl;
-	 cout << "damp = " << damp << endl;
-	 cout << "countAlphaFlip = " << countAlphaFlip << ", countDeltaFlip = " << countDeltaFlip << ", countPressFlip = " << countPressFlip << endl << endl;
-
-
-	 cout << "H-H_last = " << (H-HLastFunctionCall) << ", (H-H_last)/H = " << (H-HLastFunctionCall)/H << endl;
-	 cout << "H-Hold = " << enthalpieDiffStep << ", (H-Hold)/H = " << (H-Hold)/H << endl;
-	 cout << "U-Uold = " << energyDiffStep << ", (U-Uold)/U = " << (Uhelper-Uold)/Uhelper << endl;
-
-	 //cout << "EnergyDiffStep/U (+ftolFIRE)= "<< energyDiffStep/(Uhelper) + ftolFIRE << endl;
-
-
-
-
-	 if(programmode==3){
-	 cout << endl << "RESULTS OF SHEAR:" << endl;
-	 cout << "shear = " << (p[2*N] - alphaBeforeDeformation) << endl;
-	 cout << "dU/U = " << (Uhelper-energyBeforeDeformation)/Uhelper << endl;
-	 cout << "dsxx = " << sxx - sxxBeforeDeformation << ", dsxy = " << sxy - sxyBeforeDeformation << ", dsyy = " << syy - syyBeforeDeformation << endl;
-	 cout << "G = dsxy/dalpha " << (sxy - sxyBeforeDeformation)/(p[2*N] - alphaBeforeDeformation) << endl;
-
-	 }
-	 }//END if(screenOutput)*/
-
 	if (programmode != 3) {
 		energywrite[iterationcountSimStep] = Uhelper;
 		enthalpiewrite[iterationcountSimStep] = Uhelper + P0 * L * L;
 		sxywrite[iterationcountSimStep] = sxy;
 	}
 
-	//cout << v[2*N+2] << ", " << xi[2*N+2] << ", " << damppress << endl;
-
 	if (dofOnOff) {
-
-		/*
-		 dampalpha = 1.0 - (countAlphaFlip)/1000.0;
-		 dampdelta = 1.0 - (countDeltaFlip)/1000.0;
-		 damppress = 1.0 - (countPressFlip)/1000.0;
-
-
-		 dampalpha += 1.0 - (countAlphaFlip)/1000.0 - dampalpha;
-		 dampdelta += 1.0 - (countDeltaFlip)/1000.0 - dampdelta;
-		 damppress += 1.0 - (countPressFlip)/1000.0 - damppress;
-		 */
-		/*
-		 dampalpha += 0.5*(1.0 - (countAlphaFlip)/1000.0 - dampalpha);
-		 dampdelta += 0.5*(1.0 - (countDeltaFlip)/1000.0 - dampdelta);
-		 damppress += 0.5*(1.0 - (countPressFlip)/1000.0 - damppress);
-
-		 if(dampalpha > 1.0) dampalpha = 1.0;
-		 if(dampdelta > 1.0) dampdelta = 1.0;
-		 if(damppress > 1.0) damppress = 1.0;
-
-		 double dampDOF = 0.5;
-		 if(dampalpha < dampDOF) dampalpha = dampDOF;
-		 if(dampdelta < dampDOF) dampdelta = dampDOF;
-		 if(damppress < dampDOF) damppress = dampDOF;
-		 */
-
 		int lowerswitch = 10;
 		int upperswitch = 50;
 		double dampDOF = 0.85;
@@ -1700,7 +1516,7 @@ void simulationstep() {
 			< 1e-14 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
 		dtmax = dt * 0.95;
 	} else
-		dtmax = 0.6; //0.06*(sqrt(sqrt(0.01/(P0 + 1e-30))));
+		dtmax = 0.6;
 
 	string filepath = nameOfWorkingDirectory + "/" + "errorLog.txt";
 	if (iterationcountfire > maxIterationCountFire) {
@@ -1719,19 +1535,6 @@ void simulationstep() {
 	countDeltaFlip = 0;
 	countPressFlip = 0;
 
-	/*
-	 iloop(N){
-	 cout  << "p= " <<  p[i] << ", " << p[N+i]  << "v= " <<  v[i] << ", " << v[N+i] << " damp = " << damp << " xi = " << xi[i] << ", " << xi[N+i] << " M = " << M[i] << endl;
-	 //v[i] = v[i]*damp + xi[i]/M[i]*dt; 		// integrate accelerations to find velocities
-
-	 //v[N+i] = v[N+i]*damp + xi[N+i]/M[i]*dt
-	 }
-	 char stop;
-	 cin >> stop;
-	 */
-
-	//cout << v[2*N+2] << ", " << xi[2*N+2] << ", " << damppress << endl;
-	//cin >> stop;
 	iterationcountmnbrak = iterationcountbrent = iterationcountfrprmn = 0;
 	iterationcountSimStep++;
 
