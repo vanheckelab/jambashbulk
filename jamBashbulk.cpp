@@ -367,7 +367,6 @@ string ParticleAndPressureString() {
 	long double number, teni, teni1;
 	int digit;
 
-	int phiInt;
 	long double pressureHelper = P0;
 	int pressureExponent = 0;
 	bool leadingZero = true;
