@@ -3771,7 +3771,6 @@ inline void createFileName() {
 	string bufferString;
 	long double number, teni, teni1;
 	int digit;
-	//char *filename; // made global
 	int phiInt;
 
 	time_t rawtime;
@@ -3780,36 +3779,7 @@ inline void createFileName() {
 	char namebuffer[4];
 
 	filenameString = "";
-	/*
-	 filenameString.append("N-");
-	 //itoa (N,buffer,10);
-	 number = N;
-	 for(int i=5; i>0; i--){
-	 teni = pow(10,i*1.0);
-	 teni1 = pow(10,i-1.0);
-	 digit = fmod(number,teni)/(teni1);
-	 buffer = digit+48;
-	 bufferString = buffer;
-	 filenameString.append(bufferString);
-	 }
 
-	 filenameString.append("_phi-");
-	 number = phiininit*10000;
-	 for(int i=5; i>0; i--){
-	 teni = pow(10,i*1.0);
-	 teni1 = pow(10,i-1.0);
-	 digit = fmod(number,teni)/(teni1);
-	 buffer = digit+48;
-	 bufferString = buffer;
-	 filenameString.append(bufferString);
-	 }
-	 filenameString.append("__");
-	 time ( &rawtime );
-	 timeinfo = localtime ( &rawtime );
-	 strftime (timebuffer,80,"%Y-%m-%d_%H:%M:%S",timeinfo);
-	 */
-
-	//filenameString.append(timebuffer);
 	namebuffer[0] = 48 + (((currentPackingNumber) / 1000) % 10);
 	namebuffer[1] = 48 + (((currentPackingNumber) / 100) % 10);
 	namebuffer[2] = 48 + (((currentPackingNumber) / 10) % 10);
@@ -3822,13 +3792,9 @@ inline void createFileName() {
 
 	string filebase = nameOfWorkingDirectory;
 
-	//cout << filebase << endl;
-
 	while (nameOfWorkingDirectory[i] != 'N') {
 		i++;
 		filebase = nameOfWorkingDirectory.substr(i);
-		//		cout << i << endl;
-		//		cout << filebase << endl;
 
 		if (i > nameOfWorkingDirectory.size()) {
 			cout << "Unexpected filename ERROR 2!" << endl;
@@ -3836,22 +3802,17 @@ inline void createFileName() {
 		}
 	}
 
-	//	filenameString.append(nameOfWorkingDirectory);
 	filenameString.append(filebase);
 	filenameString.append("~");
 
-	//	if(screenOutput) cout << filenameString << endl;
 
 	filenameString.push_back(namebuffer[0]);
 	filenameString.push_back(namebuffer[1]);
 	filenameString.push_back(namebuffer[2]);
 	filenameString.push_back(namebuffer[3]);
 
-	//	if(screenOutput) cout << filenameString << endl;
 
 	filenameString.append(".txt");
-
-	//	if(screenOutput) cout << filenameString << endl;
 
 	filename = (char*) filenameString.c_str();
 	if (screenOutput)
