@@ -1,4 +1,4 @@
-opts = -Wall
+opts = -Wall -Wextra
 o3opts = $(opts) -O3
 dopts = $(opts) -g
 
