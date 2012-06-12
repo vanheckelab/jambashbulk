@@ -1826,8 +1826,6 @@ void fire() {
 
 	beta = betastart;
 
-	//cout << iterationcountfire << endl;
-
 	while (itercount < 1000) {
 
 		totaliterationcount++;
@@ -1841,7 +1839,6 @@ void fire() {
 		gradientcalc(); // calulate the gradient for the new configuration
 
 		H = Uhelper + P0 * Lhelper * Lhelper;
-		//if (iterationcountfire == 0) cout << H << " fire begin   " <<H- HLastFunctionCall  << endl;
 
 		if (programmode == 3)
 			calcSysPara();
@@ -1862,11 +1859,9 @@ void fire() {
 
 		if (power > 0 && iterPosPower > Nmin) {
 			dt = fmin(dt * finc, dtmax);
-			//dt = fmax(dt, dtmin);
 			beta *= fbeta;
 		}
 		if (power < 0) {
-			//dt = fmin(dt*fdec, dtmax);
 			if (fabs(sxy) < 1e-16)
 				dt = fmax(dt * 0.2 * fdec, dtmin);
 			else
@@ -1876,11 +1871,10 @@ void fire() {
 			}
 			beta = betastart;
 			iterPosPower = 0;
-			//damp = 0.1;
 		}
 
 		double radiusFraction = 1e-5;
-		//cout << xihelper[2*N+2]<<endl;
+
 		if (alphaOnOff && (fabs(Phelper - P0) / P0 < 5e-1)) {
 			v[2 * N] = v[2 * N] * dampalpha - xihelper[2 * N] / M[N] * dt; // damping prevents too large changes
 			if (v[2 * N] * Lhelper * dt > radiusFraction)
@@ -1924,9 +1918,6 @@ void fire() {
 			v[2 * N + 2] = 0.0;
 		}
 
-		//cout << v[2*N+2] << ", " << xihelper[2*N+2] << ", " << damppress << ", " << M[N+2] << ", " << dt << endl;
-		//if(stop != 'x') cin >> stop;
-
 		iloop(N) {
 
 			v[i] = v[i] * damp - xihelper[i] / M[i] * dt; // integrate accelerations to find velocities
@@ -1946,14 +1937,6 @@ void fire() {
 		}
 		long double vimaxloc;
 		long double indexmaxloc;
-		//		iloop(2*N+1){
-		//			if(fabs(v[i+1])>fabs(v[i])) {
-		//			vimaxloc=v[i+1];
-		//		indexmaxloc=i+1;
-		//				}
-		//}
-		//cout << "max gradient component " << indexmaxloc ;
-		//cout << "  , value : " << vimaxloc <<endl;
 
 		////////////
 
@@ -1974,7 +1957,6 @@ void fire() {
 			}
 
 			if (xihelper[2 * N + 2] * v[2 * N + 2] > 0) {
-				//v[2*N+2] = 0.0;
 				countPressFlip++;
 			} else {
 				countPress++;
@@ -1982,21 +1964,13 @@ void fire() {
 		}
 		////////////
 
-		//enthalpieDiffStepOld = enthalpieDiffStep;
 		enthalpieDiffStep = (H - Hold);
 		energyDiffStep = (Uhelper - Uold);
-
-		//if(energyDiffStep > 0.0) dt *= 0.05;
 
 		iterPosPower++;
 		iterationcountfire++;
 		itercount++;
-		//cout <<"loop end : H = "<< H << "  dH = "<< H-Hold << endl;
-
 	} // end while
-
-	//cout << "In FIRE: H-Hold = " << H - Hold << endl;
-
 } // end FIRE
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
