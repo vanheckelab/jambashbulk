@@ -1216,6 +1216,35 @@ void checkNeighborChanges(int& addedContacts, int& removedContacts,
 	}
 } // end checkNeighborChanges
 
+void calculate_neighbors() {
+	trueneighborNumberOld = trueneighborNumber;
+	trueneighborNumber = 0;
+	consideredNeighborNumber = 0;
+	iloop(N) {
+		jloop(i) {
+			neighbors[j * N + i] = true;
+
+		}
+		neighbors[i * N + i] = false;
+	}
+	iloop(2*N+3) {
+		phelper[i] = p[i];
+	}
+	energy();
+	gradientcalc();
+	iloop(N) {
+		jloop(i) {
+			if (rij[j * N + i] < Rneighbor) {
+				neighbors[j * N + i] = true;
+				consideredNeighborNumber++;
+			} else
+				neighbors[j * N + i] = false;
+			if (trueneighbors[j * N + i] && !isRattler[i] && !isRattler[j])
+				trueneighborNumber++;
+		}
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Simulation step
 void simulationstep() {
@@ -1242,68 +1271,10 @@ void simulationstep() {
 
 	if ((programmode == 5) && frprmnconverged && Rneighbor / Rmax < 2.41) {
 		if ((iterationcountfire % 10000) == 0) {
-
-			trueneighborNumberOld = trueneighborNumber;
-			trueneighborNumber = 0;
-			consideredNeighborNumber = 0;
-
-			iloop(N) {
-				jloop(i) {
-					neighbors[j * N + i] = true;
-
-				}
-				neighbors[i * N + i] = false;
-			}
-
-			iloop(2*N+3) {
-				phelper[i] = p[i];
-			}
-			energy();
-			gradientcalc();
-
-			iloop(N) {
-				jloop(i) {
-					if (rij[j * N + i] < Rneighbor) {
-						neighbors[j * N + i] = true;
-						consideredNeighborNumber++;
-					} else
-						neighbors[j * N + i] = false;
-					if (trueneighbors[j * N + i] && !isRattler[i]
-							&& !isRattler[j])
-						trueneighborNumber++;
-				}
-			}
+			calculate_neighbors();
 		}
 	} else {
-		trueneighborNumberOld = trueneighborNumber;
-		trueneighborNumber = 0;
-		consideredNeighborNumber = 0;
-
-		iloop(N) {
-			jloop(i) {
-				neighbors[j * N + i] = true;
-
-			}
-			neighbors[i * N + i] = false;
-		}
-
-		iloop(2*N+3) {
-			phelper[i] = p[i];
-		}
-		energy();
-		gradientcalc();
-
-		iloop(N) {
-			jloop(i) {
-				if (rij[j * N + i] < Rneighbor) {
-					neighbors[j * N + i] = true;
-					consideredNeighborNumber++;
-				} else
-					neighbors[j * N + i] = false;
-				if (trueneighbors[j * N + i] && !isRattler[i] && !isRattler[j])
-					trueneighborNumber++;
-			}
-		}
+		calculate_neighbors();
 	}
 
 	iloop(2*N+3) {
@@ -1423,36 +1394,7 @@ void simulationstep() {
 	calcSysPara();
 
 	if (fireconverged) {
-
-		trueneighborNumberOld = trueneighborNumber;
-		trueneighborNumber = 0;
-		consideredNeighborNumber = 0;
-
-		iloop(N) {
-			jloop(i) {
-				neighbors[j * N + i] = true;
-
-			}
-			neighbors[i * N + i] = false;
-		}
-
-		iloop(2*N+3) {
-			phelper[i] = p[i];
-		}
-		energy();
-		gradientcalc();
-
-		iloop(N) {
-			jloop(i) {
-				if (rij[j * N + i] < Rneighbor) {
-					neighbors[j * N + i] = true;
-					consideredNeighborNumber++;
-				} else
-					neighbors[j * N + i] = false;
-				if (trueneighbors[j * N + i] && !isRattler[i] && !isRattler[j])
-					trueneighborNumber++;
-			}
-		}
+		calculate_neighbors();
 	} // end if
 
 	time(&rawtime1);
