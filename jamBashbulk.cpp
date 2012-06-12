@@ -840,7 +840,6 @@ void calcBulkModulus() {
 	struct tm *timeinfo;
 	char timebuffer[80];
 
-	//string goalStrain;
 	string contactChanges = "";
 	ofstream outG;
 	ofstream outLog;
@@ -871,7 +870,6 @@ void calcBulkModulus() {
 	while (goalStrainHelper * 1.01 < 1.0) {
 		goalStrainExponent++;
 		goalStrainHelper *= 10.0;
-		//cout << pressureHelper << endl;
 	}
 
 	goalStraindigit = goalStrainHelper / 1;
@@ -931,7 +929,6 @@ void calcBulkModulus() {
 	GpositionFile.insert(particleNumberLength + 6, Appendix);
 	GpositionFile.insert(0, nameOfWorkingDirectory + "/");
 
-	//dataFileName.erase(particleNumberLength+6, 5);
 	dataFileName.insert(particleNumberLength + 6, Appendix);
 	dataFileName.insert(0, "data");
 	dataFileName.insert(0, nameOfWorkingDirectory + "/");
@@ -993,7 +990,7 @@ void calcBulkModulus() {
 	eraseFile.close();
 	writeMultiplePackings(GpositionFile);
 
-	while (!reachedGoal) { // shear < 0.15 && numberOfDataPoints < 5000 &&
+	while (!reachedGoal) {
 
 		neighborChangesLastCumulative += neighborChangesLast;
 
@@ -1012,10 +1009,7 @@ void calcBulkModulus() {
 		while (!sufficientAccuracy) {
 
 			if (!fixedStepSize) {
-				if (pastContactChange) { // neighborChanges > numberOfContactChanges ||
-
-					//writeMultiplePackings(GpositionFile);
-
+				if (pastContactChange) {
 					num++;
 
 					jloop(2*N+3) {
@@ -1036,10 +1030,7 @@ void calcBulkModulus() {
 				shear = shear * shearfactor; // shear is increased by shearfactor...
 
 			} else {
-
-				//sufficientAccuracy = true;
 				shear = shear + dstrain;
-
 			}
 
 			jloop(2*N+3) {
@@ -1072,7 +1063,7 @@ void calcBulkModulus() {
 
 			checkNeighborChanges(addedContacts, removedContacts,
 					neighborChanges, neighborChangesLast, contactChanges);
-			//	if(addedContacts != addedContactsOld || removedContacts != removedContactsOld) pastContactChange = true;
+
 			if (neighborChangesLast != 0)
 				pastContactChange = true;
 			else
@@ -1085,20 +1076,10 @@ void calcBulkModulus() {
 						|| (fabs(shearfactor - 1.0) < 1e-6))
 					sufficientAccuracy = true;
 			}
-			//else sufficientAccuracy = true;
 
 			endtime = time(NULL); // clock function runtime
 			timediff1 = endtime - starttime;
 			starttime = endtime;
-
-			outG.open((char*) dataFileName.c_str(), ios::app);
-			//cout << filename << endl;
-
-			//if( ((pastContactChange && shearfactor < 1.001) || !pastContactChange) && (numberOfDataPoints > 0 || (neighborChangesLastCumulative + neighborChangesLast) == 0 )) cout << endl  << (p[2*N] - alphaBeforeDeformation) << "	" << (sxy - sxyBeforeDeformation) << "	" << addedContacts << "	" << removedContacts << "	" << trueneighborNumber << "    " << numberOfContactChanges << "    " << (neighborChangesLastCumulative + neighborChangesLast) << "  " << contactChanges;
-			//  && shearfactor < 1.001
-			//cin >> stop;
-
-			outG.close();
 
 			// fast finding of 1st contact change:
 			if ((numberOfDataPoints < 1
@@ -1114,7 +1095,6 @@ void calcBulkModulus() {
 				num = 0;
 				pastContactChange = false;
 			} //////////////////////////////////////////
-			  //if(fixedStepSize) sufficientAccuracy = true;
 
 			numberOfDataPoints++;
 
@@ -1134,7 +1114,6 @@ void calcBulkModulus() {
 			strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
 
 			outLog.open((char*) logFileName.c_str(), ios::app);
-			//logfile.open((char*)filenameString2.c_str(), ios::app);
 
 			outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P
 					<< "	" << alpha << "	" << delta;
@@ -1156,7 +1135,7 @@ void calcBulkModulus() {
 					<< (neighborChangesLastCumulative + neighborChangesLast)
 					<< "	" << addedContacts << "	" << removedContacts << "	"
 					<< Phelper << "	" << Z << endl;
-			//if( ((pastContactChange) || !pastContactChange) && (numberOfDataPoints > 0 || (neighborChangesLastCumulative + neighborChangesLast) == 0 )) outG << endl << G << "	" << (p[2*N] - alphaBeforeDeformation) << "	" << (sxy - sxyBeforeDeformation) << "	" << addedContacts << "	" << removedContacts << "	" << trueneighborNumber << "    " << numberOfContactChanges << "    " <<
+
 			outG.close();
 
 			shearLast = shear;
@@ -1202,22 +1181,6 @@ void calcBulkModulus() {
 
 			numberOfContactChanges++;
 		}
-
-		//else sufficientAccuracy = true;
-
-		/*
-		 if(numberOfContactChanges == 1){
-		 outFirst.open("FirstContactChange.txt", ios::app);
-		 outFirst.setf(ios::scientific,ios::floatfield);
-		 outFirst.precision(16);
-
-		 outFirst << shearBeforeCC << "	" << sxyBeforeCC << "	" << sxyBeforeCC / shearBeforeCC << endl;
-
-		 outFirst.close();
-
-		 }
-		 */
-
 	} // end while
 
 	programmode = programmodeOld;
