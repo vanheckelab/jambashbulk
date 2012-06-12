@@ -488,11 +488,9 @@ void calcShearModulus() {
 	int numberOfContactChanges = 0; // the number of contact changes at a given moment
 	bool reachedGoal = false;
 
-	int initialContactNumber = trueneighborNumber;
 	int addedContacts = 0;
 	int removedContacts = 0;
-	int addedContactsOld = 0;
-	int removedContactsOld = 0;
+
 	int neighborChanges = 0; // sum of the number of added and removed contacts at a certain time
 	int neighborChangesOld = neighborChanges;
 	int neighborChangesLast = 0;
@@ -500,11 +498,10 @@ void calcShearModulus() {
 	bool pastContactChange = false;
 	bool sufficientAccuracy = false;
 	int numberOfDataPoints = 0;
-	bool rattlerChanges = false;
+
 	vector<long double> extraPositionArray;
 	extraPositionArray.reserve(2 * N + 3);
 
-	long double shearBeforeCC, sxyBeforeCC; // before Contact Change
 	long double shearLast = 0.0, sxyLast = sxy;
 
 	time_t rawtime;
@@ -519,7 +516,6 @@ void calcShearModulus() {
 	string dataFileName = filenameString;
 	string logFileName = filenameString;
 	string GpositionFile = filenameString;
-	char a1 = 'a', a2 = 'b';
 	string Appendix = "";
 
 	long double goalStrainHelper = goalStrain;
@@ -633,8 +629,6 @@ void calcShearModulus() {
 		}
 
 		neighborChangesOld = neighborChanges;
-		addedContactsOld = addedContacts;
-		removedContactsOld = removedContacts;
 
 		while (!sufficientAccuracy) {
 			if (!fixedStepSize) {
@@ -652,8 +646,6 @@ void calcShearModulus() {
 
 				} else if (num > 0) {
 					shearfactor = sqrt(shearfactor);
-					shearBeforeCC = shear;
-					sxyBeforeCC = sxy;
 				}
 
 				shear = shear * shearfactor; // shear is increased by shearfactor...
