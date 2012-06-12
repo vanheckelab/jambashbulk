@@ -2184,6 +2184,8 @@ long double f1dim(long double x) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // frprmn
+// Fletcher-Reeves-Polak-Ribiere minimization
+// see http://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method
 void frprmn(int n, long double *fret, long double (*func)()) {
 	// most input variable are global, dfunc is done in gradienU
 	int j, its;
@@ -2214,27 +2216,9 @@ void frprmn(int n, long double *fret, long double (*func)()) {
 		iterfrprmn = its;
 
 		linmin(n, fret, func);
-		//cout << "H = " << fp << endl;
 		energyDiffStepOld = energyDiffStep;
 		energyDiffStep = (*fret - fp);
 
-		/*
-		 if(energyDiffStep < -1e-4){
-		 alphaOnOff = false;
-		 deltaOnOff = false;
-		 pressOnOff = false;
-		 }
-		 else if(energyDiffStep < -1e-8){
-		 alphaOnOff = true;
-		 deltaOnOff = true;
-		 pressOnOff = false;
-		 }
-		 else{
-		 alphaOnOff = true;
-		 deltaOnOff = true;
-		 pressOnOff = true;
-		 }
-		 */
 
 		if (2.0 * fabs(*fret - fp) <= ftol * (fabs(*fret) + fabs(fp) + ZEPS)) {
 			endcount++;
@@ -2242,7 +2226,6 @@ void frprmn(int n, long double *fret, long double (*func)()) {
 			if (endcount > 3) {
 				if (screenOutput) {
 					cout << "Conjugate gradient converged!" << endl;
-					//				   cout << "EnergyDiffStep/U= "<< energyDiffStep/(*fret) << ", last: " << energyDiffStepOld/(*fret) << endl;
 				}
 
 				frprmnconverged = true;
@@ -2278,8 +2261,6 @@ void frprmn(int n, long double *fret, long double (*func)()) {
 		H = Uhelper + P0 * Lhelper * Lhelper;
 
 	}
-
-	//	if(screenOutput) cout << "Too many iterations in frprmn!" << endl;
 	return;
 } // end frprmn
 
