@@ -34,7 +34,6 @@ static bool screenOutput = false;
 static char stop; // this variable waits for user input and halts the
 // computation.
 
-static const bool report = false;
 static const bool test = true; // if true debugging output is shown
 // if(test) cout << "test0000" << endl;
 
@@ -48,7 +47,7 @@ static long double shear = 0.0;
 
 static bool alphaOnOff = false, deltaOnOff = false, pressOnOff = false;
 static bool dofOnOff = false;
-static int dofcriterium = 0;
+
 // the previous parameters indicate in which way the simulated region
 // can be deformed (these values change during execution of the
 // program):
@@ -68,7 +67,6 @@ static long double alphainit = 0.0; // the user's choice for the initial shear a
 static long double deltainit = 0.0; // the initial aspect-ratio
 static long double P0init = 0.0;
 static long double P0 = 0.0; // the target pressure
-static long double P0_mem = 0.0;
 static long double phiinit = 0.86; // the initial fill fraction (0.869 ^= P~0.01)
 
 static int countAlphaFlip = 0;
@@ -84,9 +82,6 @@ static long double alphaBeforeDeformation; // the shear angle of the relaxed pac
 static int goalNumberOfContactChanges = 10; // the total number of contact changes we are interested in
 static long double goalStrain = 0.1; // the strain range we are interested in
 static int fixedStepNumber; // number of fixed size strain steps;
-
-// OpenGL variables and parameters:
-static int window; //the number of our GLUT window
 
 // iteration counters in various algorithms:
 static int iterationcountSimStep = 0;
@@ -104,7 +99,7 @@ static bool shearconverged = false;
 static bool converged = false;
 static int menumode = 0;
 static int programmode = 0;
-static int programmodeOld = 0;
+
 static int distributioncase = 0;
 static bool endprogram = false;
 static char *filename;
@@ -112,7 +107,7 @@ static string filenameString;
 static int currentPackingNumber = 0;
 static int numPackingsToProcess = 0;
 static int firstPackingNumber = 0;
-static int packingNameNumber = 0;
+
 static bool redo = false;
 static long double distanceCalcs = 0.0;
 static long double Rneighbor = 100.0;
@@ -123,7 +118,6 @@ static long double energyDiffStep = 1e10;
 static long double energyDiffStepOld = 1e10;
 
 static long double enthalpieDiffStep = 1e10;
-static long double enthalpieDiffStepOld = 1e11;
 
 static long double UhelperLastFunctionCall = 1e20;
 static long double Uold = 1e10;
@@ -139,7 +133,6 @@ static long double H = 1e9;
 static long double Hold = 1e10;
 static long double HLastFunctionCall = 1e11;
 
-static long double U; // potential energy packing (per unit cell)
 static long double phi; // fill fraction
 static long double Z; // average number of neighbors
 static long double P; // pressure
@@ -167,8 +160,6 @@ static int consideredNeighborNumber = 0;
 static int trueneighborNumber = 0;
 static int trueneighborNumberOld = 0;
 static int cumulativeNeighborchanges;
-static bool updateNeighbors;
-static long double maxgradient;
 
 //generalized coordinates and gradients
 static vector<long double> p; // Positions of particles
@@ -202,7 +193,6 @@ static long double CG_step = 1;
 //unit cell properties
 static long double lxx, lxy; // x-/y- component of L_x (1st unit cell vector)
 static long double lyx, lyy; // x-/y- component of L_y (2nd unit cell vector)
-static long double lxabs, lyabs; // lengths of L_x and L_y
 static vector<int> nx; // NxN matrix for periodicity calculation
 static vector<int> ny; // NxN matrix for periodicity calculation
 
@@ -219,8 +209,6 @@ static long double gg, vv;
 
 // mathematical and program constants
 static const long double PI = 3.141592653589793;
-static const long double angle2rad = PI / 180.0;
-static const long double tiny = 1.0e-50; // small constant to avoid e.g. divion by zero
 static const long double gold = 0.5 * (1.0 + sqrt(5.0)); // golden ratio = 1.618033988749894885
 static const long double glimit = 100.0; // maximum magnification for parabolic-fit step in function mbrak
 
@@ -231,11 +219,9 @@ static int ITMAX = 12; // maximum of iterations in frprmn
 static const long double TOL = 1e-7; // tolerance passed to brent by linmin
 static const long double AMIN = 1e-7; // starting step in linmin
 
-static int ncom; // dimension in linmin + f1dim
 static vector<long double> pcom, xicom; // positions and gradient
 static long double (*nrfunc)(); // function place-holder
 static int iterfrprmn; // number of iterations performed in frprmn
-static long double fret; // return minimum value of frprmn + linmin
 static long double ftol = 1e-17; // tolerance passed to frprmn()
 static long double ftolFrprmnBeforeFIRE = 1e-2;
 static long double ftolFIRE = 1e-17; // tolerance passed to fire()
