@@ -2058,6 +2058,7 @@ void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // brent
+// Brent's method (see http://en.wikipedia.org/wiki/Brent's_method )
 long double brent(long double ax, long double bx, long double cx,
 		long double (*f)(long double), long double tol, long double *xmin) {
 	int iter;
@@ -2129,7 +2130,6 @@ long double brent(long double ax, long double bx, long double cx,
 		}
 
 	}
-	//	if(screenOutput) cout << "Too many iterations in brent" << endl;
 	*xmin = x;
 	return fx;
 } // end brent
