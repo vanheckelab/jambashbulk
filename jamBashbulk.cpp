@@ -1283,10 +1283,6 @@ void simulationstep() {
 	energy();
 	gradientcalc();
 
-	if (programmode == 1 && programmode == 2) {
-		Rneighbor = 3.5 * Rmax
-				+ 0.3 * L / pow(2.0, iterationcountSimStep * 2.0);
-	}
 	if (programmode == 5) {
 		if (!frprmnconverged) {
 			Rneighbor = 3.5 * Rmax
