@@ -2923,7 +2923,6 @@ void readPositionFile() {
 // writePositionFile
 inline void writePositionFile() {
 
-	//char filename[256];
 	time_t rawtime;
 	struct tm *timeinfo;
 	char timebuffer[80];
@@ -2937,18 +2936,13 @@ inline void writePositionFile() {
 
 	createFileName();
 
-	//	cout << "filenameString at step 1 : "<< endl;
-	//	cout << filenameString << endl;
-
 	filepath.append(filename);
 
 	ofstream outfile;
-	//	cout << filepath << endl;
-	//outfile.open( "jamstate.txt", ios::trunc);
+
 	if (programmode == 5)
 		outfile.open((char*) filepath.c_str(), ios::trunc);
 
-	//else outfile.open( "jamstate.txt" , ios::trunc);
 	if (!outfile) {
 		if (screenOutput)
 			cout << "Cannot open output file!" << endl;
@@ -2957,7 +2951,7 @@ inline void writePositionFile() {
 		createFileName();
 		if (programmode == 5)
 			outfile.open(filename, ios::trunc);
-		//else outfile.open( "jamstate.txt" , ios::trunc);
+
 		if (!outfile) {
 			if (screenOutput)
 				cout << "Cannot open output file!" << endl;
@@ -2972,7 +2966,7 @@ inline void writePositionFile() {
 	alpha = p[2 * N];
 	delta = p[2 * N + 1];
 	L = p[2 * N + 2];
-	//    if(screenOutput) cout << "L = " << L << endl;
+
 	lxx = L / (1.0 + delta);
 	lxy = L * 0.0;
 	lyx = L * alpha;
@@ -2982,20 +2976,6 @@ inline void writePositionFile() {
 			<< " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
 			<< Phelper << " ,P0= " << P0 << " ," << endl;
 
-	//outfile << "L = " << Lhelper << ", phi = " << phi << endl;
-	/*
-	 outfile << "[";
-	 for(int i=0; i<2*N+2; i++){
-	 outfile << p[i] << ", ";
-	 }
-	 outfile << p[2*N+2] << "],";
-	 outfile << endl << endl;
-	 outfile << "R = [";
-	 for(int i=0; i<N-1; i++){
-	 outfile << R[i] << ", ";
-	 }
-	 outfile << R[N-1] << "],";
-	 */
 	outfile << "{" << endl;
 	iloop(N) {
 		outfile << p[i] << " ,	" << p[N + i] << " ,	" << R[i] << " ,	" << endl;
@@ -3006,40 +2986,14 @@ inline void writePositionFile() {
 	outfile.close();
 	outfile.close();
 
-	//string filenameString;
 	char buffer;
 	string bufferString;
 	long double number, teni, teni1;
 	int digit;
 	char *filenametime;
 
-	/*
-	 filenameString = "timefile";
-
-	 number = N;
-	 for(int i=5; i>0; i--){
-	 teni = pow(10,i*1.0);
-	 teni1 = pow(10,i-1.0);
-	 digit = fmod(number,teni)/(teni1);
-	 buffer = digit+48;
-	 bufferString = buffer;
-	 filenameString.append(bufferString);
-	 }
-	 filenameString.append(".txt");
-	 filenametime = (char*)filenameString.c_str();
-	 */
-
-	/*
-	 ofstream timefile;
-	 timefile.open(filenametime, ios::app);
-	 timefile << "t = " << timediff1 << ", fire = " << totaliterationcount << ", alpha = " << alphahelper << ", delta = " << deltahelper << ", phi = " << phi << ", Z = " << Z << ", dH/H = " << (H-HLastFunctionCall)/H << ", s_xy = " << sxy << ", P = " << P << endl;
-	 timefile.close();
-	 */
-
 	string logFileNamePackings;
 	logFileNamePackings = filenameString;
-	//	size_t sz=logFileNamePackings.size();
-	//	logFileNamePackings.erase(sz-9,5);
 
 	logFileNamePackings.insert(0, "log");
 
@@ -3047,21 +3001,6 @@ inline void writePositionFile() {
 
 	ofstream logfile;
 
-	//    if(numberOfPackings == numberOfPackingsStartValue){
-	//	  logfile.open((char*)logFileNamePackings.c_str(), ios::app);
-	//		int position=logfile.tellp();
-	//		if(position==0){
-	//		cout << "position" << endl;
-	//		cout << logfile.tellp() << endl;
-
-	//	  logfile << "seed" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
-	////	  logfile << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
-	//	  logfile << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
-	//	  logfile << "	#FIRE" << "	#CG" << "	gg" << "total runtime" <<" creation-date"  << endl;
-	//		}
-	//      logfile.close();
-	//   }
-	//
 	long double maxGrad = 0;
 	iloop(2*N) {
 		if (fabs(xihelper[i]) > maxGrad)
@@ -3069,7 +3008,6 @@ inline void writePositionFile() {
 	}
 
 	logfile.open((char*) logFileNamePackings.c_str(), ios::app);
-	//logfile.open((char*)filenameString2.c_str(), ios::app);
 
 	logfile << currentPackingNumber << "	" << N << "	" << P0 << "	" << P << "	"
 			<< alpha << "	" << delta;
