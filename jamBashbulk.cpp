@@ -131,9 +131,9 @@ using namespace std;
     bool endprogram = false;
     char *filename;
     string filenameString;
-    int numberOfPackings = 0;
-    int numberOfPackingsinit = 0;
-    int numberOfPackingsStartValue = 0;
+    int currentPackingNumber = 0;
+    int numPackingsToProcess = 0;
+    int firstPackingNumber = 0;
     int packingNameNumber = 0;
     bool redo = false;
     long double distanceCalcs = 0.0;
@@ -519,8 +519,8 @@ void execute(){
 
 
     		
-    		if(numberOfPackings<numberOfPackingsinit-1+numberOfPackingsStartValue){
-    			numberOfPackings++;
+    		if(currentPackingNumber<numPackingsToProcess-1+firstPackingNumber){
+    			currentPackingNumber++;
     			redo = false;
     			if(distributioncase == 2) initializeSimulation();
                 if(distributioncase == 3 || distributioncase == 4) readPositionFile();			
@@ -2033,10 +2033,10 @@ void menu(){
     	alphaOnOff = false;
 		deltaOnOff = false;
 		if(screenOutput) cout << "Please insert number of packings to be created!" << endl;
-		cin >> numberOfPackingsinit;
+		cin >> numPackingsToProcess;
 		if(screenOutput) cout << "Please insert starting number of packing names!" << endl;
-		cin >> numberOfPackingsStartValue;
-		numberOfPackings = numberOfPackingsStartValue;
+		cin >> firstPackingNumber;
+		currentPackingNumber = firstPackingNumber;
 		break;
 
 	case 2:
@@ -2062,8 +2062,8 @@ void menu(){
     	alphaOnOff = false;
 		deltaOnOff = false;
 		if(screenOutput) cout << "Please insert number of packings to be created!" << endl;
-		cin >> numberOfPackingsinit;
-		numberOfPackings = 0;
+		cin >> numPackingsToProcess;
+		currentPackingNumber = 0;
 		break;
 	
 	case 3:
@@ -2074,14 +2074,14 @@ void menu(){
     	alphaOnOff = false;
 		deltaOnOff = false;
 		if(screenOutput) cout << "Please insert number of packings to be created!" << endl;
-		cin >> numberOfPackingsinit;
+		cin >> numPackingsToProcess;
 		if(screenOutput) cout << "Please insert starting number of packing names!" << endl;
-		cin >> numberOfPackingsStartValue;
+		cin >> firstPackingNumber;
 		if(screenOutput) cout << "Please insert goal number of rearrangements!" << endl;
 		cin >> goalNumberOfContactChanges;
 
 		
-		numberOfPackings = numberOfPackingsStartValue;
+		currentPackingNumber = firstPackingNumber;
 		break;
 		
 	case 4:
@@ -2092,14 +2092,14 @@ void menu(){
     	alphaOnOff = false;
 		deltaOnOff = false;
 		if(screenOutput) cout << "Please insert number of packings to be created!" << endl;
-		cin >> numberOfPackingsinit;
+		cin >> numPackingsToProcess;
 		if(screenOutput) cout << "Please insert starting number of packing names!" << endl;
-		cin >> numberOfPackingsStartValue;
+		cin >> firstPackingNumber;
 		if(screenOutput) cout << "Please insert strain goal!" << endl;
 		cin >> goalStrain;
 		if(screenOutput) cout << "Please insert number of equidistant strain steps!" << endl;
 		cin >> fixedStepNumber;
-		numberOfPackings = numberOfPackingsStartValue;
+		currentPackingNumber = firstPackingNumber;
 		break;
     	
     case 5:
@@ -2110,13 +2110,13 @@ void menu(){
     	alphaOnOff = false;
 		deltaOnOff = false;
 		if(screenOutput) cout << "Please insert number of packings to be created!" << endl;
-		cin >> numberOfPackingsinit;
+		cin >> numPackingsToProcess;
 		if(screenOutput) cout << "Please insert starting number of packing names!" << endl;
-		cin >> numberOfPackingsStartValue;
+		cin >> firstPackingNumber;
 		if(screenOutput) cout << "Please insert goal number of rearrangements!" << endl;
 		if(screenOutput) cout << "(neg. values for compression, pos. decompression)" << endl;				
 		cin >> goalNumberOfContactChanges;
-		numberOfPackings = numberOfPackingsStartValue;
+		currentPackingNumber = firstPackingNumber;
 		break;
 
 	case 6:
@@ -2127,15 +2127,15 @@ void menu(){
     	alphaOnOff = false;
 		deltaOnOff = false;
 		if(screenOutput) cout << "Please insert number of packings to be created!" << endl;
-		cin >> numberOfPackingsinit;
+		cin >> numPackingsToProcess;
 		if(screenOutput) cout << "Please insert starting number of packing names!" << endl;
-		cin >> numberOfPackingsStartValue;
+		cin >> firstPackingNumber;
 		if(screenOutput) cout << "Please insert strain goal!" << endl;
 		if(screenOutput) cout << "(neg. values for compression, pos. decompression)" << endl;	
 		cin >> goalStrain;
 		if(screenOutput) cout << "Please insert number of equidistant strain steps!" << endl;
 		cin >> fixedStepNumber;
-		numberOfPackings = numberOfPackingsStartValue;
+		currentPackingNumber = firstPackingNumber;
 		break;
     
 
@@ -2901,9 +2901,9 @@ void initializeSimulation()
 	dt = dtmax;
 	
 	// set simulation parameters
-	if(programmode != 3 && numberOfPackings == numberOfPackingsStartValue) userinput();
+	if(programmode != 3 && currentPackingNumber == firstPackingNumber) userinput();
 	
-	if(numberOfPackings == numberOfPackingsStartValue){
+	if(currentPackingNumber == firstPackingNumber){
 	// size all the dynamic 'vector' arrays according to the particle number N
 	dij.reserve(N*N);
 	rij.reserve(N*N);
@@ -2959,7 +2959,7 @@ void initializeSimulation()
     cin >> stop;
 */
 
-    srand(numberOfPackings+1);
+    srand(currentPackingNumber+1);
 
 	// set initial particle positions and properties	
 	iloop(N){
@@ -3220,7 +3220,7 @@ void readPositionFile(){
 	else infile.open((char*)filepath.c_str());
 	
 	if (!infile.is_open()){
-		numberOfPackings = 0;
+		currentPackingNumber = 0;
 		if(screenOutput) {
 			cout << "Input file did NOT OPEN!" << endl;
 			cout << "Press any key + ENTER to proceed." << endl;
@@ -3662,7 +3662,7 @@ inline void writePositionFile(){
 	logfile.open((char*)logFileNamePackings.c_str(), ios::app);	
 	//logfile.open((char*)filenameString2.c_str(), ios::app);
 	
-    	logfile << numberOfPackings << "	" << N << "	" << P0 << "	" << P << "	" << alpha << "	" << delta;
+    	logfile << currentPackingNumber << "	" << N << "	" << P0 << "	" << P << "	" << alpha << "	" << delta;
 	  logfile  << "	" << 	L  << "	" << phi << "	" << Z << "	" << N-Ncorrected << "	" << sxx << "	" << syy;
 	  logfile  << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	" << dH << "	" << timediff1;
 	  logfile  << "	" << iterationcountfire << "	" << iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	" << timediff1 << "       " << timebuffer  << endl;
@@ -3875,10 +3875,10 @@ inline void createFileName(){
 
 	//filenameString.append(timebuffer);
 	
-	namebuffer[0] = 48 + (((numberOfPackings)/1000) % 10);
-	namebuffer[1] = 48 + (((numberOfPackings)/100) % 10);
-	namebuffer[2] = 48 + (((numberOfPackings)/10) % 10);
-	namebuffer[3] = 48 + ((numberOfPackings) % 10);
+	namebuffer[0] = 48 + (((currentPackingNumber)/1000) % 10);
+	namebuffer[1] = 48 + (((currentPackingNumber)/100) % 10);
+	namebuffer[2] = 48 + (((currentPackingNumber)/10) % 10);
+	namebuffer[3] = 48 + ((currentPackingNumber) % 10);
 	
 	if(screenOutput) cout << "FilenameString: " << filenameString << endl;
 	
