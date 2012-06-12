@@ -14,8 +14,6 @@
 using namespace std;
 
 // definitions:
-//ascii code for the escape key
-#define ESCAPE 27
 //permutation procedure
 #define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
 //loops
