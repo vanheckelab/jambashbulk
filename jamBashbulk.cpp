@@ -435,8 +435,7 @@ void execute() {
 			frprmnconverged = false;
 			fireconverged = false;
 			converged = false;
-			//calcSysPara();
-			//if(programmode !=5)menu();
+
 			if (programmode == 5) {
 				if (!doSimpleShear && !doCompression) {
 					writePositionFile();
@@ -466,11 +465,9 @@ void execute() {
 					fireconverged = false;
 
 				}
-				//else menu();
 				else
 					endprogram = true;
 			}
-			//else menu();
 			else
 				endprogram = true;
 
@@ -478,7 +475,8 @@ void execute() {
 	} // if (!endprogram)
 
 	return;
-}
+} // execute
+
 ////////////////////////////////////////////////////////////////////////
 // calcShearModulus()
 void calcShearModulus() {
