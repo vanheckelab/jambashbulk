@@ -2660,7 +2660,7 @@ void readPositionFile() {
 
 	long double frac;
 	char c = 'x', clast = 'x', clastlast = 'x';
-	//long double pos[2*N+2], rad[N];
+
 	int i = 0, j = 0;
 	bool initializeNow = false;
 
@@ -2679,7 +2679,6 @@ void readPositionFile() {
 	long double L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
 
 	ifstream infile;
-	//infile.open("jamstate.txt");
 
 	if (distributioncase != 5) {
 		if (screenOutput)
@@ -2724,9 +2723,7 @@ void readPositionFile() {
 				helperchar = 0.0;
 				Nread = false;
 				initializeNow = true;
-				//cout << "N = " << N << endl;
 			}
-
 		}
 
 		if (initializeNow) {
@@ -2771,8 +2768,6 @@ void readPositionFile() {
 			}
 			if (i == 2) {
 				L1read = false;
-				//cout << "L1= (" << L1x << ", " << L1y << ") " << endl;
-				//cin >> stop;
 			}
 		}
 
@@ -2809,13 +2804,9 @@ void readPositionFile() {
 				helperchar = 0.0;
 				isnegative = false;
 				i++;
-
-				//cout << "L= " << L << endl;
 			}
 			if (i == 2) {
 				L2read = false;
-				//cout << "L2= (" << L2x << ", " << L2y << ") " << endl;
-				//cin >> stop;
 			}
 		}
 
@@ -2840,8 +2831,6 @@ void readPositionFile() {
 				P0 = helperchar;
 				helperchar = 0.0;
 				P0read = false;
-				//cout << "P0= " << P0 << endl;
-
 			}
 		}
 
@@ -2883,63 +2872,17 @@ void readPositionFile() {
 					R[i / 3] = helperchar;
 				if (i < 3 * N && isnegative && i % 3 == 2)
 					R[i / 3] = -helperchar;
-
-				//cout << p[i/3] << " " << p[N+i/3] << " " << R[i/3] << endl;
-
 				i++;
 
 				isnegative = false;
-				//cout << helperchar << endl;
 				helperchar = 0.0;
 			}
 
 			if (c == '}') {
 				posRead = false;
-				//cin >> stop;
 			}
 
 		}
-
-		/*
-		 if(clastlast == 'R' && c == '='){
-		 radRead = true;
-		 decimal=0;
-		 helperchar=0.0;
-
-		 }
-		 if(radRead){
-		 if(c=='-') isnegative=true;
-		 if(clast=='['){
-		 i=0;
-		 decimal=0;
-		 helperchar=0.0;
-		 }
-		 if(c > 47 && c < 58) {
-		 helperchar = helperchar*10.0+(c-48)*1.0;
-		 decimal++;
-		 }
-		 if(c=='.') decimal=0;
-		 if(c==',' || c==']'){
-
-		 for(int j=0; j<decimal; j++){
-		 helperchar *=0.1;
-		 }
-		 if(i<N && !isnegative) R[i] = helperchar;
-		 if(i<N && isnegative) R[i] = -helperchar;
-
-		 //cout << R[i] << endl;
-		 i++;
-		 isnegative=false;
-		 //cout << helperchar << endl;
-		 helperchar=0.0;
-		 }
-		 if(c==']') {
-		 //posRead = false;
-		 radRead = false;
-		 //numofrightbrackets++;
-		 }
-		 }
-		 */
 	} // end while
 
 	infile.close();
@@ -2948,15 +2891,12 @@ void readPositionFile() {
 	iloop(N) {
 		if (R[i] > Rmax)
 			Rmax = R[i]; // determine the largest particle radius in the packing
-		// (for neighbor determination)
+		                 // (for neighbor determination)
 	}
 
 	L = p[2 * N + 2] = sqrt(L1x * L2y);
 	alpha = p[2 * N] = L2x / L;
 	delta = p[2 * N + 1] = sqrt(L2y / L1x) - 1.0;
-
-	//cout << "L = " << L << ", alpha = " << alpha << ", delta = " << delta << endl;
-	//cin >> stop;
 
 	iloop(N) {
 		jloop(N) {
@@ -2969,12 +2909,6 @@ void readPositionFile() {
 	if (test)
 		cout << "test0000: readPositionFile-END: " << " N = " << N << ", L = "
 				<< L << ", P0= " << P0 << endl;
-
-	//    if(screenOutput) cout << "x = %, y = %, R = %:" << endl;
-	//iloop(N){ cout << p[i] <<" " << p[N+i] <<" "<< R[i] << endl;}
-	//    if(screenOutput) cout << "alpha = " << p[2*N] << ", delta = " << p[2*N+1] << ", P0 = " << P0 << endl;
-	//    if(screenOutput) cout << " N = " << N << ", L = " << L << " = " << p[2*N+2] << endl;
-	//cin >> stop;
 
 	alpha = p[2 * N];
 	delta = p[2 * N + 1];
