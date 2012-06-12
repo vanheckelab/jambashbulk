@@ -2352,7 +2352,7 @@ void gradientcalc() {
 	long double frac;
 	long double component;
 	long double term1;
-	// calculate gradient and energy        cout << "xi[0]= " << xi[0] << endl;
+	// calculate gradient and energy
 
 	Phelper = 0.0;
 
@@ -2400,22 +2400,7 @@ void gradientcalc() {
 		deltaOnOff = false;
 
 	if (pressOnOff) {
-		//if(!frprmnconverged){
-		//cout << "P0 = " << P0 << "  , and P = "<<Phelper << endl     ;
-
-		//xihelper[2*N+2] += 2*Lhelper*(P0 - Phelper);
 		xihelper[2 * N + 2] = 2 * Lhelper * (P0 - Phelper);
-		//if(xihelper[2*N+2] > 0.2) xihelper[2*N+2] = 0.2;
-
-		/*
-		 frac = (Lhelper-xihelper[2*N+2])/Lhelper;
-
-		 iloop(2*N){ // alpha=p[2*N] and delta=p[2*N+1] do not scale and L=p[2*N+2] is updated by its gradient
-		 phelper[i] *= frac;
-		 xihelper[i] *= frac;				// scale all the particle positions accordingly
-		 }
-		 */
-
 	}
 
 	return;
