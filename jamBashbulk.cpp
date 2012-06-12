@@ -1819,7 +1819,7 @@ void fire() {
 	int countDelta = 0;
 	int countPress = 0;
 	int itercount = 0;
-	int endcount = 0;
+
 	long double frac;
 	long double fracAlpha;
 	long double fracDelta;
@@ -1935,8 +1935,6 @@ void fire() {
 			phelper[N + i] = p[N + i] = (phelper[N + i] + v[N + i] * dt) * frac;
 
 		}
-		long double vimaxloc;
-		long double indexmaxloc;
 
 		////////////
 
