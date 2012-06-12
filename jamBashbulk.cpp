@@ -25,30 +25,30 @@ using namespace std;
 // global variables and constants:
 
 // simulation parameters
-int N = -1; // number of particles (per unit cell) in the packing
-int Ncorrected;
-const long double k = 1.0; // spring const. with respect to particle overlap
+static int N = -1; // number of particles (per unit cell) in the packing
+static int Ncorrected;
+static const long double k = 1.0; // spring const. with respect to particle overlap
 
-bool screenOutput = false;
+static bool screenOutput = false;
 
-char stop; // this variable waits for user input and halts the
+static char stop; // this variable waits for user input and halts the
 // computation.
 
-const bool report = false;
-const bool test = true; // if true debugging output is shown
+static const bool report = false;
+static const bool test = true; // if true debugging output is shown
 // if(test) cout << "test0000" << endl;
 
 // graphics and output
 
 // degrees of freedom of the periodic boundary unit cell in
-long double alpha = 0.0; // lattice vector angle (simple shear)
-long double delta = 0.0; // lattice vector aspect-ratio (pure shear)
-long double L = 5.0; // lattice vector length
-long double shear = 0.0;
+static long double alpha = 0.0; // lattice vector angle (simple shear)
+static long double delta = 0.0; // lattice vector aspect-ratio (pure shear)
+static long double L = 5.0; // lattice vector length
+static long double shear = 0.0;
 
-bool alphaOnOff = false, deltaOnOff = false, pressOnOff = false;
-bool dofOnOff = false;
-int dofcriterium = 0;
+static bool alphaOnOff = false, deltaOnOff = false, pressOnOff = false;
+static bool dofOnOff = false;
+static int dofcriterium = 0;
 // the previous parameters indicate in which way the simulated region
 // can be deformed (these values change during execution of the
 // program):
@@ -56,229 +56,229 @@ int dofcriterium = 0;
 // deltaOnOff allows pure shear (delta).
 // pressOnOff allows volume changes to reach given target pressure.
 
-bool alphaOnOffInit = true, deltaOnOffInit = true, pressOnOffInit = true;
+static bool alphaOnOffInit = true, deltaOnOffInit = true, pressOnOffInit = true;
 // these parameters in indicate the user's choice of the degrees of
 // freedom.
 
-string nameOfWorkingDirectory = "";
-int particleNumberLength = 0;
+static string nameOfWorkingDirectory = "";
+static int particleNumberLength = 0;
 
 // start values:
-long double alphainit = 0.0; // the user's choice for the initial shear angle
-long double deltainit = 0.0; // the initial aspect-ratio
-long double P0init = 0.0;
-long double P0 = 0.0; // the target pressure
-long double P0_mem = 0.0;
-long double phiinit = 0.86; // the initial fill fraction (0.869 ^= P~0.01)
+static long double alphainit = 0.0; // the user's choice for the initial shear angle
+static long double deltainit = 0.0; // the initial aspect-ratio
+static long double P0init = 0.0;
+static long double P0 = 0.0; // the target pressure
+static long double P0_mem = 0.0;
+static long double phiinit = 0.86; // the initial fill fraction (0.869 ^= P~0.01)
 
-int countAlphaFlip = 0;
-int countDeltaFlip = 0;
-int countPressFlip = 0;
+static int countAlphaFlip = 0;
+static int countDeltaFlip = 0;
+static int countPressFlip = 0;
 
 // straining:
-bool doSimpleShear = false; // switches on/off forced simple shear
-bool doCompression = false;
-bool fixedStepSize = false;
-long double alphaBeforeDeformation; // the shear angle of the relaxed packing
+static bool doSimpleShear = false; // switches on/off forced simple shear
+static bool doCompression = false;
+static bool fixedStepSize = false;
+static long double alphaBeforeDeformation; // the shear angle of the relaxed packing
 
-int goalNumberOfContactChanges = 10; // the total number of contact changes we are interested in
-long double goalStrain = 0.1; // the strain range we are interested in
-int fixedStepNumber; // number of fixed size strain steps;
+static int goalNumberOfContactChanges = 10; // the total number of contact changes we are interested in
+static long double goalStrain = 0.1; // the strain range we are interested in
+static int fixedStepNumber; // number of fixed size strain steps;
 
 // OpenGL variables and parameters:
-int window; //the number of our GLUT window
+static int window; //the number of our GLUT window
 
 // iteration counters in various algorithms:
-int iterationcountSimStep = 0;
-int iterationcountfire = 0;
-int maxIterationCountFire = 2e6;
+static int iterationcountSimStep = 0;
+static int iterationcountfire = 0;
+static int maxIterationCountFire = 2e6;
 
-int iterationcountmnbrak = 0;
-int iterationcountbrent = 0;
-int iterationcountfrprmn = 0;
-int iterationcountfrprmnCUMULATIVE = 0;
-int totaliterationcount = 0;
-bool frprmnconverged = false;
-bool fireconverged = false;
-bool shearconverged = false;
-bool converged = false;
-int menumode = 0;
-int programmode = 0;
-int programmodeOld = 0;
-int distributioncase = 0;
-bool endprogram = false;
-char *filename;
-string filenameString;
-int currentPackingNumber = 0;
-int numPackingsToProcess = 0;
-int firstPackingNumber = 0;
-int packingNameNumber = 0;
-bool redo = false;
-long double distanceCalcs = 0.0;
-long double Rneighbor = 100.0;
-long double RneighborFrprmnLast;
-bool onlydisplay = false;
+static int iterationcountmnbrak = 0;
+static int iterationcountbrent = 0;
+static int iterationcountfrprmn = 0;
+static int iterationcountfrprmnCUMULATIVE = 0;
+static int totaliterationcount = 0;
+static bool frprmnconverged = false;
+static bool fireconverged = false;
+static bool shearconverged = false;
+static bool converged = false;
+static int menumode = 0;
+static int programmode = 0;
+static int programmodeOld = 0;
+static int distributioncase = 0;
+static bool endprogram = false;
+static char *filename;
+static string filenameString;
+static int currentPackingNumber = 0;
+static int numPackingsToProcess = 0;
+static int firstPackingNumber = 0;
+static int packingNameNumber = 0;
+static bool redo = false;
+static long double distanceCalcs = 0.0;
+static long double Rneighbor = 100.0;
+static long double RneighborFrprmnLast;
+static bool onlydisplay = false;
 
-long double energyDiffStep = 1e10;
-long double energyDiffStepOld = 1e10;
+static long double energyDiffStep = 1e10;
+static long double energyDiffStepOld = 1e10;
 
-long double enthalpieDiffStep = 1e10;
-long double enthalpieDiffStepOld = 1e11;
+static long double enthalpieDiffStep = 1e10;
+static long double enthalpieDiffStepOld = 1e11;
 
-long double UhelperLastFunctionCall = 1e20;
-long double Uold = 1e10;
-long double energyBeforeDeformation = 0.0;
-long double sxxBeforeDeformation, sxyBeforeDeformation, syxBeforeDeformation,
+static long double UhelperLastFunctionCall = 1e20;
+static long double Uold = 1e10;
+static long double energyBeforeDeformation = 0.0;
+static long double sxxBeforeDeformation, sxyBeforeDeformation, syxBeforeDeformation,
 		syyBeforeDeformation; // stress components
 
-long double energywrite[50000];
-long double enthalpiewrite[50000];
-long double sxywrite[50000];
+static long double energywrite[50000];
+static long double enthalpiewrite[50000];
+static long double sxywrite[50000];
 
-long double H = 1e9;
-long double Hold = 1e10;
-long double HLastFunctionCall = 1e11;
+static long double H = 1e9;
+static long double Hold = 1e10;
+static long double HLastFunctionCall = 1e11;
 
-long double U; // potential energy packing (per unit cell)
-long double phi; // fill fraction
-long double Z; // average number of neighbors
-long double P; // pressure
-long double Pold;
-long double sxx, sxy, syx, syy; // stress components
-long double G;
-long double sxyOld;
+static long double U; // potential energy packing (per unit cell)
+static long double phi; // fill fraction
+static long double Z; // average number of neighbors
+static long double P; // pressure
+static long double Pold;
+static long double sxx, sxy, syx, syy; // stress components
+static long double G;
+static long double sxyOld;
 
 // overlap and distances
-vector<long double> dij; // NxN matrix of particle overlap
-vector<long double> rij; // NxN matrix of particle center distance
-vector<long double> xij; // NxN matrix of particle x-position difference
-vector<long double> yij; // NxN matrix of particle y-position difference
+static vector<long double> dij; // NxN matrix of particle overlap
+static vector<long double> rij; // NxN matrix of particle center distance
+static vector<long double> xij; // NxN matrix of particle x-position difference
+static vector<long double> yij; // NxN matrix of particle y-position difference
 
-vector<bool> neighbors;
-vector<bool> trueneighbors;
-vector<bool> trueneighborsOld;
-vector<bool> trueneighborsLast;
-vector<int> trueneighborChanges;
-vector<int> numberOfDirectNeighbors;
-vector<bool> isRattler;
-vector<bool> wasRattler;
+static vector<bool> neighbors;
+static vector<bool> trueneighbors;
+static vector<bool> trueneighborsOld;
+static vector<bool> trueneighborsLast;
+static vector<int> trueneighborChanges;
+static vector<int> numberOfDirectNeighbors;
+static vector<bool> isRattler;
+static vector<bool> wasRattler;
 
-int consideredNeighborNumber = 0;
-int trueneighborNumber = 0;
-int trueneighborNumberOld = 0;
-int cumulativeNeighborchanges;
-bool updateNeighbors;
-long double maxgradient;
+static int consideredNeighborNumber = 0;
+static int trueneighborNumber = 0;
+static int trueneighborNumberOld = 0;
+static int cumulativeNeighborchanges;
+static bool updateNeighbors;
+static long double maxgradient;
 
 //generalized coordinates and gradients
-vector<long double> p; // Positions of particles
-vector<long double> pLast; // Positions at end of last simulationstep()
-vector<long double> xi; // Potential gradient
-vector<long double> g; // gradient helper
-vector<long double> h; // gradient helper
-vector<long double> R; // Radii of particles
-long double Rmax; // Maximum particle radius
+static vector<long double> p; // Positions of particles
+static vector<long double> pLast; // Positions at end of last simulationstep()
+static vector<long double> xi; // Potential gradient
+static vector<long double> g; // gradient helper
+static vector<long double> h; // gradient helper
+static vector<long double> R; // Radii of particles
+static long double Rmax; // Maximum particle radius
 
 // fire algorithm variables
-vector<long double> v; // Effective velocity
-vector<long double> M; // Effective masses
-long double beta;
-long double power;
-const int Nmin = 5;
-const long double finc = 1.1;
-const long double fdec = 0.5;
-const long double betastart = 0.1;
-const long double fbeta = 0.99;
-long double dt = 1e-1;
-long double dtmaxinit = 1e-1;
-long double dtmax = dtmaxinit;
-long double dtmin = 0.0;
-long double damp = 1.0;
-long double dampalpha = 0.9;
-long double dampdelta = 0.9;
-long double damppress = 0.999;
-long double CG_step = 1;
+static vector<long double> v; // Effective velocity
+static vector<long double> M; // Effective masses
+static long double beta;
+static long double power;
+static const int Nmin = 5;
+static const long double finc = 1.1;
+static const long double fdec = 0.5;
+static const long double betastart = 0.1;
+static const long double fbeta = 0.99;
+static long double dt = 1e-1;
+static long double dtmaxinit = 1e-1;
+static long double dtmax = dtmaxinit;
+static long double dtmin = 0.0;
+static long double damp = 1.0;
+static long double dampalpha = 0.9;
+static long double dampdelta = 0.9;
+static long double damppress = 0.999;
+static long double CG_step = 1;
 
 //unit cell properties
-long double lxx, lxy; // x-/y- component of L_x (1st unit cell vector)
-long double lyx, lyy; // x-/y- component of L_y (2nd unit cell vector)
-long double lxabs, lyabs; // lengths of L_x and L_y
-vector<int> nx; // NxN matrix for periodicity calculation
-vector<int> ny; // NxN matrix for periodicity calculation
+static long double lxx, lxy; // x-/y- component of L_x (1st unit cell vector)
+static long double lyx, lyy; // x-/y- component of L_y (2nd unit cell vector)
+static long double lxabs, lyabs; // lengths of L_x and L_y
+static vector<int> nx; // NxN matrix for periodicity calculation
+static vector<int> ny; // NxN matrix for periodicity calculation
 
 //helper variables for energy and gradient calculation of 'hypothetical' configuration
-long double Uhelper; // energy
-vector<long double> phelper; // particle positions (x_i,y_i)
-vector<long double> xihelper; // potential gradient (dU/dx_i,dU/dy_i)
-long double alphahelper, deltahelper, Lhelper, Phelper;
-long double lxxhelper, lxyhelper;
-long double lyxhelper, lyyhelper;
+static long double Uhelper; // energy
+static vector<long double> phelper; // particle positions (x_i,y_i)
+static vector<long double> xihelper; // potential gradient (dU/dx_i,dU/dy_i)
+static long double alphahelper, deltahelper, Lhelper, Phelper;
+static long double lxxhelper, lxyhelper;
+static long double lyxhelper, lyyhelper;
 
 //long double gg; // gradient squared
-long double gg, vv;
+static long double gg, vv;
 
 // mathematical and program constants
-const long double PI = 3.141592653589793;
-const long double angle2rad = PI / 180.0;
-const long double tiny = 1.0e-50; // small constant to avoid e.g. divion by zero
-const long double gold = 0.5 * (1.0 + sqrt(5.0)); // golden ratio = 1.618033988749894885
-const long double glimit = 100.0; // maximum magnification for parabolic-fit step in function mbrak
+static const long double PI = 3.141592653589793;
+static const long double angle2rad = PI / 180.0;
+static const long double tiny = 1.0e-50; // small constant to avoid e.g. divion by zero
+static const long double gold = 0.5 * (1.0 + sqrt(5.0)); // golden ratio = 1.618033988749894885
+static const long double glimit = 100.0; // maximum magnification for parabolic-fit step in function mbrak
 
-const long double CGOLD = 0.3819660; // golden ratio for brent
-const long double ZEPS = 1e-25; // for brent
-int ITMAXBRENT = 50; // maximum of iterations in brent
-int ITMAX = 12; // maximum of iterations in frprmn
-const long double TOL = 1e-7; // tolerance passed to brent by linmin
-const long double AMIN = 1e-7; // starting step in linmin
+static const long double CGOLD = 0.3819660; // golden ratio for brent
+static const long double ZEPS = 1e-25; // for brent
+static int ITMAXBRENT = 50; // maximum of iterations in brent
+static int ITMAX = 12; // maximum of iterations in frprmn
+static const long double TOL = 1e-7; // tolerance passed to brent by linmin
+static const long double AMIN = 1e-7; // starting step in linmin
 
-int ncom; // dimension in linmin + f1dim
-vector<long double> pcom, xicom; // positions and gradient
-long double (*nrfunc)(); // function place-holder
-int iterfrprmn; // number of iterations performed in frprmn
-long double fret; // return minimum value of frprmn + linmin
-long double ftol = 1e-17; // tolerance passed to frprmn()
-long double ftolFrprmnBeforeFIRE = 1e-2;
-long double ftolFIRE = 1e-17; // tolerance passed to fire()
-int endcount = 0;
+static int ncom; // dimension in linmin + f1dim
+static vector<long double> pcom, xicom; // positions and gradient
+static long double (*nrfunc)(); // function place-holder
+static int iterfrprmn; // number of iterations performed in frprmn
+static long double fret; // return minimum value of frprmn + linmin
+static long double ftol = 1e-17; // tolerance passed to frprmn()
+static long double ftolFrprmnBeforeFIRE = 1e-2;
+static long double ftolFIRE = 1e-17; // tolerance passed to fire()
+static int endcount = 0;
 
-time_t starttime, endtime;
-long double timediff1 = 0, timediff2 = 0;
+static time_t starttime, endtime;
+static long double timediff1 = 0, timediff2 = 0;
 
-long double dU, dH;
+static long double dU, dH;
 
 // function declarations:
-void execute();
-void initializeSimulation();
-void initializeArrays();
-void simulationstep(); // this is where the simulation is performed
-void particledistance(int i, int j);
-void resethelpervars();
-long double energy();
-void gradientcalc();
-void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
+static void execute();
+static void initializeSimulation();
+static void initializeArrays();
+static void simulationstep(); // this is where the simulation is performed
+static void particledistance(int i, int j);
+static void resethelpervars();
+static long double energy();
+static void gradientcalc();
+static void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
 		long double *fb, long double *fc, long double (*func)(long double));
-long double brent(long double ax, long double bx, long double cx,
+static long double brent(long double ax, long double bx, long double cx,
 		long double (*f)(long double), long double tol, long double *xmin);
-long double SIGN(long double a, long double b);
-void linmin(int n, long double *fret, long double (*func)());
-long double f1dim(long double x);
-void frprmn(int n, long double *fret, long double (*func)());
-void calcSysPara();
-void menu();
-void readPositionFile();
-void writePositionFile();
-void writeMultiplePackings(string name);
-void packIntoBoundaries();
-void createFileName();
-void fire();
-void calcShearModulus();
-void calcBulkModulus();
-void checkNeighborChanges(int& addedcontacts, int& removedcontacts,
+static long double SIGN(long double a, long double b);
+static void linmin(int n, long double *fret, long double (*func)());
+static long double f1dim(long double x);
+static void frprmn(int n, long double *fret, long double (*func)());
+static void calcSysPara();
+static void menu();
+static void readPositionFile();
+static void writePositionFile();
+static void writeMultiplePackings(string name);
+static void packIntoBoundaries();
+static void createFileName();
+static void fire();
+static void calcShearModulus();
+static void calcBulkModulus();
+static void checkNeighborChanges(int& addedcontacts, int& removedcontacts,
 		int& neighborChanges, int& neighborChangesLast);
-void resolveRattler(int rattlerElement);
-string ParticleAndPressureString();
-void extractNandP(string foldername);
-void checkFolderName(string foldername);
+static void resolveRattler(int rattlerElement);
+static string ParticleAndPressureString();
+static void extractNandP(string foldername);
+static void checkFolderName(string foldername);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
