@@ -682,6 +682,8 @@ void calcShearModulus() {
 
 			outG.close();
 
+			writeMultiplePackings(GpositionFile);
+
 			shearLast = shear;
 			sxyLast = sxy;
 
