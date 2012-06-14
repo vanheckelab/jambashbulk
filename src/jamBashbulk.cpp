@@ -405,6 +405,48 @@ void execute() {
 	return;
 } // execute
 
+void saveShearSystemState(string logFileName, int numberOfDataPoints,
+		string dataFileName, int neighborChangesLastCumulative,
+		int neighborChangesLast, int addedContacts, int removedContacts,
+		string GpositionFile) {
+
+	char timebuffer[80];
+	time_t rawtime;
+	struct tm *timeinfo;
+	ofstream outG;
+	ofstream outLog;
+	long double maxGrad = 0;
+
+	iloop(2*N) {
+		if (fabs(xihelper[i]) > maxGrad)
+			maxGrad = fabs(xihelper[i]);
+	}
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+	outLog.open((char*) (logFileName.c_str()), ios::app);
+	outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P << "	"
+			<< alpha << "	" << delta;
+	outLog << "	" << L << "	" << phi << "	" << Z << "	" << N - Ncorrected << "	"
+			<< sxx << "	" << syy;
+	outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	" << dH
+			<< "	" << timediff1;
+	outLog << "	" << iterationcountfire << "	" << iterationcountfrprmnCUMULATIVE
+			<< "	" << maxGrad << "	" << timebuffer << endl;
+	outLog.close();
+
+	outG.open((char*) (dataFileName.c_str()), ios::app);
+	outG.setf(ios::scientific, ios::floatfield);
+	outG.precision(16);
+	outG << shear << "	" << sxy << "	" << trueneighborNumber << "	"
+			<< (neighborChangesLastCumulative + neighborChangesLast) << "	"
+			<< addedContacts << "	" << removedContacts << "	" << Phelper << "	"
+			<< Z << endl;
+	outG.close();
+	writeMultiplePackings(GpositionFile);
+}
+
 ////////////////////////////////////////////////////////////////////////
 // calcShearModulus()
 void calcShearModulus() {
@@ -432,9 +474,7 @@ void calcShearModulus() {
 
 	long double shearLast = 0.0, sxyLast = sxy;
 
-	time_t rawtime;
-	struct tm *timeinfo;
-	char timebuffer[80];
+
 
 	ofstream outG;
 	ofstream outLog;
@@ -640,49 +680,15 @@ void calcShearModulus() {
 				num = 0;
 				pastContactChange = false;
 			} //////////////////////////////////////////
-
 			numberOfDataPoints++;
-
 			energy();
 			calcSysPara();
-
-			long double maxGrad = 0;
-			iloop(2*N) {
-				if (fabs(xihelper[i]) > maxGrad)
-					maxGrad = fabs(xihelper[i]);
-			}
-
 			G = (sxy - sxyLast) / (shear - shearLast);
 
-			time(&rawtime);
-			timeinfo = localtime(&rawtime);
-			strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
-
-			outLog.open((char*) logFileName.c_str(), ios::app);
-
-			outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P
-					<< "	" << alpha << "	" << delta;
-			outLog << "	" << L << "	" << phi << "	" << Z << "	"
-					<< N - Ncorrected << "	" << sxx << "	" << syy;
-			outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H
-					<< "	" << dH << "	" << timediff1;
-			outLog << "	" << iterationcountfire << "	"
-					<< iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	"
-					<< timebuffer << endl;
-
-			outLog.close();
-
-			outG.open((char*) dataFileName.c_str(), ios::app);
-			outG.setf(ios::scientific, ios::floatfield);
-			outG.precision(16);
-			outG << shear << "	" << sxy << "	" << trueneighborNumber << "	"
-					<< (neighborChangesLastCumulative + neighborChangesLast)
-					<< "	" << addedContacts << "	" << removedContacts << "	"
-					<< Phelper << "	" << Z << endl;
-
-			outG.close();
-
-			writeMultiplePackings(GpositionFile);
+			saveShearSystemState(logFileName, numberOfDataPoints,
+					dataFileName, neighborChangesLastCumulative,
+					neighborChangesLast, addedContacts, removedContacts,
+					GpositionFile);
 
 			shearLast = shear;
 			sxyLast = sxy;
