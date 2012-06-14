@@ -582,7 +582,11 @@ void calcShearModulus() {
 
 	eraseFile.open((char*) GpositionFile.c_str(), ios::trunc);
 	eraseFile.close();
-	writeMultiplePackings(GpositionFile);
+
+	saveShearSystemState(logFileName, 0,
+			dataFileName, 0,
+			0, 0, 0,
+			GpositionFile);
 
 	while (!reachedGoal) { // shear < 0.15 && numberOfDataPoints < 5000 &&
 		neighborChangesLastCumulative += neighborChangesLast;
@@ -710,15 +714,10 @@ void calcShearModulus() {
 			}
 		} // end while(!sufficientAccuracy)
 
-		jloop(2*N+3) {
-			p[j] = pLast[j];
-		}
-		writeMultiplePackings(GpositionFile);
-
+		// extraPositionArray is saved... some 100 lines above here
 		jloop(2*N+3) {
 			p[j] = extraPositionArray[j];
 		}
-		writeMultiplePackings(GpositionFile);
 
 		if (!fixedStepSize) {
 			pastContactChange = false;
