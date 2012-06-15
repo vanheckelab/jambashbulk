@@ -524,6 +524,7 @@ void calcShearModulus() {
 	}
 
 	GpositionFile.insert(particleNumberLength + 6, Appendix);
+	GpositionFile.insert(0, "particles");
 	GpositionFile.insert(0, nameOfWorkingDirectory + "/");
 
 	dataFileName.insert(particleNumberLength + 6, Appendix);
