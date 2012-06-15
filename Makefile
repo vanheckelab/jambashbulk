@@ -12,15 +12,15 @@ binary_d = $(binary)_d
 
 all: $(binary) $(binary_d)
 
-clean: $(bin)
+clean: | $(bin)
 	rm -rf $(bin)
 
 # normal binaries (-O3 and debug)
 
-$(binary):  $(bin) $(srcfiles)
+$(binary): $(srcfiles) | $(bin)
 	g++ $(o3opts) -o $(bin)/jam2D $(srcfiles)
 
-$(binary_d):  $(bin) $(srcfiles)
+$(binary_d):  $(srcfiles) | $(bin)
 	g++ $(dopts) -o $(bin)/jam2D_d $(srcfiles)
 
 $(bin):
@@ -34,9 +34,9 @@ $(bin):
 binary_exe = $(binary).exe
 win32: $(binary_exe)
 
-$(binary_exe): $(bin) $(srcfiles)
+$(binary_exe): $(srcfiles) | $(bin)
 	i586-mingw32msvc-g++ $(o3opts) -o $(bin)/jam2D.exe $(srcfiles)
 
 # dll to work from python
-dll: $(bin) $(src)/j2d_dll.cpp $(srcfiles)
+dll: $(src)/j2d_dll.cpp $(srcfiles) | $(bin)
 	g++ -shared -Wl,-soname,j2d_dll.so -o $(bin)/j2d_dll.so $(src)/j2d_dll.cpp
