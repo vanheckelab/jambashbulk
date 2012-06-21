@@ -1658,6 +1658,10 @@ void menu() {
 		endprogram = true;
 		break;
 
+	default:
+		cout << "No value given; aborting";
+		exit(1);
+
 	}
 
 	if (programmode == 3) {
