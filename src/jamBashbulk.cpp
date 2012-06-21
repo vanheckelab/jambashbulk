@@ -489,6 +489,9 @@ void calcShearModulus() {
 	int goalStrainExponent = 0, goalStraindigit = 0;
 	string goalStrainString = "";
 
+	// Reset shear value
+	shear = 0.0;
+
 	while (goalStrainHelper * 1.01 < 1.0) {
 		goalStrainExponent++;
 		goalStrainHelper *= 10.0;
@@ -534,11 +537,6 @@ void calcShearModulus() {
 	logFileName.insert(particleNumberLength + 6, Appendix);
 	logFileName.insert(0, "log");
 	logFileName.insert(0, nameOfWorkingDirectory + "/");
-
-	if (!fixedStepSize)
-		shear = 1e-9; // for fast calculation = 1e-12 else = 1e-16
-	else
-		shear = 0.0;
 
 	outG.open((char*) dataFileName.c_str(), ios::trunc);
 	outG.setf(ios::scientific, ios::floatfield);
@@ -588,6 +586,12 @@ void calcShearModulus() {
 			dataFileName, 0,
 			0, 0, 0,
 			GpositionFile);
+
+	if (!fixedStepSize) {
+		// set shear to an initial (small) value > 0, or multiplication will yield 0.
+		// for fast calculation = 1e-12 else = 1e-16
+		shear = 1e-9;
+	}
 
 	while (!reachedGoal) { // shear < 0.15 && numberOfDataPoints < 5000 &&
 		neighborChangesLastCumulative += neighborChangesLast;
