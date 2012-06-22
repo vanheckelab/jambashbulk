@@ -170,13 +170,13 @@ static long double Rmax; // Maximum particle radius
 // fire algorithm variables
 static vector<long double> v; // Effective velocity
 static vector<long double> M; // Effective masses
-static long double beta;
+static long double FIRE_alpha;
 static long double power;
 static const int Nmin = 5;
 static const long double finc = 1.1;
 static const long double fdec = 0.5;
-static const long double betastart = 0.1;
-static const long double fbeta = 0.99;
+static const long double FIRE_alpha_start = 0.1; // called alpha_{start} in Jo's thesis
+static const long double f_FIRE_alpha = 0.99;    // called f_{alpha} in Jo's thesis
 static long double dt = 1e-1;
 static long double dtmaxinit = 1e-1;
 static long double dtmax = dtmaxinit;
@@ -1703,7 +1703,7 @@ void fire() {
 	long double fracAlpha;
 	long double fracDelta;
 
-	beta = betastart;
+	FIRE_alpha = FIRE_alpha_start;
 
 	while (itercount < 1000) {
 
@@ -1738,7 +1738,7 @@ void fire() {
 
 		if (power > 0 && iterPosPower > Nmin) {
 			dt = fmin(dt * finc, dtmax);
-			beta *= fbeta;
+			FIRE_alpha *= f_FIRE_alpha;
 		}
 		if (power < 0) {
 			if (fabs(sxy) < 1e-16)
@@ -1748,7 +1748,7 @@ void fire() {
 			iloop(2*N) {
 				v[i] = 0.0;
 			}
-			beta = betastart;
+			FIRE_alpha = FIRE_alpha_start;
 			iterPosPower = 0;
 		}
 
@@ -1802,9 +1802,9 @@ void fire() {
 			v[i] = v[i] * damp - xihelper[i] / M[i] * dt; // integrate accelerations to find velocities
 			v[N + i] = v[N + i] * damp - xihelper[N + i] / M[i] * dt; // damping added
 
-			v[i] = (1.0 - beta) * v[i] - beta * (xihelper[i] / gg * vv); // FIRE step
-			v[N + i] = (1.0 - beta) * v[N + i]
-					- beta * (xihelper[N + i] / gg * vv); // FIRE step
+			v[i] = (1.0 - FIRE_alpha) * v[i] - FIRE_alpha * (xihelper[i] / gg * vv); // FIRE step
+			v[N + i] = (1.0 - FIRE_alpha) * v[N + i]
+					- FIRE_alpha * (xihelper[N + i] / gg * vv); // FIRE step
 
 			phelper[i] = phelper[i] + phelper[N + i] * fracAlpha;
 			phelper[i] = phelper[i] / fracDelta;
