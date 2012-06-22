@@ -541,7 +541,7 @@ void calcShearModulus() {
 	outG.open((char*) dataFileName.c_str(), ios::trunc);
 	outG.setf(ios::scientific, ios::floatfield);
 	outG.precision(16);
-	outG << "eta	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
+	outG << "gamma	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
 	outG.close();
 
 	outLog.open((char*) logFileName.c_str(), ios::trunc);
@@ -882,7 +882,7 @@ void calcBulkModulus() {
 	outG.open((char*) dataFileName.c_str(), ios::trunc);
 	outG.setf(ios::scientific, ios::floatfield);
 	outG.precision(16);
-	outG << "eta_V	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
+	outG << "gamma_V	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
 	outG.close();
 
 	outLog.open((char*) logFileName.c_str(), ios::trunc);
