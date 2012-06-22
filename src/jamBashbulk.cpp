@@ -11,6 +11,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "fheader.h"
+
 using namespace std;
 
 // definitions:
@@ -268,6 +270,11 @@ static void checkFolderName(string foldername);
 int main(int argc, char **argv) {
 	if ((argc == 2) and (strcmp(argv[1], "-screen") == 0)) {
 		screenOutput = true;
+	}
+
+	if ((argc == 2) and (strcmp(argv[1], "-v") == 0)) {
+		cout << FILE_HEADER;
+		return 0;
 	}
 
 	starttime = time(NULL);
@@ -541,12 +548,14 @@ void calcShearModulus() {
 	outG.open((char*) dataFileName.c_str(), ios::trunc);
 	outG.setf(ios::scientific, ios::floatfield);
 	outG.precision(16);
-	outG << "gamma	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
+	outG << FILE_HEADER;
+	outG << "gamma_alpha	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
 	outG.close();
 
 	outLog.open((char*) logFileName.c_str(), ios::trunc);
 	outLog.setf(ios::scientific, ios::floatfield);
 	outLog.precision(16);
+	outLog << FILE_HEADER;
 	outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
 	outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
 	outLog << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
@@ -580,6 +589,7 @@ void calcShearModulus() {
 	packIntoBoundaries();
 
 	eraseFile.open((char*) GpositionFile.c_str(), ios::trunc);
+	eraseFile <<  FILE_HEADER;
 	eraseFile.close();
 
 	saveShearSystemState(logFileName, 0,
@@ -882,12 +892,14 @@ void calcBulkModulus() {
 	outG.open((char*) dataFileName.c_str(), ios::trunc);
 	outG.setf(ios::scientific, ios::floatfield);
 	outG.precision(16);
+	outG  << FILE_HEADER;
 	outG << "gamma_V	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
 	outG.close();
 
 	outLog.open((char*) logFileName.c_str(), ios::trunc);
 	outLog.setf(ios::scientific, ios::floatfield);
 	outLog.precision(16);
+	outLog  << FILE_HEADER;
 	outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
 	outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
 	outLog << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
@@ -921,6 +933,7 @@ void calcBulkModulus() {
 	packIntoBoundaries();
 
 	eraseFile.open((char*) GpositionFile.c_str(), ios::trunc);
+	eraseFile << FILE_HEADER;
 	eraseFile.close();
 	writeMultiplePackings(GpositionFile);
 
@@ -2814,6 +2827,8 @@ inline void writePositionFile() {
 		cout << "Output file is opened succesfully!" << endl;
 	outfile.setf(ios::fixed, ios::floatfield);
 	outfile.precision(16);
+
+	outfile  << FILE_HEADER;
 
 	alpha = p[2 * N];
 	delta = p[2 * N + 1];

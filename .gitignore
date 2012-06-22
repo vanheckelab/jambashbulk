@@ -3,3 +3,4 @@ bin
 .project
 .cproject
 .pydevproject
+src/gitversion.h
