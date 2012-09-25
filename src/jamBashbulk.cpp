@@ -5,11 +5,12 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
-#include <string.h>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
 
 #include "fheader.h"
 
