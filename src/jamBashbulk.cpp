@@ -64,7 +64,7 @@ static long double alphainit = 0.0; // the user's choice for the initial shear a
 static long double deltainit = 0.0; // the initial aspect-ratio
 static long double P0init = 0.0;
 static long double P0 = 0.0; // the target pressure
-static long double phiinit = 0.86; // the initial fill fraction (0.869 ^= P~0.01)
+static long double phiinit = 0.8; // the initial fill fraction (0.869 ^= P~0.01)
 
 static int countAlphaFlip = 0;
 static int countDeltaFlip = 0;
@@ -83,7 +83,7 @@ static int fixedStepNumber; // number of fixed size strain steps;
 // iteration counters in various algorithms:
 static int iterationcountSimStep = 0;
 static int iterationcountfire = 0;
-static int maxIterationCountFire = 2e6;
+static int maxIterationCountFire = 2e9;
 
 static int iterationcountmnbrak = 0;
 static int iterationcountbrent = 0;
@@ -260,6 +260,7 @@ static void checkNeighborChanges(int& addedcontacts, int& removedcontacts,
 		int& neighborChanges, int& neighborChangesLast);
 static void extractNandP(string foldername);
 static void checkFolderName(string foldername);
+static int pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1298,6 +1299,9 @@ void simulationstep() {
 		} // end else
 		if (fireconverged)
 			converged = true;
+		
+		energy();
+		gradientcalc();
 	}
 
 	if (programmode == 3) {
@@ -2164,13 +2168,15 @@ void particledistance(int i, int j) {
 	yij[j * N + i] = phelper[N + j] - phelper[N + i];
 
 	ny[j * N + i] = -floor((yij[j * N + i] + lyyhelper * 0.5) / lyyhelper);
+	ny[i * N + j] = -ny[j * N +i];
 
 	xij[j * N + i] = phelper[j] - phelper[i] + ny[j * N + i] * lyxhelper;
 	yij[j * N + i] = phelper[N + j] - phelper[N + i]
 			+ ny[j * N + i] * lyyhelper;
 
 	nx[j * N + i] = -floor((xij[j * N + i] + lxxhelper * 0.5) / lxxhelper);
-
+	nx[i * N + j] = -nx[j * N +i];
+	
 	xij[j * N + i] = phelper[j] - phelper[i] + nx[j * N + i] * lxxhelper
 			+ ny[j * N + i] * lyxhelper;
 	yij[j * N + i] = phelper[N + j] - phelper[N + i] + nx[j * N + i] * lxyhelper
@@ -2368,7 +2374,17 @@ void initializeSimulation() {
 			R[i] = 1.0; // set particle radii
 		else
 			R[i] = 1.4;
+		
 		M[i] = 1.0; // set particle 'masses' for FIRE-algorithm
+		
+		// polydispersity :
+		
+//		R[i]=1+(1.4-1)*i/(N-1) ;
+//		cout << "X[i] : "<< p[i] << "	Y[i]: "<< p[N+i] <<endl;
+//		cout << "index : "<< i << " and radius : "<< R[i] <<endl;
+		
+		
+		
 	}
 	M[N] = M[N + 1] = M[N + 2] = N;
 
@@ -2424,7 +2440,26 @@ void calcSysPara() {
 	int numberOfRattlerChanges = 1;
 
 	long double Z2 = 0;
-
+	
+	// Rattlers check
+	long double X_3n[3], Y_3n[3]; // in case there are 3 neighbors, we have to check their positions.
+	int test;
+	
+	iloop(3){
+		X_3n[i]=0;Y_3n[i]=0;
+	}
+	int ip;
+	
+	alpha = p[2 * N];
+	delta = p[2 * N + 1];
+	L = p[2 * N + 2];
+	
+	lxx = L / (1.0 + delta);
+	lxy = L * 0.0;
+	lyx = L * alpha;
+	lyy = L * (1.0 + delta);
+	
+	
 	// reset sums
 	phi = 0.0;
 	Z = 0.0;
@@ -2449,51 +2484,102 @@ void calcSysPara() {
 			}
 		}
 	}
+	
+
 
 	if (fireconverged) {
-		// Ncorrected
+		
+		
+		
+		// Ncorrected : 
+		// first loop defines the matrix "trueneighbors" and symmetrizes it.
+		
 		iloop(N) {
 			isRattler[i] = false;
 			numberOfDirectNeighbors[i] = 0;
 			jloop(i)
 				trueneighbors[i * N + j] = trueneighbors[j * N + i];
 		}
-
+		
+		
+		// now the algorithm of rattler detections : 
+		// First no particle is a rattler, then if this particle has less than 3 contacts, it is a rattler.
+		// If at least one particle is a rattler within the loop, we have to start it again to check if this rattler did not make another rattler.
+		// In the mean time, we count the number of contacts, excluding the rattlers.
+		
+		
+		cout << " Packing number "<< currentPackingNumber <<endl;
 		while (numberOfRattlerChanges != 0) {
+			Z2=0;
 			numberOfRattlerChanges = 0;
 			iloop(N) {
+//				cout << i << endl;
 				numberOfDirectNeighbors[i] = 0;
-				jloop(N) {
+				if(!isRattler[i]){
+					jloop(N) {
+						if (trueneighbors[j * N + i]) {
+							if (!isRattler[j]) {
+								numberOfDirectNeighbors[i] += 1;
+								Z2 += 0.5;
+							}
 
-					if (trueneighbors[j * N + i]) {
-						if (!isRattler[j]) {
-							numberOfDirectNeighbors[i] += 1;
-							Z2 += 1;
 						}
-
 					}
 				}
-
+			
 				if (numberOfDirectNeighbors[i] < 3 && !isRattler[i]) {
 					isRattler[i] = true;
 					numberOfRattlerChanges++;
+				
 				}
+				
+				if (numberOfDirectNeighbors[i] == 3 && !isRattler[i]) {
+				
+					ip=0;
+					jloop(N){
+						if (trueneighbors[j * N + i] && !isRattler[j]) {
+							X_3n[ip]=p[j]+ nx[j * N + i] * lxx  + ny[j * N + i] * lyx;
+							Y_3n[ip]=p[j+N]+ nx[j * N + i] * lxy  + ny[j * N + i] * lyy;
+							ip+=1;
+							
+						}
+					}
+
+
+					test=pnpoly(3,X_3n, Y_3n, p[i], p[i + N]);
+
+
+					if (!test) {
+						cout << "Particle "<<i<< " is not in the triangle !!" <<endl;
+						isRattler[i] = true;
+					}
+
+				}
+			
+				
+				
 
 			}
 		} // end while
+		
+		
 		Ncorrected = 0;
 		iloop(N) {
 			if (!isRattler[i])
 				Ncorrected++;
-		}
+		}		
 	} // end if(fireconverged)
 	else
 		Ncorrected = N;
+	
+
 
 	// normalize
 	phi = phi / (L * L);
 
-	Z = 2 * Z / (Ncorrected * 1.0 + 1e-16);
+
+	Z2 = 2 * Z2 / (Ncorrected * 1.0 + 1e-16);
+	Z=Z2;	
 	P = P / (L * L) / 2.0;
 	sxx = sxx / (L * L);
 	syy = syy / (L * L);
@@ -3078,4 +3164,19 @@ void checkFolderName(string foldername) {
 		testFolderName.close();
 
 	return;
+}
+
+
+
+
+int pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy)
+{
+	int i, j, c = 0;
+	for (i = 0, j = nvert-1; i < nvert; j = i++) {
+		
+		if ( ((verty[i]>testy) != (verty[j]>testy)) &&
+			(testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]) )
+			c = !c;
+	}
+	return c;
 }
