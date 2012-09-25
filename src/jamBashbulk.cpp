@@ -1755,14 +1755,14 @@ void fire() {
 		vv = sqrt(vv);
 
 		if (power > 0 && iterPosPower > Nmin) {
-			dt = fmin(dt * finc, dtmax);
+			dt = min(dt * finc, dtmax);
 			FIRE_alpha *= f_FIRE_alpha;
 		}
 		if (power < 0) {
 			if (fabs(sxy) < 1e-16)
-				dt = fmax(dt * 0.2 * fdec, dtmin);
+				dt = max(dt * 0.2 * fdec, dtmin);
 			else
-				dt = fmax(dt * fdec, dtmin);
+				dt = max(dt * fdec, dtmin);
 			iloop(2*N) {
 				v[i] = 0.0;
 			}
