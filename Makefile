@@ -1,7 +1,7 @@
 src = src
 bin = bin
 
-opts = -Wall -Wextra
+opts = -Wall -Wextra -Wconversion
 o3opts = $(opts) -O3
 dopts = $(opts) -g
 
