@@ -288,6 +288,10 @@ int main(int argc, char **argv) {
 } // end main()
 
 void extractNandP(string foldername) {
+	// Correct format:
+	// <anything>/Packings/N<N>~P1e<P>
+	// where <N> is an integer
+	// and <P> is +<integer> or -<integer>
 
 	int i = 0;
 	int digit = 0;
