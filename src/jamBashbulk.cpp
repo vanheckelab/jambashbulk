@@ -153,7 +153,7 @@ static long double dt = 1e-1;
 static const long double dtmaxinit = 1e-1;
 static long double dtmax = dtmaxinit;
 static const long double dtmin = 0.0;
-static long double damp = 1.0;
+static const long double damp = 1.0;
 static long double dampalpha = 0.9;
 static long double dampdelta = 0.9;
 static long double damppress = 0.999;
@@ -1412,9 +1412,6 @@ void simulationstep()
         if(damppress < dampDOF) {
             damppress = dampDOF;
         }
-
-        damp = 1.0;
-
     }
 
     M[N] = M[N + 1] = N * N;
