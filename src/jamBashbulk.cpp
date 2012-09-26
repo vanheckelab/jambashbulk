@@ -91,7 +91,6 @@ static bool fireconverged = false;
 static bool shearconverged = false;
 static bool converged = false;
 static int menumode = 0;
-static int programmode = 0;
 
 static int distributioncase = 0;
 static bool endprogram = false;
@@ -188,7 +187,6 @@ static int ITMAXBRENT = 50; // maximum of iterations in brent
 
 static int ITMAX = 12; // maximum of iterations in frprmn
 static const long double TOL = 1e-7; // tolerance passed to brent by linmin
-static const long double AMIN = 1e-7; // starting step in linmin
 
 static const long double ftol = 1e-2; // tolerance passed to frprmn()
 static const long double ftolFIRE = 1e-17; // tolerance passed to fire()
@@ -232,6 +230,12 @@ static void extractNandP(string foldername);
 static void checkFolderName(string foldername);
 static bool pnpoly(int nvert, long double * vertx, long double * verty, long double testx, long double testy);
 
+enum PROGRAMMODE {
+    PROGRAMMODE_DEFORM_PACKING = 3,
+    PROGRAMMODE_CREATE_PACKING = 5
+};
+
+static PROGRAMMODE programmode;
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,7 +362,7 @@ void execute()
             fireconverged = false;
             converged = false;
 
-            if(programmode == 5) {
+            if(programmode == PROGRAMMODE_CREATE_PACKING) {
                 if(!doSimpleShear && !doCompression) {
                     writePositionFile();
                 }
@@ -457,7 +461,7 @@ void saveShearSystemState(string logFileName, int numberOfDataPoints,
 // calcShearModulus()
 void calcShearModulus()
 {
-    int programmodeOld = programmode;
+    PROGRAMMODE programmodeOld = programmode;
     int num = 0;
 
     long double shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
@@ -573,7 +577,7 @@ void calcShearModulus()
         wasRattler[i] = isRattler[i];
     }
 
-    programmode = 3; // program-mode for shearing
+    programmode = PROGRAMMODE_DEFORM_PACKING; // program-mode for shearing
 
     jloop(2 * N + 3) {
         pLast[j] = p[j];
@@ -754,7 +758,7 @@ void calcShearModulus()
 void calcBulkModulus()
 {
 
-    int programmodeOld = programmode;
+    PROGRAMMODE programmodeOld = programmode;
     int num = 0;
 
     long double shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
@@ -924,7 +928,7 @@ void calcBulkModulus()
         wasRattler[i] = isRattler[i];
     }
 
-    programmode = 3; // program-mode for shearing
+    programmode = PROGRAMMODE_DEFORM_PACKING; // program-mode for shearing
 
     jloop(2 * N + 3) {
         pLast[j] = p[j];
@@ -1225,7 +1229,7 @@ void simulationstep()
 
     packIntoBoundaries();
 
-    if((programmode == 5) && frprmnconverged && Rneighbor / Rmax < 2.41) {
+    if((programmode == PROGRAMMODE_CREATE_PACKING) && frprmnconverged && Rneighbor / Rmax < 2.41) {
         if((iterationcountfire % 10000) == 0) {
             calculate_neighbors();
         }
@@ -1240,7 +1244,7 @@ void simulationstep()
     energy();
     gradientcalc();
 
-    if(programmode == 5) {
+    if(programmode == PROGRAMMODE_CREATE_PACKING) {
         if(!frprmnconverged) {
             Rneighbor = 3.5 * Rmax
                         + 0.3 * L / pow(2.0, iterationcountSimStep * 0.1);
@@ -1254,28 +1258,16 @@ void simulationstep()
         }
     }
 
-    if(programmode == 7) {
-        Rneighbor = 3.5 * Rmax;
-    }
-
     if(distributioncase == 3 || distributioncase == 4) {
         Rneighbor = 3.5 * Rmax;
         dofOnOff = true;
     }
 
-    if(programmode == 3) {
+    if(programmode == PROGRAMMODE_DEFORM_PACKING) {
         Rneighbor = 3.5 * Rmax;
     }
 
-    if(programmode == 1 && programmode == 2) {
-        frprmn(N, &fret, energy);
-
-        if(frprmnconverged) {
-            converged = true;
-        }
-    }
-
-    if(programmode == 5) {
+    if(programmode == PROGRAMMODE_CREATE_PACKING) {
         if(!frprmnconverged) {
             alphaOnOff = false;
             deltaOnOff = false;
@@ -1332,7 +1324,7 @@ void simulationstep()
         gradientcalc();
     }
 
-    if(programmode == 3) {
+    if(programmode == PROGRAMMODE_DEFORM_PACKING) {
         dofOnOff = false;
         alphaOnOff = false;
         deltaOnOff = false;
@@ -1471,10 +1463,9 @@ void simulationstep()
 // menu
 void menu()
 {
-
     iterationcountSimStep = 0;
     iterationcountfire = 0;
-
+    programmode = PROGRAMMODE_CREATE_PACKING;
     char answer;
 
     converged = false;
@@ -1513,7 +1504,6 @@ void menu()
     switch(menumode) {
 
     case 1:
-        programmode = 5;
         alphaOnOff = false;
         deltaOnOff = false;
 
@@ -1532,8 +1522,6 @@ void menu()
         break;
 
     case 2:
-        programmode = 5;
-
         if(screenOutput) {
             cout << "Is simple shear (alpha) a degree of freedom? Y/N :";
         }
@@ -1591,7 +1579,6 @@ void menu()
         break;
 
     case 3:
-        programmode = 5;
         doSimpleShear = true;
         fixedStepSize = false;
         alphaOnOff = false;
@@ -1619,7 +1606,6 @@ void menu()
         break;
 
     case 4:
-        programmode = 5;
         doSimpleShear = true;
         fixedStepSize = true;
         alphaOnOff = false;
@@ -1652,7 +1638,6 @@ void menu()
         break;
 
     case 5:
-        programmode = 5;
         doCompression = true;
         fixedStepSize = false;
         alphaOnOff = false;
@@ -1683,7 +1668,6 @@ void menu()
         break;
 
     case 6:
-        programmode = 5;
         doCompression = true;
         fixedStepSize = true;
         alphaOnOff = false;
@@ -1799,7 +1783,7 @@ void menu()
 
     }
 
-    if(programmode == 3) {
+    if(programmode == PROGRAMMODE_DEFORM_PACKING) {
         energy();
     }
 
@@ -1838,7 +1822,7 @@ void fire()
 
         H = Uhelper + P0 * Lhelper * Lhelper;
 
-        if(programmode == 3) {
+        if(programmode == PROGRAMMODE_DEFORM_PACKING) {
             calcSysPara();
         }
 
@@ -2214,6 +2198,7 @@ long double SIGN(long double a, long double b)
 // linmin
 void linmin(int n, long double * fret, long double(*func)())
 {
+    static const long double AMIN = 1e-7; // starting step in linmin
     long double xx, xmin, fx, fb, fa, bx, ax;
 
     ax = 0.0;
@@ -3141,7 +3126,7 @@ inline void writePositionFile()
 
     ofstream outfile;
 
-    if(programmode == 5) {
+    if(programmode == PROGRAMMODE_CREATE_PACKING) {
         outfile.open((char *) filepath.c_str(), ios::trunc);
     }
 
@@ -3154,7 +3139,7 @@ inline void writePositionFile()
         ofstream outfile;
         createFileName();
 
-        if(programmode == 5) {
+        if(programmode == PROGRAMMODE_CREATE_PACKING) {
             outfile.open(filename, ios::trunc);
         }
 
@@ -3261,7 +3246,7 @@ inline void writeMultiplePackings(string name)
         ofstream outfile;
         createFileName();
 
-        if(programmode == 5) {
+        if(programmode == PROGRAMMODE_CREATE_PACKING) {
             outfile.open((char *) name.c_str(), ios::app);
         }
 
