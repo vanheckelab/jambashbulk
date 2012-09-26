@@ -1,4 +1,9 @@
-//g++ -O3 -o jam2d jamBashbulk2.cpp
+// jamBashbulk: 2d particle simulation using conjugate gradient & FIRE algorithms
+//
+// indentation / style:
+//     astyle --mode=c --style=linux --indent=spaces=4 --break-blocks=all --pad-oper --unpad-paren --add-brackets --convert-tabs --align-pointer=middle --lineend=linux
+//     vim: set expandtab shiftwidth=4 softtabstop=4 tabstop=8:
+//
 
 // std libraries
 #include <iostream>
@@ -97,7 +102,7 @@ static int programmode = 0;
 
 static int distributioncase = 0;
 static bool endprogram = false;
-static char *filename;
+static char * filename;
 static string filenameString;
 static int currentPackingNumber = 0;
 static int numPackingsToProcess = 0;
@@ -118,7 +123,7 @@ static long double UhelperLastFunctionCall = 1e20;
 static long double Uold = 1e10;
 static long double energyBeforeDeformation = 0.0;
 static long double sxxBeforeDeformation, sxyBeforeDeformation, syxBeforeDeformation,
-		syyBeforeDeformation; // stress components
+       syyBeforeDeformation; // stress components
 
 static long double energywrite[50000];
 static long double enthalpiewrite[50000];
@@ -215,7 +220,7 @@ static const long double TOL = 1e-7; // tolerance passed to brent by linmin
 static const long double AMIN = 1e-7; // starting step in linmin
 
 static vector<long double> pcom, xicom; // positions and gradient
-static long double (*nrfunc)(); // function place-holder
+static long double(*nrfunc)();  // function place-holder
 static int iterfrprmn; // number of iterations performed in frprmn
 static long double ftol = 1e-17; // tolerance passed to frprmn()
 static const long double ftolFrprmnBeforeFIRE = 1e-2;
@@ -236,14 +241,14 @@ static void particledistance(int i, int j);
 static void resethelpervars();
 static long double energy();
 static void gradientcalc();
-static void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
-		long double *fb, long double *fc, long double (*func)(long double));
+static void mnbrak(long double * ax, long double * bx, long double * cx, long double * fa,
+                   long double * fb, long double * fc, long double(*func)(long double));
 static long double brent(long double ax, long double bx, long double cx,
-		long double (*f)(long double), long double tol, long double *xmin);
+                         long double(*f)(long double), long double tol, long double * xmin);
 static long double SIGN(long double a, long double b);
-static void linmin(int n, long double *fret, long double (*func)());
+static void linmin(int n, long double * fret, long double(*func)());
 static long double f1dim(long double x);
-static void frprmn(int n, long double *fret, long double (*func)());
+static void frprmn(int n, long double * fret, long double(*func)());
 static void calcSysPara();
 static void menu();
 static void readPositionFile();
@@ -254,1617 +259,1844 @@ static void createFileName();
 static void fire();
 static void calcShearModulus();
 static void calcBulkModulus();
-static void checkNeighborChanges(int& addedcontacts, int& removedcontacts,
-		int& neighborChanges, int& neighborChangesLast);
+static void checkNeighborChanges(int & addedcontacts, int & removedcontacts,
+                                 int & neighborChanges, int & neighborChangesLast);
 static void extractNandP(string foldername);
 static void checkFolderName(string foldername);
-static bool pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy);
+static bool pnpoly(int nvert, long double * vertx, long double * verty, long double testx, long double testy);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char **argv) {
-	if ((argc == 2) and (strcmp(argv[1], "-screen") == 0)) {
-		screenOutput = true;
-	}
+int main(int argc, char ** argv)
+{
+    if((argc == 2) and(strcmp(argv[1], "-screen") == 0)) {
+        screenOutput = true;
+    }
 
-	if ((argc == 2) and (strcmp(argv[1], "-v") == 0)) {
-		cout << FILE_HEADER;
-		return 0;
-	}
+    if((argc == 2) and(strcmp(argv[1], "-v") == 0)) {
+        cout << FILE_HEADER;
+        return 0;
+    }
 
-	starttime = time(NULL);
+    starttime = time(NULL);
 
-	menu();
+    menu();
 
-	while (!endprogram)
-		execute(); // either this
+    while(!endprogram) {
+        execute();    // either this
+    }
 
-	return 0;
+    return 0;
 } // end main()
 
-void extractNandP(string foldername) {
-	// Correct format:
-	// <anything>/Packings/N<N>~P1e<P>
-	// where <N> is an integer
-	// and <P> is +<integer> or -<integer>
+void extractNandP(string foldername)
+{
+    // Correct format:
+    // <anything>/Packings/N<N>~P1e<P>
+    // where <N> is an integer
+    // and <P> is +<integer> or -<integer>
 
-	int i = 0;
-	int digit = 0;
-	N = 0;
-	P0 = 0;
+    int i = 0;
+    int digit = 0;
+    N = 0;
+    P0 = 0;
 
-	string comp2 = foldername.substr(i, 2);
+    string comp2 = foldername.substr(i, 2);
 
-	size_t pos = foldername.rfind("Packings"); // Name of the folder containing all the other folders with packings
+    size_t pos = foldername.rfind("Packings"); // Name of the folder containing all the other folders with packings
 
-	i = pos + 9;
+    i = pos + 9;
 
-	int i0 = i;
+    int i0 = i;
 
-	if (foldername[i] != 'N') {
-		cout << "Unexpected filename ERROR 1 : couldn't find N!" << endl;
-		return;
-	} else {
-		i++;
-		while (foldername[i] != '~') {
-			N = N * 10;
-			N = N + (foldername[i] - 48);
-			i++;
-			if (i - i0 > 10) {
-				cout << "Unexpected filename ERROR 2 : N has too much digits!"
-						<< endl;
-				return;
-			}
-		}
+    if(foldername[i] != 'N') {
+        cout << "Unexpected filename ERROR 1 : couldn't find N!" << endl;
+        return;
 
-		particleNumberLength = i - i0;
+    } else {
+        i++;
 
-		if (foldername[i + 1] != 'P') {
-			cout << "Unexpected filename ERROR 3 : no P in title" << endl;
-			return;
-		}
+        while(foldername[i] != '~') {
+            N = N * 10;
+            N = N + (foldername[i] - 48);
+            i++;
 
-		int j = i + 2;
-		int power = 1;
-		while (foldername[j] != 'e') {
-			digit = digit * 10;
-			digit = digit + foldername[j] - 48;
-			power = power - 1;
-			j++;
-		}
+            if(i - i0 > 10) {
+                cout << "Unexpected filename ERROR 2 : N has too much digits!"
+                     << endl;
+                return;
+            }
+        }
 
-		if (foldername[j + 1] == '-') {
-			P0 = digit * 1.0
-					* pow(10, -1.0 * (-power + foldername[j + 2] - 48));
-		} else if (foldername[j + 1] == '+') {
-			P0 = digit * 1.0
-					* pow(10, +1.0 * (-power + foldername[j + 2] - 48));
-		}
+        particleNumberLength = i - i0;
 
-	}
+        if(foldername[i + 1] != 'P') {
+            cout << "Unexpected filename ERROR 3 : no P in title" << endl;
+            return;
+        }
+
+        int j = i + 2;
+        int power = 1;
+
+        while(foldername[j] != 'e') {
+            digit = digit * 10;
+            digit = digit + foldername[j] - 48;
+            power = power - 1;
+            j++;
+        }
+
+        if(foldername[j + 1] == '-') {
+            P0 = digit * 1.0
+                 * pow(10, -1.0 * (-power + foldername[j + 2] - 48));
+
+        } else if(foldername[j + 1] == '+') {
+            P0 = digit * 1.0
+                 * pow(10, +1.0 * (-power + foldername[j + 2] - 48));
+        }
+
+    }
 } // extractNandP
 
 ////////////////////////////////////////////////////////////////////////////////
 // execute()
-void execute() {
-	bool goodfile;
+void execute()
+{
+    bool goodfile;
 
-	if (!endprogram) {
-		if (!converged) {
-			simulationstep();
-		} else {
+    if(!endprogram) {
+        if(!converged) {
+            simulationstep();
 
-			if ((iterationcountfire > maxIterationCountFire)
-					|| fabs((Phelper - P0) / P0) > 0.1 || Z < 3.5 || Z > 10)
-				goodfile = false;
-			else
-				goodfile = true;
+        } else {
 
-			endtime = time(NULL); // clock function runtime
-			timediff1 = endtime - starttime;
-			starttime = endtime;
-			if (screenOutput)
-				cout << "Total runtime is " << timediff1 << " seconds." << endl;
+            if((iterationcountfire > maxIterationCountFire)
+               || fabs((Phelper - P0) / P0) > 0.1 || Z < 3.5 || Z > 10) {
+                goodfile = false;
 
-			frprmnconverged = false;
-			fireconverged = false;
-			converged = false;
+            } else {
+                goodfile = true;
+            }
 
-			if (programmode == 5) {
-				if (!doSimpleShear && !doCompression) {
-					writePositionFile();
-				}
-				iterationcountSimStep = 0;
-				iterationcountfire = 0;
-				totaliterationcount = 0;
-				iterationcountfrprmnCUMULATIVE = 0;
-				if (goodfile) {
-					if (doSimpleShear)
-						if (!redo)
-							calcShearModulus();
-					if (doCompression)
-						if (!redo)
-							calcBulkModulus();
-				}
+            endtime = time(NULL); // clock function runtime
+            timediff1 = endtime - starttime;
+            starttime = endtime;
 
-				if (currentPackingNumber
-						< numPackingsToProcess - 1 + firstPackingNumber) {
-					currentPackingNumber++;
-					redo = false;
-					if (distributioncase == 2)
-						initializeSimulation();
-					if (distributioncase == 3 || distributioncase == 4)
-						readPositionFile();
-					converged = false;
-					fireconverged = false;
+            if(screenOutput) {
+                cout << "Total runtime is " << timediff1 << " seconds." << endl;
+            }
 
-				}
-				else
-					endprogram = true;
-			}
-			else
-				endprogram = true;
+            frprmnconverged = false;
+            fireconverged = false;
+            converged = false;
 
-		}
-	} // if (!endprogram)
+            if(programmode == 5) {
+                if(!doSimpleShear && !doCompression) {
+                    writePositionFile();
+                }
 
-	return;
+                iterationcountSimStep = 0;
+                iterationcountfire = 0;
+                totaliterationcount = 0;
+                iterationcountfrprmnCUMULATIVE = 0;
+
+                if(goodfile) {
+                    if(doSimpleShear)
+                        if(!redo) {
+                            calcShearModulus();
+                        }
+
+                    if(doCompression)
+                        if(!redo) {
+                            calcBulkModulus();
+                        }
+                }
+
+                if(currentPackingNumber
+                   < numPackingsToProcess - 1 + firstPackingNumber) {
+                    currentPackingNumber++;
+                    redo = false;
+
+                    if(distributioncase == 2) {
+                        initializeSimulation();
+                    }
+
+                    if(distributioncase == 3 || distributioncase == 4) {
+                        readPositionFile();
+                    }
+
+                    converged = false;
+                    fireconverged = false;
+
+                } else {
+                    endprogram = true;
+                }
+
+            } else {
+                endprogram = true;
+            }
+
+        }
+    } // if (!endprogram)
+
+    return;
 } // execute
 
 void saveShearSystemState(string logFileName, int numberOfDataPoints,
-		string dataFileName, int neighborChangesLastCumulative,
-		int neighborChangesLast, int addedContacts, int removedContacts,
-		string GpositionFile) {
+                          string dataFileName, int neighborChangesLastCumulative,
+                          int neighborChangesLast, int addedContacts, int removedContacts,
+                          string GpositionFile)
+{
 
-	char timebuffer[80];
-	time_t rawtime;
-	struct tm *timeinfo;
-	ofstream outG;
-	ofstream outLog;
-	long double maxGrad = 0;
+    char timebuffer[80];
+    time_t rawtime;
+    struct tm * timeinfo;
+    ofstream outG;
+    ofstream outLog;
+    long double maxGrad = 0;
 
-	iloop(2*N) {
-		if (fabs(xihelper[i]) > maxGrad)
-			maxGrad = fabs(xihelper[i]);
-	}
+    iloop(2 * N) {
+        if(fabs(xihelper[i]) > maxGrad) {
+            maxGrad = fabs(xihelper[i]);
+        }
+    }
 
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
-	outLog.open((char*) (logFileName.c_str()), ios::app);
-	outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P << "	"
-			<< alpha << "	" << delta;
-	outLog << "	" << L << "	" << phi << "	" << Z << "	" << N - Ncorrected << "	"
-			<< sxx << "	" << syy;
-	outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	" << dH
-			<< "	" << timediff1;
-	outLog << "	" << iterationcountfire << "	" << iterationcountfrprmnCUMULATIVE
-			<< "	" << maxGrad << "	" << timebuffer << endl;
-	outLog.close();
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+    outLog.open((char *)(logFileName.c_str()), ios::app);
+    outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P << "	"
+           << alpha << "	" << delta;
+    outLog << "	" << L << "	" << phi << "	" << Z << "	" << N - Ncorrected << "	"
+           << sxx << "	" << syy;
+    outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	" << dH
+           << "	" << timediff1;
+    outLog << "	" << iterationcountfire << "	" << iterationcountfrprmnCUMULATIVE
+           << "	" << maxGrad << "	" << timebuffer << endl;
+    outLog.close();
 
-	outG.open((char*) (dataFileName.c_str()), ios::app);
-	outG.setf(ios::scientific, ios::floatfield);
-	outG.precision(16);
-	outG << shear << "	" << sxy << "	" << trueneighborNumber << "	"
-			<< (neighborChangesLastCumulative + neighborChangesLast) << "	"
-			<< addedContacts << "	" << removedContacts << "	" << Phelper << "	"
-			<< Z << endl;
-	outG.close();
-	writeMultiplePackings(GpositionFile);
+    outG.open((char *)(dataFileName.c_str()), ios::app);
+    outG.setf(ios::scientific, ios::floatfield);
+    outG.precision(16);
+    outG << shear << "	" << sxy << "	" << trueneighborNumber << "	"
+         << (neighborChangesLastCumulative + neighborChangesLast) << "	"
+         << addedContacts << "	" << removedContacts << "	" << Phelper << "	"
+         << Z << endl;
+    outG.close();
+    writeMultiplePackings(GpositionFile);
 }
 
 ////////////////////////////////////////////////////////////////////////
 // calcShearModulus()
-void calcShearModulus() {
-	int programmodeOld = programmode;
-	int num = 0;
+void calcShearModulus()
+{
+    int programmodeOld = programmode;
+    int num = 0;
 
-	long double shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
-	long double dstrain = goalStrain / fixedStepNumber;
-	int numberOfContactChanges = 0; // the number of contact changes at a given moment
-	bool reachedGoal = false;
+    long double shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
+    long double dstrain = goalStrain / fixedStepNumber;
+    int numberOfContactChanges = 0; // the number of contact changes at a given moment
+    bool reachedGoal = false;
 
-	int addedContacts = 0;
-	int removedContacts = 0;
+    int addedContacts = 0;
+    int removedContacts = 0;
 
-	int neighborChanges = 0; // sum of the number of added and removed contacts at a certain time
-	int neighborChangesOld = neighborChanges;
-	int neighborChangesLast = 0;
-	int neighborChangesLastCumulative = 0;
-	bool pastContactChange = false;
-	bool sufficientAccuracy = false;
-	int numberOfDataPoints = 0;
+    int neighborChanges = 0; // sum of the number of added and removed contacts at a certain time
+    int neighborChangesOld = neighborChanges;
+    int neighborChangesLast = 0;
+    int neighborChangesLastCumulative = 0;
+    bool pastContactChange = false;
+    bool sufficientAccuracy = false;
+    int numberOfDataPoints = 0;
 
-	vector<long double> extraPositionArray;
-	extraPositionArray.reserve(2 * N + 3);
+    vector<long double> extraPositionArray;
+    extraPositionArray.reserve(2 * N + 3);
 
-	long double shearLast = 0.0, sxyLast = sxy;
+    long double shearLast = 0.0, sxyLast = sxy;
 
 
 
-	ofstream outG;
-	ofstream outLog;
-	ofstream outFirst;
-	ofstream eraseFile;
-	string dataFileName = filenameString;
-	string logFileName = filenameString;
-	string GpositionFile = filenameString;
-	string Appendix = "";
+    ofstream outG;
+    ofstream outLog;
+    ofstream outFirst;
+    ofstream eraseFile;
+    string dataFileName = filenameString;
+    string logFileName = filenameString;
+    string GpositionFile = filenameString;
+    string Appendix = "";
 
-	long double goalStrainHelper = goalStrain;
-	int goalStrainExponent = 0, goalStraindigit = 0;
-	string goalStrainString = "";
+    long double goalStrainHelper = goalStrain;
+    int goalStrainExponent = 0, goalStraindigit = 0;
+    string goalStrainString = "";
 
-	// Reset shear value
-	shear = 0.0;
+    // Reset shear value
+    shear = 0.0;
 
-	while (goalStrainHelper * 1.01 < 1.0) {
-		goalStrainExponent++;
-		goalStrainHelper *= 10.0;
-	}
+    while(goalStrainHelper * 1.01 < 1.0) {
+        goalStrainExponent++;
+        goalStrainHelper *= 10.0;
+    }
 
-	goalStraindigit = goalStrainHelper / 1;
+    goalStraindigit = goalStrainHelper / 1;
 
-	goalStrainString.push_back(goalStraindigit + 48);
-	goalStrainString.append("e-");
-	goalStrainString.push_back(goalStrainExponent + 48);
+    goalStrainString.push_back(goalStraindigit + 48);
+    goalStrainString.append("e-");
+    goalStrainString.push_back(goalStrainExponent + 48);
 
-	if (!fixedStepSize) {
-		Appendix = "~SR";
-		Appendix.push_back(((goalNumberOfContactChanges / 100) % 10) + 48);
-		Appendix.push_back(((goalNumberOfContactChanges / 10) % 10) + 48);
-		Appendix.push_back(((goalNumberOfContactChanges / 1) % 10) + 48);
-		Appendix.append("~step");
-		Appendix.push_back(
-				(((2 * goalNumberOfContactChanges + 1) / 100) % 10) + 48);
-		Appendix.push_back(
-				(((2 * goalNumberOfContactChanges + 1) / 10) % 10) + 48);
-		Appendix.push_back(
-				(((2 * goalNumberOfContactChanges + 1) / 1) % 10) + 48);
-	} else {
+    if(!fixedStepSize) {
+        Appendix = "~SR";
+        Appendix.push_back(((goalNumberOfContactChanges / 100) % 10) + 48);
+        Appendix.push_back(((goalNumberOfContactChanges / 10) % 10) + 48);
+        Appendix.push_back(((goalNumberOfContactChanges / 1) % 10) + 48);
+        Appendix.append("~step");
+        Appendix.push_back(
+            (((2 * goalNumberOfContactChanges + 1) / 100) % 10) + 48);
+        Appendix.push_back(
+            (((2 * goalNumberOfContactChanges + 1) / 10) % 10) + 48);
+        Appendix.push_back(
+            (((2 * goalNumberOfContactChanges + 1) / 1) % 10) + 48);
 
-		Appendix = "~SS";
-		Appendix.append(goalStrainString);
-		Appendix.append("~step");
-		Appendix.push_back((((fixedStepNumber) / 1000) % 10) + 48);
-		Appendix.push_back((((fixedStepNumber) / 100) % 10) + 48);
-		Appendix.push_back((((fixedStepNumber) / 10) % 10) + 48);
-		Appendix.push_back((((fixedStepNumber) / 1) % 10) + 48);
-	}
+    } else {
 
-	GpositionFile.insert(particleNumberLength + 6, Appendix);
-	GpositionFile.insert(0, "particles");
-	GpositionFile.insert(0, nameOfWorkingDirectory + "/");
+        Appendix = "~SS";
+        Appendix.append(goalStrainString);
+        Appendix.append("~step");
+        Appendix.push_back((((fixedStepNumber) / 1000) % 10) + 48);
+        Appendix.push_back((((fixedStepNumber) / 100) % 10) + 48);
+        Appendix.push_back((((fixedStepNumber) / 10) % 10) + 48);
+        Appendix.push_back((((fixedStepNumber) / 1) % 10) + 48);
+    }
 
-	dataFileName.insert(particleNumberLength + 6, Appendix);
-	dataFileName.insert(0, "data");
-	dataFileName.insert(0, nameOfWorkingDirectory + "/");
+    GpositionFile.insert(particleNumberLength + 6, Appendix);
+    GpositionFile.insert(0, "particles");
+    GpositionFile.insert(0, nameOfWorkingDirectory + "/");
 
-	logFileName.insert(particleNumberLength + 6, Appendix);
-	logFileName.insert(0, "log");
-	logFileName.insert(0, nameOfWorkingDirectory + "/");
+    dataFileName.insert(particleNumberLength + 6, Appendix);
+    dataFileName.insert(0, "data");
+    dataFileName.insert(0, nameOfWorkingDirectory + "/");
 
-	outG.open((char*) dataFileName.c_str(), ios::trunc);
-	outG.setf(ios::scientific, ios::floatfield);
-	outG.precision(16);
-	outG << FILE_HEADER;
-	outG << "gamma_alpha	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
-	outG.close();
+    logFileName.insert(particleNumberLength + 6, Appendix);
+    logFileName.insert(0, "log");
+    logFileName.insert(0, nameOfWorkingDirectory + "/");
 
-	outLog.open((char*) logFileName.c_str(), ios::trunc);
-	outLog.setf(ios::scientific, ios::floatfield);
-	outLog.precision(16);
-	outLog << FILE_HEADER;
-	outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
-	outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
-	outLog << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
-	outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
-	outLog.close();
+    outG.open((char *) dataFileName.c_str(), ios::trunc);
+    outG.setf(ios::scientific, ios::floatfield);
+    outG.precision(16);
+    outG << FILE_HEADER;
+    outG << "gamma_alpha	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
+    outG.close();
 
-	alphaBeforeDeformation = p[2 * N];
-	iloop(N) {
-		jloop(N) {
-			trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
-					trueneighbors[j * N + i]; // the contacts before shearing
-			trueneighborChanges[j * N + i] = 0;
-		}
-		wasRattler[i] = isRattler[i];
-	}
+    outLog.open((char *) logFileName.c_str(), ios::trunc);
+    outLog.setf(ios::scientific, ios::floatfield);
+    outLog.precision(16);
+    outLog << FILE_HEADER;
+    outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
+    outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
+    outLog << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
+    outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
+    outLog.close();
 
-	programmode = 3; // program-mode for shearing
+    alphaBeforeDeformation = p[2 * N];
+    iloop(N) {
+        jloop(N) {
+            trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
+                                               trueneighbors[j * N + i]; // the contacts before shearing
+            trueneighborChanges[j * N + i] = 0;
+        }
+        wasRattler[i] = isRattler[i];
+    }
 
-	cumulativeNeighborchanges = 0;
+    programmode = 3; // program-mode for shearing
 
-	jloop(2*N+3) {
-		pLast[j] = p[j];
-	} // backup the particle position before the shear step
+    cumulativeNeighborchanges = 0;
 
-	energyBeforeDeformation = Uhelper;
-	sxxBeforeDeformation = sxx;
-	sxyBeforeDeformation = sxy;
-	syxBeforeDeformation = syx;
-	syyBeforeDeformation = syy;
+    jloop(2 * N + 3) {
+        pLast[j] = p[j];
+    } // backup the particle position before the shear step
 
-	packIntoBoundaries();
+    energyBeforeDeformation = Uhelper;
+    sxxBeforeDeformation = sxx;
+    sxyBeforeDeformation = sxy;
+    syxBeforeDeformation = syx;
+    syyBeforeDeformation = syy;
 
-	eraseFile.open((char*) GpositionFile.c_str(), ios::trunc);
-	eraseFile <<  FILE_HEADER;
-	eraseFile.close();
+    packIntoBoundaries();
 
-	saveShearSystemState(logFileName, 0,
-			dataFileName, 0,
-			0, 0, 0,
-			GpositionFile);
+    eraseFile.open((char *) GpositionFile.c_str(), ios::trunc);
+    eraseFile <<  FILE_HEADER;
+    eraseFile.close();
 
-	if (!fixedStepSize) {
-		// set shear to an initial (small) value > 0, or multiplication will yield 0.
-		// for fast calculation = 1e-12 else = 1e-16
-		shear = 1e-9;
-	}
+    saveShearSystemState(logFileName, 0,
+                         dataFileName, 0,
+                         0, 0, 0,
+                         GpositionFile);
 
-	while (!reachedGoal) { // shear < 0.15 && numberOfDataPoints < 5000 &&
-		neighborChangesLastCumulative += neighborChangesLast;
+    if(!fixedStepSize) {
+        // set shear to an initial (small) value > 0, or multiplication will yield 0.
+        // for fast calculation = 1e-12 else = 1e-16
+        shear = 1e-9;
+    }
 
-		iloop(N) {
-			jloop(N) {
-				trueneighborsLast[j * N + i] = trueneighbors[j * N + i]; // the contacts before shearing step
+    while(!reachedGoal) {  // shear < 0.15 && numberOfDataPoints < 5000 &&
+        neighborChangesLastCumulative += neighborChangesLast;
 
-			}
-			wasRattler[i] = isRattler[i];
-		}
+        iloop(N) {
+            jloop(N) {
+                trueneighborsLast[j * N + i] = trueneighbors[j * N + i]; // the contacts before shearing step
 
-		neighborChangesOld = neighborChanges;
+            }
+            wasRattler[i] = isRattler[i];
+        }
 
-		while (!sufficientAccuracy) {
-			if (!fixedStepSize) {
-				if (pastContactChange) {
-					num++;
+        neighborChangesOld = neighborChanges;
 
-					jloop(2*N+3) {
-						extraPositionArray[j] = p[j];
-					} // save positions just after rearrangement
-					jloop(2*N+3) {
-						p[j] = pLast[j];
-					} // go back to last particle positions
-					shear = shear / shearfactor; // go back to previous shear
-					shearfactor = sqrt(shearfactor);
+        while(!sufficientAccuracy) {
+            if(!fixedStepSize) {
+                if(pastContactChange) {
+                    num++;
 
-				} else if (num > 0) {
-					shearfactor = sqrt(shearfactor);
-				}
+                    jloop(2 * N + 3) {
+                        extraPositionArray[j] = p[j];
+                    } // save positions just after rearrangement
+                    jloop(2 * N + 3) {
+                        p[j] = pLast[j];
+                    } // go back to last particle positions
+                    shear = shear / shearfactor; // go back to previous shear
+                    shearfactor = sqrt(shearfactor);
 
-				shear = shear * shearfactor; // shear is increased by shearfactor...
+                } else if(num > 0) {
+                    shearfactor = sqrt(shearfactor);
+                }
 
-			} else {
-				shear = shear + dstrain;
-			}
+                shear = shear * shearfactor; // shear is increased by shearfactor...
 
-			jloop(2*N+3) {
-				pLast[j] = p[j];
-			} // backup the particle position before the shear step
-			p[2 * N] = alphaBeforeDeformation + shear; // ... and added to the shear of the relaxed packing
+            } else {
+                shear = shear + dstrain;
+            }
 
-			iterationcountSimStep = 0;
-			iterationcountfrprmn = 0;
-			iterationcountfire = 0;
-			iterationcountfrprmnCUMULATIVE = 0;
+            jloop(2 * N + 3) {
+                pLast[j] = p[j];
+            } // backup the particle position before the shear step
+            p[2 * N] = alphaBeforeDeformation + shear; // ... and added to the shear of the relaxed packing
 
-			G = 0.0;
+            iterationcountSimStep = 0;
+            iterationcountfrprmn = 0;
+            iterationcountfire = 0;
+            iterationcountfrprmnCUMULATIVE = 0;
 
-			cumulativeNeighborchanges = 0;
+            G = 0.0;
 
-			shearconverged = false;
-			converged = false;
-			frprmnconverged = false;
-			fireconverged = false;
+            cumulativeNeighborchanges = 0;
 
-			while (!shearconverged) {
-				simulationstep();
-			}
-			calcSysPara();
-			if (iterationcountfire > maxIterationCountFire) {
-				programmode = programmodeOld;
-				return;
-			}
+            shearconverged = false;
+            converged = false;
+            frprmnconverged = false;
+            fireconverged = false;
 
-			checkNeighborChanges(addedContacts, removedContacts,
-					neighborChanges, neighborChangesLast);
+            while(!shearconverged) {
+                simulationstep();
+            }
 
-			if (neighborChangesLast != 0)
-				pastContactChange = true;
-			else
-				pastContactChange = false;
+            calcSysPara();
 
-			if (!fixedStepSize) {
-				if (((neighborChanges - neighborChangesOld)
-						* (neighborChanges - neighborChangesOld) == 1
-						&& (shearfactor - 1.0) < 0.0001)
-						|| ((shearfactor - 1.0) < 1e-6))
-					sufficientAccuracy = true;
-			}
+            if(iterationcountfire > maxIterationCountFire) {
+                programmode = programmodeOld;
+                return;
+            }
 
-			endtime = time(NULL); // clock function runtime
-			timediff1 = endtime - starttime;
-			starttime = endtime;
+            checkNeighborChanges(addedContacts, removedContacts,
+                                 neighborChanges, neighborChangesLast);
 
-			// fast finding of 1st contact change:
-			if ((numberOfDataPoints < 1
-					&& (neighborChangesLastCumulative + neighborChangesLast)
-							!= 0) && !fixedStepSize) {
-				numberOfContactChanges = 0;
-				shear = 1e-16;
-				sufficientAccuracy = false;
-				shearfactor = 10;
-				num = 0;
-				pastContactChange = false;
-			} //////////////////////////////////////////
-			numberOfDataPoints++;
-			energy();
-			calcSysPara();
-			G = (sxy - sxyLast) / (shear - shearLast);
+            if(neighborChangesLast != 0) {
+                pastContactChange = true;
 
-			saveShearSystemState(logFileName, numberOfDataPoints,
-					dataFileName, neighborChangesLastCumulative,
-					neighborChangesLast, addedContacts, removedContacts,
-					GpositionFile);
+            } else {
+                pastContactChange = false;
+            }
 
-			shearLast = shear;
-			sxyLast = sxy;
+            if(!fixedStepSize) {
+                if(((neighborChanges - neighborChangesOld)
+                    * (neighborChanges - neighborChangesOld) == 1
+                    && (shearfactor - 1.0) < 0.0001)
+                   || ((shearfactor - 1.0) < 1e-6)) {
+                    sufficientAccuracy = true;
+                }
+            }
 
-			if (fixedStepSize) {
-				if (numberOfDataPoints < fixedStepNumber) {
-					reachedGoal = false;
-					writeMultiplePackings(GpositionFile);
-				}
+            endtime = time(NULL); // clock function runtime
+            timediff1 = endtime - starttime;
+            starttime = endtime;
 
-				else {
-					reachedGoal = true;
-					sufficientAccuracy = true;
-					writeMultiplePackings(GpositionFile);
-					programmode = programmodeOld;
+            // fast finding of 1st contact change:
+            if((numberOfDataPoints < 1
+                && (neighborChangesLastCumulative + neighborChangesLast)
+                != 0) && !fixedStepSize) {
+                numberOfContactChanges = 0;
+                shear = 1e-16;
+                sufficientAccuracy = false;
+                shearfactor = 10;
+                num = 0;
+                pastContactChange = false;
+            } //////////////////////////////////////////
 
-					return;
-				}
-			}
-		} // end while(!sufficientAccuracy)
+            numberOfDataPoints++;
+            energy();
+            calcSysPara();
+            G = (sxy - sxyLast) / (shear - shearLast);
 
-		// extraPositionArray is saved... some 100 lines above here
-		jloop(2*N+3) {
-			p[j] = extraPositionArray[j];
-		}
+            saveShearSystemState(logFileName, numberOfDataPoints,
+                                 dataFileName, neighborChangesLastCumulative,
+                                 neighborChangesLast, addedContacts, removedContacts,
+                                 GpositionFile);
 
-		if (!fixedStepSize) {
-			pastContactChange = false;
-			sufficientAccuracy = false;
-			num = 0;
-			shearfactor = sqrt(sqrt(sqrt(sqrt(10)))); //sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(10)))))));
-			numberOfContactChanges++;
-		}
+            shearLast = shear;
+            sxyLast = sxy;
 
-		if (!fixedStepSize) {
-			if (numberOfContactChanges < goalNumberOfContactChanges)
-				reachedGoal = false;
-			else
-				reachedGoal = true;
-		}
-	} // end while
+            if(fixedStepSize) {
+                if(numberOfDataPoints < fixedStepNumber) {
+                    reachedGoal = false;
+                    writeMultiplePackings(GpositionFile);
+                }
 
-	programmode = programmodeOld;
-	return;
+                else {
+                    reachedGoal = true;
+                    sufficientAccuracy = true;
+                    writeMultiplePackings(GpositionFile);
+                    programmode = programmodeOld;
+
+                    return;
+                }
+            }
+        } // end while(!sufficientAccuracy)
+
+        // extraPositionArray is saved... some 100 lines above here
+        jloop(2 * N + 3) {
+            p[j] = extraPositionArray[j];
+        }
+
+        if(!fixedStepSize) {
+            pastContactChange = false;
+            sufficientAccuracy = false;
+            num = 0;
+            shearfactor = sqrt(sqrt(sqrt(sqrt(10)))); //sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(10)))))));
+            numberOfContactChanges++;
+        }
+
+        if(!fixedStepSize) {
+            if(numberOfContactChanges < goalNumberOfContactChanges) {
+                reachedGoal = false;
+
+            } else {
+                reachedGoal = true;
+            }
+        }
+    } // end while
+
+    programmode = programmodeOld;
+    return;
 } // end calcShearModulus
 
 ////////////////////////////////////////////////////////////////////////
 // calcBulkModulus()
-void calcBulkModulus() {
-
-	int programmodeOld = programmode;
-	int num = 0;
-
-	long double shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
-	long double dstrain = goalStrain / fixedStepNumber;
-	int numberOfContactChanges = 0; // the number of contact changes at a given moment
-	bool reachedGoal = false;
-
-	int addedContacts = 0;
-	int removedContacts = 0;
-
-	int neighborChanges = 0; // sum of the number of added and removed contacts at a certain time
-	int neighborChangesOld = neighborChanges;
-	int neighborChangesLast = 0;
-	int neighborChangesLastCumulative = 0;
-	bool pastContactChange = false;
-	bool sufficientAccuracy = false;
-	int numberOfDataPoints = 0;
-
-	vector<long double> extraPositionArray;
-	extraPositionArray.reserve(2 * N + 3);
-
-	long double shearLast = 0.0, sxyLast = sxy;
-
-	time_t rawtime;
-	struct tm *timeinfo;
-	char timebuffer[80];
-
-	ofstream outG;
-	ofstream outLog;
-	ofstream outFirst;
-	ofstream eraseFile;
-	string dataFileName = filenameString;
-	string logFileName = filenameString;
-	string GpositionFile = filenameString;
-	bool compress;
-	string Appendix = "";
-
-	long double goalStrainHelper = goalStrain;
-	int goalStrainExponent = 0, goalStraindigit = 0;
-	string goalStrainString = "";
-
-	if (goalStrain < 0 || goalNumberOfContactChanges < 0) {
-		compress = true;
-		if (goalStrain < 0)
-			goalStrainHelper *= -1.0;
-		if (goalNumberOfContactChanges < 0)
-			goalNumberOfContactChanges *= -1;
-	} else {
-		compress = false;
-
-	}
-
-	while (goalStrainHelper * 1.01 < 1.0) {
-		goalStrainExponent++;
-		goalStrainHelper *= 10.0;
-	}
-
-	goalStraindigit = goalStrainHelper / 1;
-
-	goalStrainString.push_back(goalStraindigit + 48);
-	goalStrainString.append("e-");
-	goalStrainString.push_back(goalStrainExponent + 48);
-
-	if (compress) {
-		if (!fixedStepSize) {
-			Appendix = "~CR";
-			Appendix.push_back(((goalNumberOfContactChanges / 100) % 10) + 48);
-			Appendix.push_back(((goalNumberOfContactChanges / 10) % 10) + 48);
-			Appendix.push_back(((goalNumberOfContactChanges / 1) % 10) + 48);
-			Appendix.append("~step");
-			Appendix.push_back(
-					(((2 * (goalNumberOfContactChanges) + 1) / 100) % 10) + 48);
-			Appendix.push_back(
-					(((2 * (goalNumberOfContactChanges) + 1) / 10) % 10) + 48);
-			Appendix.push_back(
-					(((2 * (goalNumberOfContactChanges) + 1) / 1) % 10) + 48);
-		} else {
-
-			Appendix = "~CS";
-			Appendix.append(goalStrainString);
-			Appendix.append("~step");
-			Appendix.push_back((((fixedStepNumber) / 1000) % 10) + 48);
-			Appendix.push_back((((fixedStepNumber) / 100) % 10) + 48);
-			Appendix.push_back((((fixedStepNumber) / 10) % 10) + 48);
-			Appendix.push_back((((fixedStepNumber) / 1) % 10) + 48);
-		}
-	} else {
-		if (!fixedStepSize) {
-			Appendix = "~DR";
-			Appendix.push_back(((goalNumberOfContactChanges / 100) % 10) + 48);
-			Appendix.push_back(((goalNumberOfContactChanges / 10) % 10) + 48);
-			Appendix.push_back(((goalNumberOfContactChanges / 1) % 10) + 48);
-			Appendix.append("~step");
-			Appendix.push_back(
-					(((2 * goalNumberOfContactChanges + 1) / 100) % 10) + 48);
-			Appendix.push_back(
-					(((2 * goalNumberOfContactChanges + 1) / 10) % 10) + 48);
-			Appendix.push_back(
-					(((2 * goalNumberOfContactChanges + 1) / 1) % 10) + 48);
-		} else {
-
-			Appendix = "~DS";
-			Appendix.append(goalStrainString);
-			Appendix.append("~step");
-			Appendix.push_back((((fixedStepNumber) / 1000) % 10) + 48);
-			Appendix.push_back((((fixedStepNumber) / 100) % 10) + 48);
-			Appendix.push_back((((fixedStepNumber) / 10) % 10) + 48);
-			Appendix.push_back((((fixedStepNumber) / 1) % 10) + 48);
-		}
-	}
-
-	GpositionFile.insert(particleNumberLength + 6, Appendix);
-	GpositionFile.insert(0, nameOfWorkingDirectory + "/");
-
-	dataFileName.insert(particleNumberLength + 6, Appendix);
-	dataFileName.insert(0, "data");
-	dataFileName.insert(0, nameOfWorkingDirectory + "/");
-
-	logFileName.insert(particleNumberLength + 6, Appendix);
-	logFileName.insert(0, "log");
-	logFileName.insert(0, nameOfWorkingDirectory + "/");
-
-	if (!fixedStepSize) {
-		if (compress)
-			shear = -1e-9; // for fast calculation = 1e-12 else = 1e-16
-		else
-			shear = 1e-9;
-	} else
-		shear = 0.0;
-
-	outG.open((char*) dataFileName.c_str(), ios::trunc);
-	outG.setf(ios::scientific, ios::floatfield);
-	outG.precision(16);
-	outG  << FILE_HEADER;
-	outG << "gamma_V	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
-	outG.close();
-
-	outLog.open((char*) logFileName.c_str(), ios::trunc);
-	outLog.setf(ios::scientific, ios::floatfield);
-	outLog.precision(16);
-	outLog  << FILE_HEADER;
-	outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
-	outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
-	outLog << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
-	outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
-	outLog.close();
-
-	alphaBeforeDeformation = p[2 * N + 2];
-	iloop(N) {
-		jloop(N) {
-			trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
-					trueneighbors[j * N + i]; // the contacts before shearing
-			trueneighborChanges[j * N + i] = 0;
-		}
-		wasRattler[i] = isRattler[i];
-	}
-
-	programmode = 3; // program-mode for shearing
-
-	cumulativeNeighborchanges = 0;
-
-	jloop(2*N+3) {
-		pLast[j] = p[j];
-	} // backup the particle position before the shear step
-
-	energyBeforeDeformation = Uhelper;
-	sxxBeforeDeformation = sxx;
-	sxyBeforeDeformation = sxy;
-	syxBeforeDeformation = syx;
-	syyBeforeDeformation = syy;
-
-	packIntoBoundaries();
-
-	eraseFile.open((char*) GpositionFile.c_str(), ios::trunc);
-	eraseFile << FILE_HEADER;
-	eraseFile.close();
-	writeMultiplePackings(GpositionFile);
-
-	while (!reachedGoal) {
-
-		neighborChangesLastCumulative += neighborChangesLast;
-
-		iloop(N) {
-			jloop(N) {
-				trueneighborsLast[j * N + i] = trueneighbors[j * N + i]; // the contacts before shearing step
-
-			}
-			wasRattler[i] = isRattler[i];
-		}
-
-		neighborChangesOld = neighborChanges;
-
-		while (!sufficientAccuracy) {
-
-			if (!fixedStepSize) {
-				if (pastContactChange) {
-					num++;
-
-					jloop(2*N+3) {
-						extraPositionArray[j] = p[j];
-					} // save positions just after rearrangement
-					jloop(2*N+3) {
-						p[j] = pLast[j];
-					} // go back to last particle positions
-					shear = shear / shearfactor; // go back to previous shear
-					shearfactor = sqrt(shearfactor);
-
-				} else if (num > 0) {
-					shearfactor = sqrt(shearfactor);
-				}
-
-				shear = shear * shearfactor; // shear is increased by shearfactor...
-
-			} else {
-				shear = shear + dstrain;
-			}
-
-			jloop(2*N+3) {
-				pLast[j] = p[j];
-			} // backup the particle position before the shear step
-			p[2 * N + 2] = alphaBeforeDeformation * (1 + shear); // ... and added to the shear of the relaxed packing
-
-			iterationcountSimStep = 0;
-			iterationcountfrprmn = 0;
-			iterationcountfire = 0;
-			iterationcountfrprmnCUMULATIVE = 0;
-
-			G = 0.0;
-
-			cumulativeNeighborchanges = 0;
-
-			shearconverged = false;
-			converged = false;
-			frprmnconverged = false;
-			fireconverged = false;
-
-			while (!shearconverged) {
-				simulationstep();
-			}
-			calcSysPara();
-			if (iterationcountfire > maxIterationCountFire) {
-				programmode = programmodeOld;
-				return;
-			}
-
-			checkNeighborChanges(addedContacts, removedContacts,
-					neighborChanges, neighborChangesLast);
-
-			if (neighborChangesLast != 0)
-				pastContactChange = true;
-			else
-				pastContactChange = false;
-
-			if (!fixedStepSize) {
-				if (((neighborChanges - neighborChangesOld)
-						* (neighborChanges - neighborChangesOld) == 1
-						&& fabs(shearfactor - 1.0) < 0.0001)
-						|| (fabs(shearfactor - 1.0) < 1e-6))
-					sufficientAccuracy = true;
-			}
-
-			endtime = time(NULL); // clock function runtime
-			timediff1 = endtime - starttime;
-			starttime = endtime;
-
-			// fast finding of 1st contact change:
-			if ((numberOfDataPoints < 1
-					&& (neighborChangesLastCumulative + neighborChangesLast)
-							!= 0) && !fixedStepSize) {
-				numberOfContactChanges = 0;
-				if (compress)
-					shear = -1e-16;
-				else
-					shear = 1e-16;
-				sufficientAccuracy = false;
-				shearfactor = 10;
-				num = 0;
-				pastContactChange = false;
-			} //////////////////////////////////////////
-
-			numberOfDataPoints++;
-
-			energy();
-			calcSysPara();
-
-			long double maxGrad = 0;
-			iloop(2*N) {
-				if (fabs(xihelper[i]) > maxGrad)
-					maxGrad = fabs(xihelper[i]);
-			}
-
-			G = (sxy - sxyLast) / (shear - shearLast);
-
-			time(&rawtime);
-			timeinfo = localtime(&rawtime);
-			strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
-
-			outLog.open((char*) logFileName.c_str(), ios::app);
-
-			outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P
-					<< "	" << alpha << "	" << delta;
-			outLog << "	" << L << "	" << phi << "	" << Z << "	"
-					<< N - Ncorrected << "	" << sxx << "	" << syy;
-			outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H
-					<< "	" << dH << "	" << timediff1;
-			outLog << "	" << iterationcountfire << "	"
-					<< iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	"
-					<< timebuffer << endl;
-
-			outLog.close();
-
-			outG.open((char*) dataFileName.c_str(), ios::app);
-			outG.setf(ios::scientific, ios::floatfield);
-			outG.precision(16);
-			outG << ((1.0 + shear) * (1.0 + shear) - 1.0) << "	" << sxy << "	"
-					<< trueneighborNumber << "	"
-					<< (neighborChangesLastCumulative + neighborChangesLast)
-					<< "	" << addedContacts << "	" << removedContacts << "	"
-					<< Phelper << "	" << Z << endl;
-
-			outG.close();
-
-			shearLast = shear;
-			sxyLast = sxy;
-
-			if (fixedStepSize) {
-				if (numberOfDataPoints < fixedStepNumber) {
-					reachedGoal = false;
-					writeMultiplePackings(GpositionFile);
-				}
-
-				else {
-					reachedGoal = true;
-					sufficientAccuracy = true;
-					writeMultiplePackings(GpositionFile);
-					programmode = programmodeOld;
-
-					return;
-				}
-			}
-		} // end while(!sufficientAccuracy)
-
-		jloop(2*N+3) {
-			p[j] = pLast[j];
-		}
-		writeMultiplePackings(GpositionFile);
-
-		jloop(2*N+3) {
-			p[j] = extraPositionArray[j];
-		}
-		writeMultiplePackings(GpositionFile);
-
-		if (!fixedStepSize) {
-			pastContactChange = false;
-			sufficientAccuracy = false;
-			num = 0;
-			shearfactor = sqrt(sqrt(sqrt(sqrt(10)))); //sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(10)))))));
-
-			if (numberOfContactChanges < goalNumberOfContactChanges)
-				reachedGoal = false;
-			else
-				reachedGoal = true;
-
-			numberOfContactChanges++;
-		}
-	} // end while
-
-	programmode = programmodeOld;
-	return;
+void calcBulkModulus()
+{
+
+    int programmodeOld = programmode;
+    int num = 0;
+
+    long double shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
+    long double dstrain = goalStrain / fixedStepNumber;
+    int numberOfContactChanges = 0; // the number of contact changes at a given moment
+    bool reachedGoal = false;
+
+    int addedContacts = 0;
+    int removedContacts = 0;
+
+    int neighborChanges = 0; // sum of the number of added and removed contacts at a certain time
+    int neighborChangesOld = neighborChanges;
+    int neighborChangesLast = 0;
+    int neighborChangesLastCumulative = 0;
+    bool pastContactChange = false;
+    bool sufficientAccuracy = false;
+    int numberOfDataPoints = 0;
+
+    vector<long double> extraPositionArray;
+    extraPositionArray.reserve(2 * N + 3);
+
+    long double shearLast = 0.0, sxyLast = sxy;
+
+    time_t rawtime;
+    struct tm * timeinfo;
+    char timebuffer[80];
+
+    ofstream outG;
+    ofstream outLog;
+    ofstream outFirst;
+    ofstream eraseFile;
+    string dataFileName = filenameString;
+    string logFileName = filenameString;
+    string GpositionFile = filenameString;
+    bool compress;
+    string Appendix = "";
+
+    long double goalStrainHelper = goalStrain;
+    int goalStrainExponent = 0, goalStraindigit = 0;
+    string goalStrainString = "";
+
+    if(goalStrain < 0 || goalNumberOfContactChanges < 0) {
+        compress = true;
+
+        if(goalStrain < 0) {
+            goalStrainHelper *= -1.0;
+        }
+
+        if(goalNumberOfContactChanges < 0) {
+            goalNumberOfContactChanges *= -1;
+        }
+
+    } else {
+        compress = false;
+
+    }
+
+    while(goalStrainHelper * 1.01 < 1.0) {
+        goalStrainExponent++;
+        goalStrainHelper *= 10.0;
+    }
+
+    goalStraindigit = goalStrainHelper / 1;
+
+    goalStrainString.push_back(goalStraindigit + 48);
+    goalStrainString.append("e-");
+    goalStrainString.push_back(goalStrainExponent + 48);
+
+    if(compress) {
+        if(!fixedStepSize) {
+            Appendix = "~CR";
+            Appendix.push_back(((goalNumberOfContactChanges / 100) % 10) + 48);
+            Appendix.push_back(((goalNumberOfContactChanges / 10) % 10) + 48);
+            Appendix.push_back(((goalNumberOfContactChanges / 1) % 10) + 48);
+            Appendix.append("~step");
+            Appendix.push_back(
+                (((2 * (goalNumberOfContactChanges) + 1) / 100) % 10) + 48);
+            Appendix.push_back(
+                (((2 * (goalNumberOfContactChanges) + 1) / 10) % 10) + 48);
+            Appendix.push_back(
+                (((2 * (goalNumberOfContactChanges) + 1) / 1) % 10) + 48);
+
+        } else {
+
+            Appendix = "~CS";
+            Appendix.append(goalStrainString);
+            Appendix.append("~step");
+            Appendix.push_back((((fixedStepNumber) / 1000) % 10) + 48);
+            Appendix.push_back((((fixedStepNumber) / 100) % 10) + 48);
+            Appendix.push_back((((fixedStepNumber) / 10) % 10) + 48);
+            Appendix.push_back((((fixedStepNumber) / 1) % 10) + 48);
+        }
+
+    } else {
+        if(!fixedStepSize) {
+            Appendix = "~DR";
+            Appendix.push_back(((goalNumberOfContactChanges / 100) % 10) + 48);
+            Appendix.push_back(((goalNumberOfContactChanges / 10) % 10) + 48);
+            Appendix.push_back(((goalNumberOfContactChanges / 1) % 10) + 48);
+            Appendix.append("~step");
+            Appendix.push_back(
+                (((2 * goalNumberOfContactChanges + 1) / 100) % 10) + 48);
+            Appendix.push_back(
+                (((2 * goalNumberOfContactChanges + 1) / 10) % 10) + 48);
+            Appendix.push_back(
+                (((2 * goalNumberOfContactChanges + 1) / 1) % 10) + 48);
+
+        } else {
+
+            Appendix = "~DS";
+            Appendix.append(goalStrainString);
+            Appendix.append("~step");
+            Appendix.push_back((((fixedStepNumber) / 1000) % 10) + 48);
+            Appendix.push_back((((fixedStepNumber) / 100) % 10) + 48);
+            Appendix.push_back((((fixedStepNumber) / 10) % 10) + 48);
+            Appendix.push_back((((fixedStepNumber) / 1) % 10) + 48);
+        }
+    }
+
+    GpositionFile.insert(particleNumberLength + 6, Appendix);
+    GpositionFile.insert(0, nameOfWorkingDirectory + "/");
+
+    dataFileName.insert(particleNumberLength + 6, Appendix);
+    dataFileName.insert(0, "data");
+    dataFileName.insert(0, nameOfWorkingDirectory + "/");
+
+    logFileName.insert(particleNumberLength + 6, Appendix);
+    logFileName.insert(0, "log");
+    logFileName.insert(0, nameOfWorkingDirectory + "/");
+
+    if(!fixedStepSize) {
+        if(compress) {
+            shear = -1e-9;    // for fast calculation = 1e-12 else = 1e-16
+
+        } else {
+            shear = 1e-9;
+        }
+
+    } else {
+        shear = 0.0;
+    }
+
+    outG.open((char *) dataFileName.c_str(), ios::trunc);
+    outG.setf(ios::scientific, ios::floatfield);
+    outG.precision(16);
+    outG  << FILE_HEADER;
+    outG << "gamma_V	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
+    outG.close();
+
+    outLog.open((char *) logFileName.c_str(), ios::trunc);
+    outLog.setf(ios::scientific, ios::floatfield);
+    outLog.precision(16);
+    outLog  << FILE_HEADER;
+    outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
+    outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
+    outLog << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
+    outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
+    outLog.close();
+
+    alphaBeforeDeformation = p[2 * N + 2];
+    iloop(N) {
+        jloop(N) {
+            trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
+                                               trueneighbors[j * N + i]; // the contacts before shearing
+            trueneighborChanges[j * N + i] = 0;
+        }
+        wasRattler[i] = isRattler[i];
+    }
+
+    programmode = 3; // program-mode for shearing
+
+    cumulativeNeighborchanges = 0;
+
+    jloop(2 * N + 3) {
+        pLast[j] = p[j];
+    } // backup the particle position before the shear step
+
+    energyBeforeDeformation = Uhelper;
+    sxxBeforeDeformation = sxx;
+    sxyBeforeDeformation = sxy;
+    syxBeforeDeformation = syx;
+    syyBeforeDeformation = syy;
+
+    packIntoBoundaries();
+
+    eraseFile.open((char *) GpositionFile.c_str(), ios::trunc);
+    eraseFile << FILE_HEADER;
+    eraseFile.close();
+    writeMultiplePackings(GpositionFile);
+
+    while(!reachedGoal) {
+
+        neighborChangesLastCumulative += neighborChangesLast;
+
+        iloop(N) {
+            jloop(N) {
+                trueneighborsLast[j * N + i] = trueneighbors[j * N + i]; // the contacts before shearing step
+
+            }
+            wasRattler[i] = isRattler[i];
+        }
+
+        neighborChangesOld = neighborChanges;
+
+        while(!sufficientAccuracy) {
+
+            if(!fixedStepSize) {
+                if(pastContactChange) {
+                    num++;
+
+                    jloop(2 * N + 3) {
+                        extraPositionArray[j] = p[j];
+                    } // save positions just after rearrangement
+                    jloop(2 * N + 3) {
+                        p[j] = pLast[j];
+                    } // go back to last particle positions
+                    shear = shear / shearfactor; // go back to previous shear
+                    shearfactor = sqrt(shearfactor);
+
+                } else if(num > 0) {
+                    shearfactor = sqrt(shearfactor);
+                }
+
+                shear = shear * shearfactor; // shear is increased by shearfactor...
+
+            } else {
+                shear = shear + dstrain;
+            }
+
+            jloop(2 * N + 3) {
+                pLast[j] = p[j];
+            } // backup the particle position before the shear step
+            p[2 * N + 2] = alphaBeforeDeformation * (1 + shear); // ... and added to the shear of the relaxed packing
+
+            iterationcountSimStep = 0;
+            iterationcountfrprmn = 0;
+            iterationcountfire = 0;
+            iterationcountfrprmnCUMULATIVE = 0;
+
+            G = 0.0;
+
+            cumulativeNeighborchanges = 0;
+
+            shearconverged = false;
+            converged = false;
+            frprmnconverged = false;
+            fireconverged = false;
+
+            while(!shearconverged) {
+                simulationstep();
+            }
+
+            calcSysPara();
+
+            if(iterationcountfire > maxIterationCountFire) {
+                programmode = programmodeOld;
+                return;
+            }
+
+            checkNeighborChanges(addedContacts, removedContacts,
+                                 neighborChanges, neighborChangesLast);
+
+            if(neighborChangesLast != 0) {
+                pastContactChange = true;
+
+            } else {
+                pastContactChange = false;
+            }
+
+            if(!fixedStepSize) {
+                if(((neighborChanges - neighborChangesOld)
+                    * (neighborChanges - neighborChangesOld) == 1
+                    && fabs(shearfactor - 1.0) < 0.0001)
+                   || (fabs(shearfactor - 1.0) < 1e-6)) {
+                    sufficientAccuracy = true;
+                }
+            }
+
+            endtime = time(NULL); // clock function runtime
+            timediff1 = endtime - starttime;
+            starttime = endtime;
+
+            // fast finding of 1st contact change:
+            if((numberOfDataPoints < 1
+                && (neighborChangesLastCumulative + neighborChangesLast)
+                != 0) && !fixedStepSize) {
+                numberOfContactChanges = 0;
+
+                if(compress) {
+                    shear = -1e-16;
+
+                } else {
+                    shear = 1e-16;
+                }
+
+                sufficientAccuracy = false;
+                shearfactor = 10;
+                num = 0;
+                pastContactChange = false;
+            } //////////////////////////////////////////
+
+            numberOfDataPoints++;
+
+            energy();
+            calcSysPara();
+
+            long double maxGrad = 0;
+            iloop(2 * N) {
+                if(fabs(xihelper[i]) > maxGrad) {
+                    maxGrad = fabs(xihelper[i]);
+                }
+            }
+
+            G = (sxy - sxyLast) / (shear - shearLast);
+
+            time(&rawtime);
+            timeinfo = localtime(&rawtime);
+            strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+
+            outLog.open((char *) logFileName.c_str(), ios::app);
+
+            outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P
+                   << "	" << alpha << "	" << delta;
+            outLog << "	" << L << "	" << phi << "	" << Z << "	"
+                   << N - Ncorrected << "	" << sxx << "	" << syy;
+            outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H
+                   << "	" << dH << "	" << timediff1;
+            outLog << "	" << iterationcountfire << "	"
+                   << iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	"
+                   << timebuffer << endl;
+
+            outLog.close();
+
+            outG.open((char *) dataFileName.c_str(), ios::app);
+            outG.setf(ios::scientific, ios::floatfield);
+            outG.precision(16);
+            outG << ((1.0 + shear) * (1.0 + shear) - 1.0) << "	" << sxy << "	"
+                 << trueneighborNumber << "	"
+                 << (neighborChangesLastCumulative + neighborChangesLast)
+                 << "	" << addedContacts << "	" << removedContacts << "	"
+                 << Phelper << "	" << Z << endl;
+
+            outG.close();
+
+            shearLast = shear;
+            sxyLast = sxy;
+
+            if(fixedStepSize) {
+                if(numberOfDataPoints < fixedStepNumber) {
+                    reachedGoal = false;
+                    writeMultiplePackings(GpositionFile);
+                }
+
+                else {
+                    reachedGoal = true;
+                    sufficientAccuracy = true;
+                    writeMultiplePackings(GpositionFile);
+                    programmode = programmodeOld;
+
+                    return;
+                }
+            }
+        } // end while(!sufficientAccuracy)
+
+        jloop(2 * N + 3) {
+            p[j] = pLast[j];
+        }
+        writeMultiplePackings(GpositionFile);
+
+        jloop(2 * N + 3) {
+            p[j] = extraPositionArray[j];
+        }
+        writeMultiplePackings(GpositionFile);
+
+        if(!fixedStepSize) {
+            pastContactChange = false;
+            sufficientAccuracy = false;
+            num = 0;
+            shearfactor = sqrt(sqrt(sqrt(sqrt(10)))); //sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(10)))))));
+
+            if(numberOfContactChanges < goalNumberOfContactChanges) {
+                reachedGoal = false;
+
+            } else {
+                reachedGoal = true;
+            }
+
+            numberOfContactChanges++;
+        }
+    } // end while
+
+    programmode = programmodeOld;
+    return;
 } // end calcBulkModulus
 
 ////////////////////////////////////////////////////////////////////////
 // checkNeighborChanges()
-void checkNeighborChanges(int& addedContacts, int& removedContacts,
-		int& neighborChanges, int& neighborChangesLast) {
-	stringstream out(stringstream::out);
+void checkNeighborChanges(int & addedContacts, int & removedContacts,
+                          int & neighborChanges, int & neighborChangesLast)
+{
+    stringstream out(stringstream::out);
 
-	int trueneighborChangesLast = 0;
+    int trueneighborChangesLast = 0;
 
-	addedContacts = 0; // added contacts (with respect to contacts of the relaxed packing)
-	removedContacts = 0; // removed contacts (-"-)
-	neighborChanges = 0; // total number of contact changes (-"-)
-	neighborChangesLast = 0; // contact changes since last step
+    addedContacts = 0; // added contacts (with respect to contacts of the relaxed packing)
+    removedContacts = 0; // removed contacts (-"-)
+    neighborChanges = 0; // total number of contact changes (-"-)
+    neighborChangesLast = 0; // contact changes since last step
 
-	calcSysPara();
+    calcSysPara();
 
-	iloop(N) {
-		jloop(i) {
-			trueneighborChanges[j * N + i] = trueneighbors[j * N + i]
-					- trueneighborsOld[j * N + i];
-			trueneighborChangesLast = trueneighbors[j * N + i]
-					- trueneighborsLast[j * N + i];
+    iloop(N) {
+        jloop(i) {
+            trueneighborChanges[j * N + i] = trueneighbors[j * N + i]
+                                             - trueneighborsOld[j * N + i];
+            trueneighborChangesLast = trueneighbors[j * N + i]
+                                      - trueneighborsLast[j * N + i];
 
-			if (!isRattler[j] && !isRattler[i]) {
-				if (trueneighborChangesLast > 0) {
-					neighborChangesLast++;
-					addedContacts++;
-				}
-			}
+            if(!isRattler[j] && !isRattler[i]) {
+                if(trueneighborChangesLast > 0) {
+                    neighborChangesLast++;
+                    addedContacts++;
+                }
+            }
 
-			if (!wasRattler[j] && !wasRattler[i]) {
-				if (trueneighborChangesLast < 0) {
-					neighborChangesLast++;
-					removedContacts++;
-				}
-			}
-		}
-	}
+            if(!wasRattler[j] && !wasRattler[i]) {
+                if(trueneighborChangesLast < 0) {
+                    neighborChangesLast++;
+                    removedContacts++;
+                }
+            }
+        }
+    }
 } // end checkNeighborChanges
 
-void calculate_neighbors() {
-	trueneighborNumberOld = trueneighborNumber;
-	trueneighborNumber = 0;
-	consideredNeighborNumber = 0;
-	iloop(N) {
-		jloop(i) {
-			neighbors[j * N + i] = true;
+void calculate_neighbors()
+{
+    trueneighborNumberOld = trueneighborNumber;
+    trueneighborNumber = 0;
+    consideredNeighborNumber = 0;
+    iloop(N) {
+        jloop(i) {
+            neighbors[j * N + i] = true;
 
-		}
-		neighbors[i * N + i] = false;
-	}
-	iloop(2*N+3) {
-		phelper[i] = p[i];
-	}
-	energy();
-	gradientcalc();
-	iloop(N) {
-		jloop(i) {
-			if (rij[j * N + i] < Rneighbor) {
-				neighbors[j * N + i] = true;
-				consideredNeighborNumber++;
-			} else
-				neighbors[j * N + i] = false;
-			if (trueneighbors[j * N + i] && !isRattler[i] && !isRattler[j])
-				trueneighborNumber++;
-		}
-	}
+        }
+        neighbors[i * N + i] = false;
+    }
+    iloop(2 * N + 3) {
+        phelper[i] = p[i];
+    }
+    energy();
+    gradientcalc();
+    iloop(N) {
+        jloop(i) {
+            if(rij[j * N + i] < Rneighbor) {
+                neighbors[j * N + i] = true;
+                consideredNeighborNumber++;
+
+            } else {
+                neighbors[j * N + i] = false;
+            }
+
+            if(trueneighbors[j * N + i] && !isRattler[i] && !isRattler[j]) {
+                trueneighborNumber++;
+            }
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Simulation step
-void simulationstep() {
-	long double fret;
+void simulationstep()
+{
+    long double fret;
 
-	time_t rawtime1;
+    time_t rawtime1;
 
-	timediff2 = time(NULL);
-	distanceCalcs = 0.0;
+    timediff2 = time(NULL);
+    distanceCalcs = 0.0;
 
-	alpha = p[2 * N];
-	delta = p[2 * N + 1];
-	L = p[2 * N + 2];
+    alpha = p[2 * N];
+    delta = p[2 * N + 1];
+    L = p[2 * N + 2];
 
-	lxx = L / (1.0 + delta);
-	lxy = L * 0.0;
-	lyx = L * alpha;
-	lyy = L * (1.0 + delta);
+    lxx = L / (1.0 + delta);
+    lxy = L * 0.0;
+    lyx = L * alpha;
+    lyy = L * (1.0 + delta);
 
-	packIntoBoundaries();
+    packIntoBoundaries();
 
-	if (programmode == 3 && iterationcountfire == 0)
-		cumulativeNeighborchanges = 0;
+    if(programmode == 3 && iterationcountfire == 0) {
+        cumulativeNeighborchanges = 0;
+    }
 
-	if ((programmode == 5) && frprmnconverged && Rneighbor / Rmax < 2.41) {
-		if ((iterationcountfire % 10000) == 0) {
-			calculate_neighbors();
-		}
-	} else {
-		calculate_neighbors();
-	}
+    if((programmode == 5) && frprmnconverged && Rneighbor / Rmax < 2.41) {
+        if((iterationcountfire % 10000) == 0) {
+            calculate_neighbors();
+        }
 
-	iloop(2*N+3) {
-		phelper[i] = p[i];
-	}
-	energy();
-	gradientcalc();
+    } else {
+        calculate_neighbors();
+    }
 
-	if (programmode == 5) {
-		if (!frprmnconverged) {
-			Rneighbor = 3.5 * Rmax
-					+ 0.3 * L / pow(2.0, iterationcountSimStep * 0.1);
-			RneighborFrprmnLast = Rneighbor;
-		} else {
-			Rneighbor = 3.5 * Rmax
-					+ (RneighborFrprmnLast - 2.4 * Rmax)
-							/ pow(2.0, (iterationcountfire) * 0.001);
+    iloop(2 * N + 3) {
+        phelper[i] = p[i];
+    }
+    energy();
+    gradientcalc();
 
-		}
-	}
+    if(programmode == 5) {
+        if(!frprmnconverged) {
+            Rneighbor = 3.5 * Rmax
+                        + 0.3 * L / pow(2.0, iterationcountSimStep * 0.1);
+            RneighborFrprmnLast = Rneighbor;
 
-	if (programmode == 7) {
-		Rneighbor = 3.5 * Rmax;
-	}
+        } else {
+            Rneighbor = 3.5 * Rmax
+                        + (RneighborFrprmnLast - 2.4 * Rmax)
+                        / pow(2.0, (iterationcountfire) * 0.001);
 
-	if (distributioncase == 3 || distributioncase == 4) {
-		Rneighbor = 3.5 * Rmax;
-		dofOnOff = true;
-	}
+        }
+    }
 
-	if (programmode == 3) {
-		Rneighbor = 3.5 * Rmax;
-	}
+    if(programmode == 7) {
+        Rneighbor = 3.5 * Rmax;
+    }
 
-	cumulativeNeighborchanges += fabs(
-			trueneighborNumber - trueneighborNumberOld);
+    if(distributioncase == 3 || distributioncase == 4) {
+        Rneighbor = 3.5 * Rmax;
+        dofOnOff = true;
+    }
 
-	if (programmode == 1 && programmode == 2) {
-		frprmn(N, &fret, energy);
-		if (frprmnconverged)
-			converged = true;
-	}
-	if (programmode == 5) {
-		if (!frprmnconverged) {
-			alphaOnOff = false;
-			deltaOnOff = false;
-			pressOnOff = false;
+    if(programmode == 3) {
+        Rneighbor = 3.5 * Rmax;
+    }
 
-			frprmn(N, &fret, energy);
-		} else {
-			dofOnOff = true;
+    cumulativeNeighborchanges += fabs(
+                                     trueneighborNumber - trueneighborNumberOld);
 
-			Pold = Phelper;
+    if(programmode == 1 && programmode == 2) {
+        frprmn(N, &fret, energy);
 
-			if (dofOnOff) {
+        if(frprmnconverged) {
+            converged = true;
+        }
+    }
 
-				if (alphaOnOffInit)
-					alphaOnOff = true;
-				if (deltaOnOffInit)
-					deltaOnOff = true;
-				if (pressOnOffInit)
-					pressOnOff = true;
-			} else {
-				alphaOnOff = false;
-				deltaOnOff = false;
-				pressOnOff = false;
-			} // end else
+    if(programmode == 5) {
+        if(!frprmnconverged) {
+            alphaOnOff = false;
+            deltaOnOff = false;
+            pressOnOff = false;
 
-			fire();
+            frprmn(N, &fret, energy);
 
-			if (2.0 * fabs(H - HLastFunctionCall)
-					< ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
-				if (fabs(sxy) < 1e-15) {
+        } else {
+            dofOnOff = true;
 
-					if (screenOutput)
-						cout << "FIRE algorithm converged!" << endl;
-					fireconverged = true;
-				}
-			} else
-				endcount = 0;
-		} // end else
-		if (fireconverged)
-			converged = true;
-		
-		energy();
-		gradientcalc();
-	}
+            Pold = Phelper;
 
-	if (programmode == 3) {
-		dofOnOff = false;
-		alphaOnOff = false;
-		deltaOnOff = false;
-		pressOnOff = false;
+            if(dofOnOff) {
 
-		shearconverged = false;
-		converged = false;
-		frprmnconverged = false;
-		fireconverged = false;
+                if(alphaOnOffInit) {
+                    alphaOnOff = true;
+                }
 
-		fire();
+                if(deltaOnOffInit) {
+                    deltaOnOff = true;
+                }
 
-		if (2.0 * fabs(H - HLastFunctionCall)
-				< 1e-13 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
+                if(pressOnOffInit) {
+                    pressOnOff = true;
+                }
 
-			if (screenOutput)
-				cout << "FIRE algorithm converged!" << endl;
-			fireconverged = true;
-		}
+            } else {
+                alphaOnOff = false;
+                deltaOnOff = false;
+                pressOnOff = false;
+            } // end else
 
-		if (fireconverged) {
-			converged = true;
-			shearconverged = true;
-		}
-	}
+            fire();
 
-	calcSysPara();
+            if(2.0 * fabs(H - HLastFunctionCall)
+               < ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
+                if(fabs(sxy) < 1e-15) {
 
-	if (fireconverged) {
-		calculate_neighbors();
-	} // end if
+                    if(screenOutput) {
+                        cout << "FIRE algorithm converged!" << endl;
+                    }
 
-	time(&rawtime1);
+                    fireconverged = true;
+                }
 
-	if (programmode != 3) {
-		energywrite[iterationcountSimStep] = Uhelper;
-		enthalpiewrite[iterationcountSimStep] = Uhelper + P0 * L * L;
-		sxywrite[iterationcountSimStep] = sxy;
-	}
+            } else {
+                endcount = 0;
+            }
+        } // end else
 
-	if (dofOnOff) {
-		int lowerswitch = 10;
-		int upperswitch = 50;
-		double dampDOF = 0.85;
+        if(fireconverged) {
+            converged = true;
+        }
 
-		if (countAlphaFlip < lowerswitch) {
-			dampalpha = 1.01 * (dampalpha);
-		}
-		if (countAlphaFlip > upperswitch)
-			dampalpha = 0.99 * dampalpha;
+        energy();
+        gradientcalc();
+    }
 
-		if (countDeltaFlip < lowerswitch) {
-			dampdelta = 1.01 * (dampdelta);
-		}
-		if (countDeltaFlip > upperswitch)
-			dampdelta = 0.99 * dampdelta;
+    if(programmode == 3) {
+        dofOnOff = false;
+        alphaOnOff = false;
+        deltaOnOff = false;
+        pressOnOff = false;
 
-		if (countPressFlip < lowerswitch) {
-			damppress = 1.01 * (damppress);
-		}
-		if (countPressFlip > upperswitch)
-			damppress = 0.99 * damppress;
+        shearconverged = false;
+        converged = false;
+        frprmnconverged = false;
+        fireconverged = false;
 
-		if (dampalpha > 1.0)
-			dampalpha = 1.0;
-		if (dampdelta > 1.0)
-			dampdelta = 1.0;
-		if (damppress > 1.0)
-			damppress = 1.0;
+        fire();
 
-		if (dampalpha < dampDOF)
-			dampalpha = dampDOF;
-		if (dampdelta < dampDOF)
-			dampdelta = dampDOF;
-		if (damppress < dampDOF)
-			damppress = dampDOF;
+        if(2.0 * fabs(H - HLastFunctionCall)
+           < 1e-13 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
 
-		damp = 1.0;
+            if(screenOutput) {
+                cout << "FIRE algorithm converged!" << endl;
+            }
 
-	}
+            fireconverged = true;
+        }
 
-	M[N] = M[N + 1] = N * N;
-	M[N + 2] = sqrt(N);
+        if(fireconverged) {
+            converged = true;
+            shearconverged = true;
+        }
+    }
 
-	if (2.0 * fabs(H - HLastFunctionCall)
-			< 1e-14 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
-		dtmax = dt * 0.95;
-	} else
-		dtmax = 0.6;
+    calcSysPara();
 
-	string filepath = nameOfWorkingDirectory + "/" + "errorLog.txt";
-	if (iterationcountfire > maxIterationCountFire) {
-		fireconverged = true;
+    if(fireconverged) {
+        calculate_neighbors();
+    } // end if
 
-		ofstream errorLog;
-		errorLog.open((char*) filepath.c_str(), ios::app);
+    time(&rawtime1);
 
-		createFileName();
-		errorLog << filenameString
-				<< " did not converge within maximum amount of iterations."
-				<< endl;
-	}
+    if(programmode != 3) {
+        energywrite[iterationcountSimStep] = Uhelper;
+        enthalpiewrite[iterationcountSimStep] = Uhelper + P0 * L * L;
+        sxywrite[iterationcountSimStep] = sxy;
+    }
 
-	countAlphaFlip = 0;
-	countDeltaFlip = 0;
-	countPressFlip = 0;
+    if(dofOnOff) {
+        int lowerswitch = 10;
+        int upperswitch = 50;
+        double dampDOF = 0.85;
 
-	iterationcountmnbrak = iterationcountbrent = iterationcountfrprmn = 0;
-	iterationcountSimStep++;
+        if(countAlphaFlip < lowerswitch) {
+            dampalpha = 1.01 * (dampalpha);
+        }
 
-	dU = Uhelper - UhelperLastFunctionCall;
-	dH = H - HLastFunctionCall;
+        if(countAlphaFlip > upperswitch) {
+            dampalpha = 0.99 * dampalpha;
+        }
 
-	UhelperLastFunctionCall = Uhelper;
-	HLastFunctionCall = H;
-	return;
+        if(countDeltaFlip < lowerswitch) {
+            dampdelta = 1.01 * (dampdelta);
+        }
+
+        if(countDeltaFlip > upperswitch) {
+            dampdelta = 0.99 * dampdelta;
+        }
+
+        if(countPressFlip < lowerswitch) {
+            damppress = 1.01 * (damppress);
+        }
+
+        if(countPressFlip > upperswitch) {
+            damppress = 0.99 * damppress;
+        }
+
+        if(dampalpha > 1.0) {
+            dampalpha = 1.0;
+        }
+
+        if(dampdelta > 1.0) {
+            dampdelta = 1.0;
+        }
+
+        if(damppress > 1.0) {
+            damppress = 1.0;
+        }
+
+        if(dampalpha < dampDOF) {
+            dampalpha = dampDOF;
+        }
+
+        if(dampdelta < dampDOF) {
+            dampdelta = dampDOF;
+        }
+
+        if(damppress < dampDOF) {
+            damppress = dampDOF;
+        }
+
+        damp = 1.0;
+
+    }
+
+    M[N] = M[N + 1] = N * N;
+    M[N + 2] = sqrt(N);
+
+    if(2.0 * fabs(H - HLastFunctionCall)
+       < 1e-14 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
+        dtmax = dt * 0.95;
+
+    } else {
+        dtmax = 0.6;
+    }
+
+    string filepath = nameOfWorkingDirectory + "/" + "errorLog.txt";
+
+    if(iterationcountfire > maxIterationCountFire) {
+        fireconverged = true;
+
+        ofstream errorLog;
+        errorLog.open((char *) filepath.c_str(), ios::app);
+
+        createFileName();
+        errorLog << filenameString
+                 << " did not converge within maximum amount of iterations."
+                 << endl;
+    }
+
+    countAlphaFlip = 0;
+    countDeltaFlip = 0;
+    countPressFlip = 0;
+
+    iterationcountmnbrak = iterationcountbrent = iterationcountfrprmn = 0;
+    iterationcountSimStep++;
+
+    dU = Uhelper - UhelperLastFunctionCall;
+    dH = H - HLastFunctionCall;
+
+    UhelperLastFunctionCall = Uhelper;
+    HLastFunctionCall = H;
+    return;
 }
 
 // end simulation step
 
 ////////////////////////////////////////////////////////////////////////
 // menu
-void menu() {
+void menu()
+{
 
-	iterationcountSimStep = 0;
-	iterationcountfrprmn = 0;
-	iterationcountfire = 0;
+    iterationcountSimStep = 0;
+    iterationcountfrprmn = 0;
+    iterationcountfire = 0;
 
-	char answer;
+    char answer;
 
-	converged = false;
-	frprmnconverged = false;
-	fireconverged = false;
-	alphaOnOff = deltaOnOff = false;
+    converged = false;
+    frprmnconverged = false;
+    fireconverged = false;
+    alphaOnOff = deltaOnOff = false;
 
-	doSimpleShear = false;
+    doSimpleShear = false;
 
-	string fileToOpen = "";
+    string fileToOpen = "";
 
-	if (screenOutput)
-		cout << "Please specify WORKING DIRECTORY." << endl;
-	cin >> nameOfWorkingDirectory;
-	checkFolderName(nameOfWorkingDirectory);
-	extractNandP(nameOfWorkingDirectory);
+    if(screenOutput) {
+        cout << "Please specify WORKING DIRECTORY." << endl;
+    }
 
-	if (screenOutput) {
-		cout << endl;
-		cout << "Please choose a program mode." << endl;
-		cout << "1 = create DEFAULT jammed packing(s)." << endl;
-		cout << "2 = create NON-default jammed packing(s)." << endl;
-		cout << "3 = apply simple shear (rearrangements)." << endl;
-		cout << "4 = apply simple shear (fixed step size)." << endl;
-		cout << "5 = apply compression (rearrangements)." << endl;
-		cout << "6 = apply compression (fixed step size)." << endl;
-		cout << "7 = DISPLAY system state." << endl << endl;
+    cin >> nameOfWorkingDirectory;
+    checkFolderName(nameOfWorkingDirectory);
+    extractNandP(nameOfWorkingDirectory);
 
-		cout << "9 = EXIT program" << endl;
-	}
+    if(screenOutput) {
+        cout << endl;
+        cout << "Please choose a program mode." << endl;
+        cout << "1 = create DEFAULT jammed packing(s)." << endl;
+        cout << "2 = create NON-default jammed packing(s)." << endl;
+        cout << "3 = apply simple shear (rearrangements)." << endl;
+        cout << "4 = apply simple shear (fixed step size)." << endl;
+        cout << "5 = apply compression (rearrangements)." << endl;
+        cout << "6 = apply compression (fixed step size)." << endl;
+        cout << "7 = DISPLAY system state." << endl << endl;
 
-	cin >> menumode;
-	switch (menumode) {
+        cout << "9 = EXIT program" << endl;
+    }
 
-	case 1:
-		programmode = 5;
-		ftol = ftolFrprmnBeforeFIRE;
-		alphaOnOff = false;
-		deltaOnOff = false;
-		if (screenOutput)
-			cout << "Please insert number of packings to be created!" << endl;
-		cin >> numPackingsToProcess;
-		if (screenOutput)
-			cout << "Please insert starting number of packing names!" << endl;
-		cin >> firstPackingNumber;
-		currentPackingNumber = firstPackingNumber;
-		break;
+    cin >> menumode;
 
-	case 2:
-		programmode = 5;
-		ftol = ftolFrprmnBeforeFIRE;
-		if (screenOutput)
-			cout << "Is simple shear (alpha) a degree of freedom? Y/N :";
-		cin >> answer;
-		if (answer == 'Y' || answer == 'y')
-			alphaOnOffInit = true;
-		else
-			alphaOnOffInit = false;
-		if (screenOutput)
-			cout << "Is pure shear (delta) a degree of freedom? Y/N :";
-		cin >> answer;
-		if (answer == 'Y' || answer == 'y')
-			deltaOnOffInit = true;
-		else
-			deltaOnOffInit = false;
-		if (screenOutput)
-			cout << "Equilibrate at target pressure? Y/N :";
-		cin >> answer;
-		if (answer == 'Y' || answer == 'y')
-			pressOnOffInit = true;
-		else {
-			pressOnOffInit = false;
-			if (screenOutput)
-				cout << "Please insert desired fill fraction:";
-			cin >> phiinit;
-		}
+    switch(menumode) {
 
-		alphaOnOff = false;
-		deltaOnOff = false;
-		if (screenOutput)
-			cout << "Please insert number of packings to be created!" << endl;
-		cin >> numPackingsToProcess;
-		currentPackingNumber = 0;
-		break;
+    case 1:
+        programmode = 5;
+        ftol = ftolFrprmnBeforeFIRE;
+        alphaOnOff = false;
+        deltaOnOff = false;
 
-	case 3:
-		programmode = 5;
-		doSimpleShear = true;
-		fixedStepSize = false;
-		ftol = ftolFrprmnBeforeFIRE;
-		alphaOnOff = false;
-		deltaOnOff = false;
-		if (screenOutput)
-			cout << "Please insert number of packings to be created!" << endl;
-		cin >> numPackingsToProcess;
-		if (screenOutput)
-			cout << "Please insert starting number of packing names!" << endl;
-		cin >> firstPackingNumber;
-		if (screenOutput)
-			cout << "Please insert goal number of rearrangements!" << endl;
-		cin >> goalNumberOfContactChanges;
+        if(screenOutput) {
+            cout << "Please insert number of packings to be created!" << endl;
+        }
 
-		currentPackingNumber = firstPackingNumber;
-		break;
+        cin >> numPackingsToProcess;
 
-	case 4:
-		programmode = 5;
-		doSimpleShear = true;
-		fixedStepSize = true;
-		ftol = ftolFrprmnBeforeFIRE;
-		alphaOnOff = false;
-		deltaOnOff = false;
-		if (screenOutput)
-			cout << "Please insert number of packings to be created!" << endl;
-		cin >> numPackingsToProcess;
-		if (screenOutput)
-			cout << "Please insert starting number of packing names!" << endl;
-		cin >> firstPackingNumber;
-		if (screenOutput)
-			cout << "Please insert strain goal!" << endl;
-		cin >> goalStrain;
-		if (screenOutput)
-			cout << "Please insert number of equidistant strain steps!" << endl;
-		cin >> fixedStepNumber;
-		currentPackingNumber = firstPackingNumber;
-		break;
+        if(screenOutput) {
+            cout << "Please insert starting number of packing names!" << endl;
+        }
 
-	case 5:
-		programmode = 5;
-		doCompression = true;
-		fixedStepSize = false;
-		ftol = ftolFrprmnBeforeFIRE;
-		alphaOnOff = false;
-		deltaOnOff = false;
-		if (screenOutput)
-			cout << "Please insert number of packings to be created!" << endl;
-		cin >> numPackingsToProcess;
-		if (screenOutput)
-			cout << "Please insert starting number of packing names!" << endl;
-		cin >> firstPackingNumber;
-		if (screenOutput)
-			cout << "Please insert goal number of rearrangements!" << endl;
-		if (screenOutput)
-			cout << "(neg. values for compression, pos. decompression)" << endl;
-		cin >> goalNumberOfContactChanges;
-		currentPackingNumber = firstPackingNumber;
-		break;
+        cin >> firstPackingNumber;
+        currentPackingNumber = firstPackingNumber;
+        break;
 
-	case 6:
-		programmode = 5;
-		doCompression = true;
-		fixedStepSize = true;
-		ftol = ftolFrprmnBeforeFIRE;
-		alphaOnOff = false;
-		deltaOnOff = false;
-		if (screenOutput)
-			cout << "Please insert number of packings to be created!" << endl;
-		cin >> numPackingsToProcess;
-		if (screenOutput)
-			cout << "Please insert starting number of packing names!" << endl;
-		cin >> firstPackingNumber;
-		if (screenOutput)
-			cout << "Please insert strain goal!" << endl;
-		if (screenOutput)
-			cout << "(neg. values for compression, pos. decompression)" << endl;
-		cin >> goalStrain;
-		if (screenOutput)
-			cout << "Please insert number of equidistant strain steps!" << endl;
-		cin >> fixedStepNumber;
-		currentPackingNumber = firstPackingNumber;
-		break;
+    case 2:
+        programmode = 5;
+        ftol = ftolFrprmnBeforeFIRE;
 
-	case 7:
-		onlydisplay = true;
-		break;
+        if(screenOutput) {
+            cout << "Is simple shear (alpha) a degree of freedom? Y/N :";
+        }
 
-	case 9:
-		endprogram = true;
-		return;
-		break;
+        cin >> answer;
 
-	}
-	if (screenOutput) {
-		cout << "Please choose a system state." << endl;
-		cout << "1 = use CURRENT particle distribution." << endl;
-		cout << "2 = use RANDOM particle distribution." << endl;
-		cout << "3 = read particle distribution from file." << endl;
-		cout
-				<< "4 = read particle distribution from file (NEW target pressure)."
-				<< endl;
-		cout << "5 = open file by name." << endl;
+        if(answer == 'Y' || answer == 'y') {
+            alphaOnOffInit = true;
 
-		cout << "9 = EXIT program" << endl;
-	}
-	cin >> distributioncase;
+        } else {
+            alphaOnOffInit = false;
+        }
 
-	switch (distributioncase) {
-	case 1:
-		if (screenOutput)
-			cout << "Please insert target pressure P0: ";
-		cin >> P0;
-		break;
-	case 2:
+        if(screenOutput) {
+            cout << "Is pure shear (delta) a degree of freedom? Y/N :";
+        }
 
-		initializeSimulation();
-		resethelpervars();
-		break;
-	case 3:
-		readPositionFile();
-		break;
+        cin >> answer;
 
-	case 4:
-		if (screenOutput)
-			cout << "Please specify target pressure: ";
-		cin >> P0init;
-		readPositionFile();
-		break;
+        if(answer == 'Y' || answer == 'y') {
+            deltaOnOffInit = true;
 
-	case 5:
-		if (screenOutput)
-			cout << "Filename: ";
-		cin >> fileToOpen;
-		filenameString = fileToOpen;
-		if (screenOutput)
-			cout << filenameString << endl;
-		readPositionFile();
-		simulationstep();
-		break;
+        } else {
+            deltaOnOffInit = false;
+        }
 
-	case 9:
-		endprogram = true;
-		break;
+        if(screenOutput) {
+            cout << "Equilibrate at target pressure? Y/N :";
+        }
 
-	default:
-		cout << "No value given; aborting";
-		exit(1);
+        cin >> answer;
 
-	}
+        if(answer == 'Y' || answer == 'y') {
+            pressOnOffInit = true;
 
-	if (programmode == 3) {
-		energy();
-		energyBeforeDeformation = Uhelper;
-		sxxBeforeDeformation = sxx;
-		sxyBeforeDeformation = sxy;
-		syxBeforeDeformation = syx;
-		syyBeforeDeformation = syy;
-	}
+        } else {
+            pressOnOffInit = false;
 
-	return;
+            if(screenOutput) {
+                cout << "Please insert desired fill fraction:";
+            }
+
+            cin >> phiinit;
+        }
+
+        alphaOnOff = false;
+        deltaOnOff = false;
+
+        if(screenOutput) {
+            cout << "Please insert number of packings to be created!" << endl;
+        }
+
+        cin >> numPackingsToProcess;
+        currentPackingNumber = 0;
+        break;
+
+    case 3:
+        programmode = 5;
+        doSimpleShear = true;
+        fixedStepSize = false;
+        ftol = ftolFrprmnBeforeFIRE;
+        alphaOnOff = false;
+        deltaOnOff = false;
+
+        if(screenOutput) {
+            cout << "Please insert number of packings to be created!" << endl;
+        }
+
+        cin >> numPackingsToProcess;
+
+        if(screenOutput) {
+            cout << "Please insert starting number of packing names!" << endl;
+        }
+
+        cin >> firstPackingNumber;
+
+        if(screenOutput) {
+            cout << "Please insert goal number of rearrangements!" << endl;
+        }
+
+        cin >> goalNumberOfContactChanges;
+
+        currentPackingNumber = firstPackingNumber;
+        break;
+
+    case 4:
+        programmode = 5;
+        doSimpleShear = true;
+        fixedStepSize = true;
+        ftol = ftolFrprmnBeforeFIRE;
+        alphaOnOff = false;
+        deltaOnOff = false;
+
+        if(screenOutput) {
+            cout << "Please insert number of packings to be created!" << endl;
+        }
+
+        cin >> numPackingsToProcess;
+
+        if(screenOutput) {
+            cout << "Please insert starting number of packing names!" << endl;
+        }
+
+        cin >> firstPackingNumber;
+
+        if(screenOutput) {
+            cout << "Please insert strain goal!" << endl;
+        }
+
+        cin >> goalStrain;
+
+        if(screenOutput) {
+            cout << "Please insert number of equidistant strain steps!" << endl;
+        }
+
+        cin >> fixedStepNumber;
+        currentPackingNumber = firstPackingNumber;
+        break;
+
+    case 5:
+        programmode = 5;
+        doCompression = true;
+        fixedStepSize = false;
+        ftol = ftolFrprmnBeforeFIRE;
+        alphaOnOff = false;
+        deltaOnOff = false;
+
+        if(screenOutput) {
+            cout << "Please insert number of packings to be created!" << endl;
+        }
+
+        cin >> numPackingsToProcess;
+
+        if(screenOutput) {
+            cout << "Please insert starting number of packing names!" << endl;
+        }
+
+        cin >> firstPackingNumber;
+
+        if(screenOutput) {
+            cout << "Please insert goal number of rearrangements!" << endl;
+        }
+
+        if(screenOutput) {
+            cout << "(neg. values for compression, pos. decompression)" << endl;
+        }
+
+        cin >> goalNumberOfContactChanges;
+        currentPackingNumber = firstPackingNumber;
+        break;
+
+    case 6:
+        programmode = 5;
+        doCompression = true;
+        fixedStepSize = true;
+        ftol = ftolFrprmnBeforeFIRE;
+        alphaOnOff = false;
+        deltaOnOff = false;
+
+        if(screenOutput) {
+            cout << "Please insert number of packings to be created!" << endl;
+        }
+
+        cin >> numPackingsToProcess;
+
+        if(screenOutput) {
+            cout << "Please insert starting number of packing names!" << endl;
+        }
+
+        cin >> firstPackingNumber;
+
+        if(screenOutput) {
+            cout << "Please insert strain goal!" << endl;
+        }
+
+        if(screenOutput) {
+            cout << "(neg. values for compression, pos. decompression)" << endl;
+        }
+
+        cin >> goalStrain;
+
+        if(screenOutput) {
+            cout << "Please insert number of equidistant strain steps!" << endl;
+        }
+
+        cin >> fixedStepNumber;
+        currentPackingNumber = firstPackingNumber;
+        break;
+
+    case 7:
+        onlydisplay = true;
+        break;
+
+    case 9:
+        endprogram = true;
+        return;
+        break;
+
+    }
+
+    if(screenOutput) {
+        cout << "Please choose a system state." << endl;
+        cout << "1 = use CURRENT particle distribution." << endl;
+        cout << "2 = use RANDOM particle distribution." << endl;
+        cout << "3 = read particle distribution from file." << endl;
+        cout
+                << "4 = read particle distribution from file (NEW target pressure)."
+                << endl;
+        cout << "5 = open file by name." << endl;
+
+        cout << "9 = EXIT program" << endl;
+    }
+
+    cin >> distributioncase;
+
+    switch(distributioncase) {
+    case 1:
+
+        if(screenOutput) {
+            cout << "Please insert target pressure P0: ";
+        }
+
+        cin >> P0;
+        break;
+    case 2:
+
+        initializeSimulation();
+        resethelpervars();
+        break;
+    case 3:
+        readPositionFile();
+        break;
+
+    case 4:
+
+        if(screenOutput) {
+            cout << "Please specify target pressure: ";
+        }
+
+        cin >> P0init;
+        readPositionFile();
+        break;
+
+    case 5:
+
+        if(screenOutput) {
+            cout << "Filename: ";
+        }
+
+        cin >> fileToOpen;
+        filenameString = fileToOpen;
+
+        if(screenOutput) {
+            cout << filenameString << endl;
+        }
+
+        readPositionFile();
+        simulationstep();
+        break;
+
+    case 9:
+        endprogram = true;
+        break;
+
+    default:
+        cout << "No value given; aborting";
+        exit(1);
+
+    }
+
+    if(programmode == 3) {
+        energy();
+        energyBeforeDeformation = Uhelper;
+        sxxBeforeDeformation = sxx;
+        sxyBeforeDeformation = sxy;
+        syxBeforeDeformation = syx;
+        syyBeforeDeformation = syy;
+    }
+
+    return;
 }
 // end menu
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // fire
-void fire() {
-	// Velocity Verlet algorithm
-	//v += 0.5*(aold+a)*dt
-	//p += v*dt+0.5*aold*dt*dt;
+void fire()
+{
+    // Velocity Verlet algorithm
+    //v += 0.5*(aold+a)*dt
+    //p += v*dt+0.5*aold*dt*dt;
 
-	// if velocities are irrelevant and we only want the equilibrium position...
-	//v += a*dt
-	//p += v*dt
+    // if velocities are irrelevant and we only want the equilibrium position...
+    //v += a*dt
+    //p += v*dt
 
-	long double iterPosPower = 0;
-	int countAlpha = 0;
-	int countDelta = 0;
-	int countPress = 0;
-	int itercount = 0;
+    long double iterPosPower = 0;
+    int countAlpha = 0;
+    int countDelta = 0;
+    int countPress = 0;
+    int itercount = 0;
 
-	long double frac;
-	long double fracAlpha;
-	long double fracDelta;
+    long double frac;
+    long double fracAlpha;
+    long double fracDelta;
 
-	FIRE_alpha = FIRE_alpha_start;
+    FIRE_alpha = FIRE_alpha_start;
 
-	while (itercount < 1000) {
+    while(itercount < 1000) {
 
-		totaliterationcount++;
+        totaliterationcount++;
 
-		Uold = Uhelper;
-		Hold = Uhelper + P0 * Lhelper * Lhelper;
+        Uold = Uhelper;
+        Hold = Uhelper + P0 * Lhelper * Lhelper;
 
-		sxyOld = sxy;
+        sxyOld = sxy;
 
-		energy(); // calculate overlaps of new configuration
-		gradientcalc(); // calulate the gradient for the new configuration
+        energy(); // calculate overlaps of new configuration
+        gradientcalc(); // calulate the gradient for the new configuration
 
-		H = Uhelper + P0 * Lhelper * Lhelper;
+        H = Uhelper + P0 * Lhelper * Lhelper;
 
-		if (programmode == 3)
-			calcSysPara();
+        if(programmode == 3) {
+            calcSysPara();
+        }
 
-		power = 0;
-		gg = 0;
-		vv = 0;
+        power = 0;
+        gg = 0;
+        vv = 0;
 
-		iloop(N) { // iloop(2*N+3) to include 3 DoF !
-			power -= (xihelper[i] * v[i] + xihelper[N + i] * v[N + i]);
-			gg += (xihelper[i] * xihelper[i])
-					+ (xihelper[N + i] * xihelper[N + i]);
-			vv += (v[i] * v[i]) + (v[N + i] * v[N + i]);
-		} // end iloop
+        iloop(N) { // iloop(2*N+3) to include 3 DoF !
+            power -= (xihelper[i] * v[i] + xihelper[N + i] * v[N + i]);
+            gg += (xihelper[i] * xihelper[i])
+                  + (xihelper[N + i] * xihelper[N + i]);
+            vv += (v[i] * v[i]) + (v[N + i] * v[N + i]);
+        } // end iloop
 
-		gg = sqrt(gg) + 1e-30;
-		vv = sqrt(vv);
+        gg = sqrt(gg) + 1e-30;
+        vv = sqrt(vv);
 
-		if (power > 0 && iterPosPower > Nmin) {
-			dt = min(dt * finc, dtmax);
-			FIRE_alpha *= f_FIRE_alpha;
-		}
-		if (power < 0) {
-			if (fabs(sxy) < 1e-16)
-				dt = max(dt * 0.2 * fdec, dtmin);
-			else
-				dt = max(dt * fdec, dtmin);
-			iloop(2*N) {
-				v[i] = 0.0;
-			}
-			FIRE_alpha = FIRE_alpha_start;
-			iterPosPower = 0;
-		}
+        if(power > 0 && iterPosPower > Nmin) {
+            dt = min(dt * finc, dtmax);
+            FIRE_alpha *= f_FIRE_alpha;
+        }
 
-		double radiusFraction = 1e-5;
+        if(power < 0) {
+            if(fabs(sxy) < 1e-16) {
+                dt = max(dt * 0.2 * fdec, dtmin);
 
-		if (alphaOnOff && (fabs(Phelper - P0) / P0 < 5e-1)) {
-			v[2 * N] = v[2 * N] * dampalpha - xihelper[2 * N] / M[N] * dt; // damping prevents too large changes
-			if (v[2 * N] * Lhelper * dt > radiusFraction)
-				v[2 * N] = radiusFraction / Lhelper / dt;
-			else if (v[2 * N] * Lhelper * dt < -radiusFraction)
-				v[2 * N] = -radiusFraction / Lhelper / dt;
-			phelper[2 * N] = p[2 * N] = p[2 * N] + v[2 * N] * dt;
-			fracAlpha = p[2 * N] - alphahelper;
-		} else {
-			fracAlpha = 0.0;
-			v[2 * N] = 0.0;
-		}
+            } else {
+                dt = max(dt * fdec, dtmin);
+            }
 
-		if (deltaOnOff && (fabs(Phelper - P0) / P0 < 5e-1)) {
-			v[2 * N + 1] = v[2 * N + 1] * dampdelta
-					- xihelper[2 * N + 1] / M[N + 1] * dt;
-			if (v[2 * N + 1] * Lhelper * dt > radiusFraction)
-				v[2 * N + 1] = radiusFraction / Lhelper / dt;
-			else if (v[2 * N + 1] * Lhelper * dt < -radiusFraction)
-				v[2 * N + 1] = -radiusFraction / Lhelper / dt;
-			phelper[2 * N + 1] = p[2 * N + 1] = p[2 * N + 1]
-					+ v[2 * N + 1] * dt;
-			fracDelta = (1 + p[2 * N + 1]) / (1 + deltahelper);
-		} else {
-			fracDelta = 1.0;
-			v[2 * N + 1] = 0.0;
-		}
+            iloop(2 * N) {
+                v[i] = 0.0;
+            }
+            FIRE_alpha = FIRE_alpha_start;
+            iterPosPower = 0;
+        }
 
-		if (pressOnOff) {
-			v[2 * N + 2] = v[2 * N + 2] * damppress
-					- xihelper[2 * N + 2] / M[N + 2] * dt;
-			if (v[2 * N + 2] * dt > radiusFraction)
-				v[2 * N + 2] = radiusFraction / dt;
-			else if (v[2 * N + 2] * dt < -radiusFraction)
-				v[2 * N + 2] = -radiusFraction / dt;
-			phelper[2 * N + 2] = p[2 * N + 2] = p[2 * N + 2]
-					+ v[2 * N + 2] * dt;
-			frac = p[2 * N + 2] / Lhelper;
-		} else {
-			frac = 1.0;
-			v[2 * N + 2] = 0.0;
-		}
+        double radiusFraction = 1e-5;
 
-		iloop(N) {
+        if(alphaOnOff && (fabs(Phelper - P0) / P0 < 5e-1)) {
+            v[2 * N] = v[2 * N] * dampalpha - xihelper[2 * N] / M[N] * dt; // damping prevents too large changes
 
-			v[i] = v[i] * damp - xihelper[i] / M[i] * dt; // integrate accelerations to find velocities
-			v[N + i] = v[N + i] * damp - xihelper[N + i] / M[i] * dt; // damping added
+            if(v[2 * N] * Lhelper * dt > radiusFraction) {
+                v[2 * N] = radiusFraction / Lhelper / dt;
 
-			v[i] = (1.0 - FIRE_alpha) * v[i] - FIRE_alpha * (xihelper[i] / gg * vv); // FIRE step
-			v[N + i] = (1.0 - FIRE_alpha) * v[N + i]
-					- FIRE_alpha * (xihelper[N + i] / gg * vv); // FIRE step
+            } else if(v[2 * N] * Lhelper * dt < -radiusFraction) {
+                v[2 * N] = -radiusFraction / Lhelper / dt;
+            }
 
-			phelper[i] = phelper[i] + phelper[N + i] * fracAlpha;
-			phelper[i] = phelper[i] / fracDelta;
-			phelper[N + i] = phelper[N + i] * fracDelta;
+            phelper[2 * N] = p[2 * N] = p[2 * N] + v[2 * N] * dt;
+            fracAlpha = p[2 * N] - alphahelper;
 
-			phelper[i] = p[i] = (phelper[i] + v[i] * dt) * frac; // integrate velocities to find positions
-			phelper[N + i] = p[N + i] = (phelper[N + i] + v[N + i] * dt) * frac;
+        } else {
+            fracAlpha = 0.0;
+            v[2 * N] = 0.0;
+        }
 
-		}
+        if(deltaOnOff && (fabs(Phelper - P0) / P0 < 5e-1)) {
+            v[2 * N + 1] = v[2 * N + 1] * dampdelta
+                           - xihelper[2 * N + 1] / M[N + 1] * dt;
 
-		////////////
+            if(v[2 * N + 1] * Lhelper * dt > radiusFraction) {
+                v[2 * N + 1] = radiusFraction / Lhelper / dt;
 
-		if (dofOnOff) {
+            } else if(v[2 * N + 1] * Lhelper * dt < -radiusFraction) {
+                v[2 * N + 1] = -radiusFraction / Lhelper / dt;
+            }
 
-			if (xihelper[2 * N] * v[2 * N] > 0) {
-				v[2 * N] = 0.0;
-				countAlphaFlip++;
-			} else {
-				countAlpha++;
-			}
+            phelper[2 * N + 1] = p[2 * N + 1] = p[2 * N + 1]
+                                                + v[2 * N + 1] * dt;
+            fracDelta = (1 + p[2 * N + 1]) / (1 + deltahelper);
 
-			if (xihelper[2 * N + 1] * v[2 * N + 1] > 0) {
-				v[2 * N + 1] = 0.0;
-				countDeltaFlip++;
-			} else {
-				countDelta++;
-			}
+        } else {
+            fracDelta = 1.0;
+            v[2 * N + 1] = 0.0;
+        }
 
-			if (xihelper[2 * N + 2] * v[2 * N + 2] > 0) {
-				countPressFlip++;
-			} else {
-				countPress++;
-			}
-		}
-		////////////
+        if(pressOnOff) {
+            v[2 * N + 2] = v[2 * N + 2] * damppress
+                           - xihelper[2 * N + 2] / M[N + 2] * dt;
 
-		enthalpieDiffStep = (H - Hold);
-		energyDiffStep = (Uhelper - Uold);
+            if(v[2 * N + 2] * dt > radiusFraction) {
+                v[2 * N + 2] = radiusFraction / dt;
 
-		iterPosPower++;
-		iterationcountfire++;
-		itercount++;
-	} // end while
+            } else if(v[2 * N + 2] * dt < -radiusFraction) {
+                v[2 * N + 2] = -radiusFraction / dt;
+            }
+
+            phelper[2 * N + 2] = p[2 * N + 2] = p[2 * N + 2]
+                                                + v[2 * N + 2] * dt;
+            frac = p[2 * N + 2] / Lhelper;
+
+        } else {
+            frac = 1.0;
+            v[2 * N + 2] = 0.0;
+        }
+
+        iloop(N) {
+
+            v[i] = v[i] * damp - xihelper[i] / M[i] * dt; // integrate accelerations to find velocities
+            v[N + i] = v[N + i] * damp - xihelper[N + i] / M[i] * dt; // damping added
+
+            v[i] = (1.0 - FIRE_alpha) * v[i] - FIRE_alpha * (xihelper[i] / gg * vv); // FIRE step
+            v[N + i] = (1.0 - FIRE_alpha) * v[N + i]
+                       - FIRE_alpha * (xihelper[N + i] / gg * vv); // FIRE step
+
+            phelper[i] = phelper[i] + phelper[N + i] * fracAlpha;
+            phelper[i] = phelper[i] / fracDelta;
+            phelper[N + i] = phelper[N + i] * fracDelta;
+
+            phelper[i] = p[i] = (phelper[i] + v[i] * dt) * frac; // integrate velocities to find positions
+            phelper[N + i] = p[N + i] = (phelper[N + i] + v[N + i] * dt) * frac;
+
+        }
+
+        ////////////
+
+        if(dofOnOff) {
+
+            if(xihelper[2 * N] * v[2 * N] > 0) {
+                v[2 * N] = 0.0;
+                countAlphaFlip++;
+
+            } else {
+                countAlpha++;
+            }
+
+            if(xihelper[2 * N + 1] * v[2 * N + 1] > 0) {
+                v[2 * N + 1] = 0.0;
+                countDeltaFlip++;
+
+            } else {
+                countDelta++;
+            }
+
+            if(xihelper[2 * N + 2] * v[2 * N + 2] > 0) {
+                countPressFlip++;
+
+            } else {
+                countPress++;
+            }
+        }
+
+        ////////////
+
+        enthalpieDiffStep = (H - Hold);
+        energyDiffStep = (Uhelper - Uold);
+
+        iterPosPower++;
+        iterationcountfire++;
+        itercount++;
+    } // end while
 } // end FIRE
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1886,71 +2118,84 @@ void fire() {
 
 #define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
 
-void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
-		long double *fb, long double *fc, long double (*func)(long double)) {
+void mnbrak(long double * ax, long double * bx, long double * cx, long double * fa,
+            long double * fb, long double * fc, long double(*func)(long double))
+{
 
-	//permutation procedure
-	long double ulim, u, r, q, fu, dum;
-	int numberOfIterations = 0;
+    //permutation procedure
+    long double ulim, u, r, q, fu, dum;
+    int numberOfIterations = 0;
 
-	*fa = (*func)(*ax);
-	*fb = (*func)(*bx);
-	if (*fb > *fa) {
-		SHFT(dum, *ax, *bx, dum)
-		SHFT(dum, *fb, *fa, dum)
-	} // end if
-	*cx = (*bx) + gold * (*bx - *ax);
-	*fc = (*func)(*cx);
+    *fa = (*func)(*ax);
+    *fb = (*func)(*bx);
 
-	while (*fb > *fc) {
-		numberOfIterations++;
-		iterationcountmnbrak++;
+    if(*fb > *fa) {
+        SHFT(dum, *ax, *bx, dum)
+        SHFT(dum, *fb, *fa, dum)
+    } // end if
 
-		r = (*bx - *ax) * (*fb - *fc);
-		q = (*bx - *cx) * (*fb - *fa);
-		u = (*bx) - ((*bx - *cx) * q - (*bx - *ax) * r) / (2.0 * (q - r));
-		// possible div by 0 !!!!!
+    *cx = (*bx) + gold * (*bx - *ax);
+    *fc = (*func)(*cx);
 
-		ulim = (*bx) + glimit * (*cx - *bx); // maximum step
-		// "Where is u?"
-		if ((*bx - u) * (u - *cx) > 0.0) { // IF_1
-			fu = (*func)(u);
-			if (fu < *fc) { // IF_2
-				*ax = (*bx);
-				*bx = u;
-				*fa = (*fb);
-				*fb = fu;
-				//                      if(screenOutput) cout << "Number of iterations in mnbrak():  " << numberOfIterations << endl;
-				return;
-			} // end IF_2
-			else if (fu > *fb) {
-				*cx = u;
-				*fc = fu;
-				//                     if(screenOutput) cout << "Number of iterations in mnbrak(): " << numberOfIterations << endl;
-				return;
-			} // end ELSE IF
-			u = (*cx) + gold * (*cx - *bx);
-			fu = (*func)(u);
-		} // end IF_1
-		else if ((*cx - u) * (u - ulim) > 0.0) { // ELSE IF_1
-			fu = (*func)(u);
-			if (fu < *fc) {
-				SHFT(*bx, *cx, u, *cx+gold*(*cx-*bx))
-				SHFT(*fb, *fc, fu, (*func)(u))
-			} // end IF
-		} // end ELSE IF_1
-		else if ((u - ulim) * (ulim - *cx) > 0.0) { // ELSE IF_2
-			u = ulim;
-			fu = (*func)(u);
-		} // end ELSE IF_2
-		else {
-			u = (*cx) + gold * (*cx - *bx);
-			fu = (*func)(u);
-		} // end ELSE
-		SHFT(*ax, *bx, *cx, u)
-		SHFT(*fa, *fb, *fc, fu)
-	} // end while
-	  //      if(screenOutput) cout << "Number of iterations in mnbrak(): " << numberOfIterations << endl;
+    while(*fb > *fc) {
+        numberOfIterations++;
+        iterationcountmnbrak++;
+
+        r = (*bx - *ax) * (*fb - *fc);
+        q = (*bx - *cx) * (*fb - *fa);
+        u = (*bx) - ((*bx - *cx) * q - (*bx - *ax) * r) / (2.0 * (q - r));
+        // possible div by 0 !!!!!
+
+        ulim = (*bx) + glimit * (*cx - *bx); // maximum step
+
+        // "Where is u?"
+        if((*bx - u) * (u - *cx) > 0.0) {  // IF_1
+            fu = (*func)(u);
+
+            if(fu < *fc) {  // IF_2
+                *ax = (*bx);
+                *bx = u;
+                *fa = (*fb);
+                *fb = fu;
+                //                      if(screenOutput) cout << "Number of iterations in mnbrak():  " << numberOfIterations << endl;
+                return;
+            } // end IF_2
+
+            else if(fu > *fb) {
+                *cx = u;
+                *fc = fu;
+                //                     if(screenOutput) cout << "Number of iterations in mnbrak(): " << numberOfIterations << endl;
+                return;
+            } // end ELSE IF
+
+            u = (*cx) + gold * (*cx - *bx);
+            fu = (*func)(u);
+        } // end IF_1
+
+        else if((*cx - u) * (u - ulim) > 0.0) {  // ELSE IF_1
+            fu = (*func)(u);
+
+            if(fu < *fc) {
+                SHFT(*bx, *cx, u, *cx + gold * (*cx - *bx))
+                SHFT(*fb, *fc, fu, (*func)(u))
+            } // end IF
+        } // end ELSE IF_1
+
+        else if((u - ulim) * (ulim - *cx) > 0.0) {  // ELSE IF_2
+            u = ulim;
+            fu = (*func)(u);
+        } // end ELSE IF_2
+
+        else {
+            u = (*cx) + gold * (*cx - *bx);
+            fu = (*func)(u);
+        } // end ELSE
+
+        SHFT(*ax, *bx, *cx, u)
+        SHFT(*fa, *fb, *fc, fu)
+    } // end while
+
+    //      if(screenOutput) cout << "Number of iterations in mnbrak(): " << numberOfIterations << endl;
 
 }
 #undef SHFT
@@ -1964,79 +2209,100 @@ void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
 
 #define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
 long double brent(long double ax, long double bx, long double cx,
-		long double (*f)(long double), long double tol, long double *xmin) {
+                  long double(*f)(long double), long double tol, long double * xmin)
+{
 
-	int iter;
-	long double a, b, d, etemp, fu, fv, fw, fx, s, q, r, tol1, tol2, u, v, w, x,
-			xm;
-	long double e = 0.0;
+    int iter;
+    long double a, b, d, etemp, fu, fv, fw, fx, s, q, r, tol1, tol2, u, v, w, x,
+         xm;
+    long double e = 0.0;
 
-	a = (ax < cx ? ax : cx);
-	b = (ax > cx ? ax : cx);
-	x = w = v = bx;
-	fw = fv = fx = (*f)(x);
-	for (iter = 1; iter <= ITMAXBRENT; iter++) {
-		iterationcountbrent++;
-		//cout<< iterationcountbrent <<endl;
-		xm = 0.5 * (a + b);
-		tol2 = 2.0 * (tol1 = tol * fabs(x) + ZEPS);
-		if (fabs(x - xm) <= (tol2 - 0.5 * (b - a))) {
-			*xmin = x;
-			return fx;
-		}
-		if (fabs(e) > tol1) {
-			r = (x - w) * (fx - fv);
-			q = (x - v) * (fx - fw);
-			s = (x - v) * q - (x - w) * r;
-			q = 2.0 * (q - r);
-			if (q > 0.0)
-				s = -s;
-			q = fabs(q);
-			etemp = e;
-			e = d;
-			if (fabs(s) >= fabs(0.5 * q * etemp) || s <= q * (a - x)
-					|| s >= q * (b - x))
-				d = CGOLD * (e = (x >= xm ? a - x : b - x));
-			else {
-				d = s / q;
-				u = x + d;
-				if (u - a < tol2 || b - u < tol2)
-					d = SIGN(tol1, xm - x);
+    a = (ax < cx ? ax : cx);
+    b = (ax > cx ? ax : cx);
+    x = w = v = bx;
+    fw = fv = fx = (*f)(x);
 
-			}
-		} else {
-			d = CGOLD * (e = (x >= xm ? a - x : b - x));
-		}
-		u = (fabs(d) >= tol1 ? x + d : x + SIGN(tol1, d));
-		fu = (*f)(u);
-		if (fu <= fx) {
-			if (u >= x)
-				a = x;
-			else
-				b = x;
-			SHFT(v, w, x, u)
-			SHFT(fv, fw, fx, fu)
+    for(iter = 1; iter <= ITMAXBRENT; iter++) {
+        iterationcountbrent++;
+        //cout<< iterationcountbrent <<endl;
+        xm = 0.5 * (a + b);
+        tol2 = 2.0 * (tol1 = tol * fabs(x) + ZEPS);
 
-		} else {
-			if (u < x)
-				a = u;
-			else
-				b = u;
-			if (fu <= fw || w == x) {
-				v = w;
-				w = u;
-				fv = fw;
-				fw = fu;
+        if(fabs(x - xm) <= (tol2 - 0.5 * (b - a))) {
+            *xmin = x;
+            return fx;
+        }
 
-			} else if (fu <= fv || v == x || v == w) {
-				v = u;
-				fv = fu;
-			}
-		}
+        if(fabs(e) > tol1) {
+            r = (x - w) * (fx - fv);
+            q = (x - v) * (fx - fw);
+            s = (x - v) * q - (x - w) * r;
+            q = 2.0 * (q - r);
 
-	}
-	*xmin = x;
-	return fx;
+            if(q > 0.0) {
+                s = -s;
+            }
+
+            q = fabs(q);
+            etemp = e;
+            e = d;
+
+            if(fabs(s) >= fabs(0.5 * q * etemp) || s <= q * (a - x)
+               || s >= q * (b - x)) {
+                d = CGOLD * (e = (x >= xm ? a - x : b - x));
+
+            } else {
+                d = s / q;
+                u = x + d;
+
+                if(u - a < tol2 || b - u < tol2) {
+                    d = SIGN(tol1, xm - x);
+                }
+
+            }
+
+        } else {
+            d = CGOLD * (e = (x >= xm ? a - x : b - x));
+        }
+
+        u = (fabs(d) >= tol1 ? x + d : x + SIGN(tol1, d));
+        fu = (*f)(u);
+
+        if(fu <= fx) {
+            if(u >= x) {
+                a = x;
+
+            } else {
+                b = x;
+            }
+
+            SHFT(v, w, x, u)
+            SHFT(fv, fw, fx, fu)
+
+        } else {
+            if(u < x) {
+                a = u;
+
+            } else {
+                b = u;
+            }
+
+            if(fu <= fw || w == x) {
+                v = w;
+                w = u;
+                fv = fw;
+                fw = fu;
+
+            } else if(fu <= fv || v == x || v == w) {
+                v = u;
+                fv = fu;
+            }
+        }
+
+    }
+
+    *xmin = x;
+    return fx;
 }
 
 #undef SHFT
@@ -2045,48 +2311,55 @@ long double brent(long double ax, long double bx, long double cx,
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-long double SIGN(long double a, long double b) {
-	if (b < 0.0)
-		return -a;
-	else
-		return a;
+long double SIGN(long double a, long double b)
+{
+    if(b < 0.0) {
+        return -a;
+
+    } else {
+        return a;
+    }
 } // end SIGN
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // linmin
-void linmin(int n, long double *fret, long double (*func)()) {
-	long double xx, xmin, fx, fb, fa, bx, ax;
+void linmin(int n, long double * fret, long double(*func)())
+{
+    long double xx, xmin, fx, fb, fa, bx, ax;
 
-	// pcom, xicom are global row-matrices
-	nrfunc = func;
+    // pcom, xicom are global row-matrices
+    nrfunc = func;
 
-	ax = 0.0;
-	xx = AMIN;
-	mnbrak(&ax, &xx, &bx, &fa, &fx, &fb, f1dim);
-	*fret = brent(ax, xx, bx, f1dim, TOL, &xmin);
+    ax = 0.0;
+    xx = AMIN;
+    mnbrak(&ax, &xx, &bx, &fa, &fx, &fb, f1dim);
+    *fret = brent(ax, xx, bx, f1dim, TOL, &xmin);
 
-	iloop(2*N+3) {
-		p[i] += xi[i] * xmin;
-	} // move by gradient*xmin to the 1D-minimum
-	return;
+    iloop(2 * N + 3) {
+        p[i] += xi[i] * xmin;
+    } // move by gradient*xmin to the 1D-minimum
+    return;
 } // end linmin
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // f1dim
-long double f1dim(long double x) {
-	long double Uloc;
+long double f1dim(long double x)
+{
+    long double Uloc;
 
-	iloop(2*N+3) {
-		phelper[i] = p[i] + x * xi[i];
-	} // move by gradient*x ...
-	energy();
-	Uloc = Uhelper;
-	if (pressOnOff)
-		Uloc = Uloc + P0 * Lhelper * Lhelper;
+    iloop(2 * N + 3) {
+        phelper[i] = p[i] + x * xi[i];
+    } // move by gradient*x ...
+    energy();
+    Uloc = Uhelper;
 
-	return Uloc; // ... and return the energy of the new configuration
+    if(pressOnOff) {
+        Uloc = Uloc + P0 * Lhelper * Lhelper;
+    }
+
+    return Uloc; // ... and return the energy of the new configuration
 } // end f1dim
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2094,512 +2367,543 @@ long double f1dim(long double x) {
 // frprmn
 // Fletcher-Reeves-Polak-Ribiere minimization
 // see http://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method
-void frprmn(int n, long double *fret, long double (*func)()) {
-	// most input variable are global, dfunc is done in gradienU
-	int its;
-	int endcount = 0;
-	long double gam, fp, dgg;
+void frprmn(int n, long double * fret, long double(*func)())
+{
+    // most input variable are global, dfunc is done in gradienU
+    int its;
+    int endcount = 0;
+    long double gam, fp, dgg;
 
-	iloop(2*N+3) {
-		phelper[i] = p[i];
-	}
-	(*func)(); // func = energy does not need inputvector
-	fp = Uhelper;
+    iloop(2 * N + 3) {
+        phelper[i] = p[i];
+    }
+    (*func)(); // func = energy does not need inputvector
+    fp = Uhelper;
 
-	if (pressOnOff)
-		fp = fp + P0 * Lhelper * Lhelper;
-	energy();
-	gradientcalc();
+    if(pressOnOff) {
+        fp = fp + P0 * Lhelper * Lhelper;
+    }
 
-	iloop(2*N+3) {
-		xi[i] = h[i] = g[i] = -xihelper[i]; // the 'force' is in the negative gradient direction
-	}
+    energy();
+    gradientcalc();
 
-	for (its = 1; its <= ITMAX; its++) {
-		packIntoBoundaries();
-		iterationcountfrprmn++;
-		iterationcountfrprmnCUMULATIVE++;
-		totaliterationcount++;
+    iloop(2 * N + 3) {
+        xi[i] = h[i] = g[i] = -xihelper[i]; // the 'force' is in the negative gradient direction
+    }
 
-		iterfrprmn = its;
+    for(its = 1; its <= ITMAX; its++) {
+        packIntoBoundaries();
+        iterationcountfrprmn++;
+        iterationcountfrprmnCUMULATIVE++;
+        totaliterationcount++;
 
-		linmin(n, fret, func);
-		energyDiffStepOld = energyDiffStep;
-		energyDiffStep = (*fret - fp);
+        iterfrprmn = its;
+
+        linmin(n, fret, func);
+        energyDiffStepOld = energyDiffStep;
+        energyDiffStep = (*fret - fp);
 
 
-		if (2.0 * fabs(*fret - fp) <= ftol * (fabs(*fret) + fabs(fp) + ZEPS)) {
-			endcount++;
+        if(2.0 * fabs(*fret - fp) <= ftol * (fabs(*fret) + fabs(fp) + ZEPS)) {
+            endcount++;
 
-			if (endcount > 3) {
-				if (screenOutput) {
-					cout << "Conjugate gradient converged!" << endl;
-				}
+            if(endcount > 3) {
+                if(screenOutput) {
+                    cout << "Conjugate gradient converged!" << endl;
+                }
 
-				frprmnconverged = true;
-				return;
-			}
-		} else
-			endcount = 0;
-		fp = *fret;
-		energy();
-		gradientcalc();
-		iloop(2*N+3) {
-			xi[i] = xihelper[i];
-		}
-		dgg = gg = 0.0;
+                frprmnconverged = true;
+                return;
+            }
 
-		iloop(2*N+3) {
-			gg += g[i] * g[i];
-			dgg += xi[i] * xi[i]; // Fletcher-Reeves
-			//dgg += (xi[i] + g[i])*xi[i]; // Polak-Ribiere
-		}
+        } else {
+            endcount = 0;
+        }
 
-		if (gg == 0.0) {
-			if (screenOutput)
-				cout << "Gradient is ZERO!" << endl;
-			frprmnconverged = true;
-			return;
-		}
-		gam = dgg / gg;
-		iloop(2*N+3) {
-			g[i] = -xi[i];
-			xi[i] = h[i] = g[i] + gam * h[i];
-		}
-		H = Uhelper + P0 * Lhelper * Lhelper;
+        fp = *fret;
+        energy();
+        gradientcalc();
+        iloop(2 * N + 3) {
+            xi[i] = xihelper[i];
+        }
+        dgg = gg = 0.0;
 
-	}
-	return;
+        iloop(2 * N + 3) {
+            gg += g[i] * g[i];
+            dgg += xi[i] * xi[i]; // Fletcher-Reeves
+            //dgg += (xi[i] + g[i])*xi[i]; // Polak-Ribiere
+        }
+
+        if(gg == 0.0) {
+            if(screenOutput) {
+                cout << "Gradient is ZERO!" << endl;
+            }
+
+            frprmnconverged = true;
+            return;
+        }
+
+        gam = dgg / gg;
+        iloop(2 * N + 3) {
+            g[i] = -xi[i];
+            xi[i] = h[i] = g[i] + gam * h[i];
+        }
+        H = Uhelper + P0 * Lhelper * Lhelper;
+
+    }
+
+    return;
 } // end frprmn
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // particle distance
-void particledistance(int i, int j) {
+void particledistance(int i, int j)
+{
 
-	xij[j * N + i] = phelper[j] - phelper[i];
-	yij[j * N + i] = phelper[N + j] - phelper[N + i];
+    xij[j * N + i] = phelper[j] - phelper[i];
+    yij[j * N + i] = phelper[N + j] - phelper[N + i];
 
-	ny[j * N + i] = -floor((yij[j * N + i] + lyyhelper * 0.5) / lyyhelper);
-	ny[i * N + j] = -ny[j * N +i];
+    ny[j * N + i] = -floor((yij[j * N + i] + lyyhelper * 0.5) / lyyhelper);
+    ny[i * N + j] = -ny[j * N + i];
 
-	xij[j * N + i] = phelper[j] - phelper[i] + ny[j * N + i] * lyxhelper;
-	yij[j * N + i] = phelper[N + j] - phelper[N + i]
-			+ ny[j * N + i] * lyyhelper;
+    xij[j * N + i] = phelper[j] - phelper[i] + ny[j * N + i] * lyxhelper;
+    yij[j * N + i] = phelper[N + j] - phelper[N + i]
+                     + ny[j * N + i] * lyyhelper;
 
-	nx[j * N + i] = -floor((xij[j * N + i] + lxxhelper * 0.5) / lxxhelper);
-	nx[i * N + j] = -nx[j * N +i];
-	
-	xij[j * N + i] = phelper[j] - phelper[i] + nx[j * N + i] * lxxhelper
-			+ ny[j * N + i] * lyxhelper;
-	yij[j * N + i] = phelper[N + j] - phelper[N + i] + nx[j * N + i] * lxyhelper
-			+ ny[j * N + i] * lyyhelper;
+    nx[j * N + i] = -floor((xij[j * N + i] + lxxhelper * 0.5) / lxxhelper);
+    nx[i * N + j] = -nx[j * N + i];
 
-	rij[j * N + i] = sqrt(
-			xij[j * N + i] * xij[j * N + i] + yij[j * N + i] * yij[j * N + i]);
+    xij[j * N + i] = phelper[j] - phelper[i] + nx[j * N + i] * lxxhelper
+                     + ny[j * N + i] * lyxhelper;
+    yij[j * N + i] = phelper[N + j] - phelper[N + i] + nx[j * N + i] * lxyhelper
+                     + ny[j * N + i] * lyyhelper;
 
-	return;
+    rij[j * N + i] = sqrt(
+                         xij[j * N + i] * xij[j * N + i] + yij[j * N + i] * yij[j * N + i]);
+
+    return;
 } // end particledistance
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // resetvars
-void resethelpervars() {
-	// reset variables
+void resethelpervars()
+{
+    // reset variables
 
-	alphahelper = phelper[2 * N];
-	deltahelper = phelper[2 * N + 1];
-	Lhelper = phelper[2 * N + 2];
-	alpha = p[2 * N];
-	delta = p[2 * N + 1];
-	L = p[2 * N + 2];
-	lxxhelper = Lhelper / (1.0 + deltahelper);
-	lxyhelper = Lhelper * 0.0;
-	lyxhelper = Lhelper * alphahelper;
-	lyyhelper = Lhelper * (1.0 + deltahelper);
+    alphahelper = phelper[2 * N];
+    deltahelper = phelper[2 * N + 1];
+    Lhelper = phelper[2 * N + 2];
+    alpha = p[2 * N];
+    delta = p[2 * N + 1];
+    L = p[2 * N + 2];
+    lxxhelper = Lhelper / (1.0 + deltahelper);
+    lxyhelper = Lhelper * 0.0;
+    lyxhelper = Lhelper * alphahelper;
+    lyyhelper = Lhelper * (1.0 + deltahelper);
 
-	Uhelper = 0.0;
+    Uhelper = 0.0;
 
-	return;
+    return;
 } // end resetvars
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // energy
-long double energy() {
-	resethelpervars();
+long double energy()
+{
+    resethelpervars();
 
-	// calculate distances and overlaps
-	iloop(N) {
-		jloop(i) // only calculate j<i, i.e., upper right corner of matrices
-		{
+    // calculate distances and overlaps
+    iloop(N) {
+        jloop(i) { // only calculate j<i, i.e., upper right corner of matrices
 
-			if (neighbors[j * N + i]) { // avoid selfinteraction
+            if(neighbors[j * N + i]) {  // avoid selfinteraction
 
-				particledistance(i, j);
+                particledistance(i, j);
 
-				dij[j * N + i] = R[i] + R[j] - rij[j * N + i];
+                dij[j * N + i] = R[i] + R[j] - rij[j * N + i];
 
-				if (dij[j * N + i] > 0.0) { // this saves about 5-10 % in runtime
-					Uhelper += 0.5 * k * (dij[j * N + i] * dij[j * N + i]);
-					trueneighbors[j * N + i] = true;
-				} else {
-					trueneighbors[j * N + i] = false;
-					dij[j * N + i] = 0.0;
-				}
+                if(dij[j * N + i] > 0.0) {  // this saves about 5-10 % in runtime
+                    Uhelper += 0.5 * k * (dij[j * N + i] * dij[j * N + i]);
+                    trueneighbors[j * N + i] = true;
 
-				distanceCalcs += 1.0;
+                } else {
+                    trueneighbors[j * N + i] = false;
+                    dij[j * N + i] = 0.0;
+                }
 
-			} //end if
-		} // end jloop
-		trueneighbors[i * N + i] = false;
-	} // end iloop
+                distanceCalcs += 1.0;
 
-	return Uhelper;
+            } //end if
+        } // end jloop
+        trueneighbors[i * N + i] = false;
+    } // end iloop
+
+    return Uhelper;
 } // end energy
 
 //////////////////////////////////
 // gradientcalc
-void gradientcalc() {
-	long double component;
-	long double term1;
-	// calculate gradient and energy
+void gradientcalc()
+{
+    long double component;
+    long double term1;
+    // calculate gradient and energy
 
-	Phelper = 0.0;
+    Phelper = 0.0;
 
-	xihelper[2 * N] = 0.0;
-	xihelper[2 * N + 1] = 0.0;
-	xihelper[2 * N + 2] = 0.0;
+    xihelper[2 * N] = 0.0;
+    xihelper[2 * N + 1] = 0.0;
+    xihelper[2 * N + 2] = 0.0;
 
-	iloop(N) {
+    iloop(N) {
 
-		xihelper[i] = 0.0;
-		xihelper[N + i] = 0.0;
+        xihelper[i] = 0.0;
+        xihelper[N + i] = 0.0;
 
-		jloop(i) {
-			if (trueneighbors[j * N + i]) // this saves about 5-10 % in runtime
-			{
-				term1 = k * dij[j * N + i] / rij[j * N + i];
-				// gradient expressions have been derived analytically
-				component = term1 * xij[j * N + i]; //gradient component i with respect to particle j
-				xihelper[i] += component;
-				xihelper[j] -= component; // opposite sign in xji vs. xij
+        jloop(i) {
+            if(trueneighbors[j * N + i]) { // this saves about 5-10 % in runtime
+                term1 = k * dij[j * N + i] / rij[j * N + i];
+                // gradient expressions have been derived analytically
+                component = term1 * xij[j * N + i]; //gradient component i with respect to particle j
+                xihelper[i] += component;
+                xihelper[j] -= component; // opposite sign in xji vs. xij
 
-				component = term1 * yij[j * N + i];
-				xihelper[N + i] += component;
-				xihelper[N + j] -= component;
+                component = term1 * yij[j * N + i];
+                xihelper[N + i] += component;
+                xihelper[N + j] -= component;
 
-				if (alphaOnOff)
-					xihelper[2 * N] += -2 * term1 * Lhelper * xij[j * N + i]
-							* ny[j * N + i];
-				if (deltaOnOff)
-					xihelper[2 * N + 1] += -2 * term1 * Lhelper
-							* (xij[j * N + i] * nx[j * N + i]
-									* (-1.0 / ((1.0 + delta) * (1.0 + delta)))
-									+ yij[j * N + i] * ny[j * N + i]);
-				Phelper += 2 * term1 * rij[j * N + i] * rij[j * N + i];
-			} // end if
-		} // end jloop
-	}
+                if(alphaOnOff)
+                    xihelper[2 * N] += -2 * term1 * Lhelper * xij[j * N + i]
+                                       * ny[j * N + i];
 
-	// end iloop
+                if(deltaOnOff)
+                    xihelper[2 * N + 1] += -2 * term1 * Lhelper
+                                           * (xij[j * N + i] * nx[j * N + i]
+                                              * (-1.0 / ((1.0 + delta) * (1.0 + delta)))
+                                              + yij[j * N + i] * ny[j * N + i]);
 
-	// normalize
-	Phelper = Phelper / (Lhelper * Lhelper) / 4.0;
+                Phelper += 2 * term1 * rij[j * N + i] * rij[j * N + i];
+            } // end if
+        } // end jloop
+    }
 
-	if (fabs(p[2 * N + 1] - deltainit) > 0.2)
-		deltaOnOff = false;
+    // end iloop
 
-	if (pressOnOff) {
-		xihelper[2 * N + 2] = 2 * Lhelper * (P0 - Phelper);
-	}
+    // normalize
+    Phelper = Phelper / (Lhelper * Lhelper) / 4.0;
 
-	return;
+    if(fabs(p[2 * N + 1] - deltainit) > 0.2) {
+        deltaOnOff = false;
+    }
+
+    if(pressOnOff) {
+        xihelper[2 * N + 2] = 2 * Lhelper * (P0 - Phelper);
+    }
+
+    return;
 } // end gradientcalc
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // initializeSimulation
 
-void initializeSimulation() {
+void initializeSimulation()
+{
 
-	long double randLx, randLy;
-	long double frac;
+    long double randLx, randLy;
+    long double frac;
 
-	dtmax = 0.1;
-	dt = dtmax;
+    dtmax = 0.1;
+    dt = dtmax;
 
-	if (currentPackingNumber == firstPackingNumber) {
-		// size all the dynamic 'vector' arrays according to the particle number N
-		dij.reserve(N * N);
-		rij.reserve(N * N);
-		xij.reserve(N * N);
-		yij.reserve(N * N);
-		nx.reserve(N * N);
-		ny.reserve(N * N);
-		neighbors.reserve(N * N);
-		trueneighbors.reserve(N * N);
-		trueneighborsOld.reserve(N * N);
-		trueneighborsLast.reserve(N * N);
-		trueneighborChanges.reserve(N * N);
+    if(currentPackingNumber == firstPackingNumber) {
+        // size all the dynamic 'vector' arrays according to the particle number N
+        dij.reserve(N * N);
+        rij.reserve(N * N);
+        xij.reserve(N * N);
+        yij.reserve(N * N);
+        nx.reserve(N * N);
+        ny.reserve(N * N);
+        neighbors.reserve(N * N);
+        trueneighbors.reserve(N * N);
+        trueneighborsOld.reserve(N * N);
+        trueneighborsLast.reserve(N * N);
+        trueneighborChanges.reserve(N * N);
 
-		p.reserve(2 * N + 3);
-		phelper.reserve(2 * N + 3);
-		pcom.reserve(2 * N + 3);
-		pLast.reserve(2 * N + 3);
-		xi.reserve(2 * N + 3);
-		xihelper.reserve(2 * N + 3);
-		xicom.reserve(2 * N + 3);
-		g.reserve(2 * N + 3);
-		h.reserve(2 * N + 3);
-		v.reserve(2 * N + 3);
-		R.reserve(N);
-		M.reserve(N + 3);
+        p.reserve(2 * N + 3);
+        phelper.reserve(2 * N + 3);
+        pcom.reserve(2 * N + 3);
+        pLast.reserve(2 * N + 3);
+        xi.reserve(2 * N + 3);
+        xihelper.reserve(2 * N + 3);
+        xicom.reserve(2 * N + 3);
+        g.reserve(2 * N + 3);
+        h.reserve(2 * N + 3);
+        v.reserve(2 * N + 3);
+        R.reserve(N);
+        M.reserve(N + 3);
 
-		numberOfDirectNeighbors.reserve(N);
-		isRattler.reserve(N);
-		wasRattler.reserve(N);
-	} // end if
+        numberOfDirectNeighbors.reserve(N);
+        isRattler.reserve(N);
+        wasRattler.reserve(N);
+    } // end if
 
-	// set initial unit cell properties
-	alpha = alphainit;
-	delta = deltainit;
+    // set initial unit cell properties
+    alpha = alphainit;
+    delta = deltainit;
 
-	dampalpha = dampdelta = 0.9;
-	damppress = 0.9;
+    dampalpha = dampdelta = 0.9;
+    damppress = 0.9;
 
-	p[2 * N] = alpha;
-	p[2 * N + 1] = delta;
-	p[2 * N + 2] = L;
+    p[2 * N] = alpha;
+    p[2 * N + 1] = delta;
+    p[2 * N + 2] = L;
 
-	lxx = L / (1.0 + delta);
-	lxy = L * 0.0;
-	lyx = L * alpha;
-	lyy = L * (1.0 + delta);
+    lxx = L / (1.0 + delta);
+    lxy = L * 0.0;
+    lyx = L * alpha;
+    lyy = L * (1.0 + delta);
 
-	srand(currentPackingNumber + 1);
+    srand(currentPackingNumber + 1);
 
-	// set initial particle positions and properties
-	iloop(N) {
-		randLx = (rand() * 1.0) / (RAND_MAX * 1.0); // random position along L_x
-		randLy = (rand() * 1.0) / (RAND_MAX * 1.0); // random position along L_y
-		p[i] = randLx * lxx + randLy * lyx; // set random x-position for particle
-		p[N + i] = randLy * lxy + randLy * lyy; // set random y-position for particle
-		if (i < 0.5 * N)
-			R[i] = 1.0; // set particle radii
-		else
-			R[i] = 1.4;
-		
-		M[i] = 1.0; // set particle 'masses' for FIRE-algorithm
-		
-		// polydispersity :
-		
-//		R[i]=1+(1.4-1)*i/(N-1) ;
-//		cout << "X[i] : "<< p[i] << "	Y[i]: "<< p[N+i] <<endl;
-//		cout << "index : "<< i << " and radius : "<< R[i] <<endl;
-		
-		
-		
-	}
-	M[N] = M[N + 1] = M[N + 2] = N;
+    // set initial particle positions and properties
+    iloop(N) {
+        randLx = (rand() * 1.0) / (RAND_MAX * 1.0); // random position along L_x
+        randLy = (rand() * 1.0) / (RAND_MAX * 1.0); // random position along L_y
+        p[i] = randLx * lxx + randLy * lyx; // set random x-position for particle
+        p[N + i] = randLy * lxy + randLy * lyy; // set random y-position for particle
 
-	// rescale to fit desired fill fraction
-	iloop(2*N+2)
-		phelper[i] = p[i];
+        if(i < 0.5 * N) {
+            R[i] = 1.0;    // set particle radii
 
-	energy();
-	calcSysPara();
+        } else {
+            R[i] = 1.4;
+        }
 
-	// calculate the current fill fraction phi
-	frac = sqrt(phi / (phiinit)); // sqrt-ratio of desired fill fraction and actual
+        M[i] = 1.0; // set particle 'masses' for FIRE-algorithm
 
-	L *= frac; // scale the boxlength accordingly
-	iloop(2*N) {
-		p[i] *= frac; // scale all the particle positions accordingly
-		v[i] = 0.0;
-	}
-	p[2 * N + 2] = L;
+        // polydispersity :
 
-	v[2 * N] = v[2 * N + 1] = v[2 * N + 2] = 0;
+//      R[i]=1+(1.4-1)*i/(N-1) ;
+//      cout << "X[i] : "<< p[i] << "   Y[i]: "<< p[N+i] <<endl;
+//      cout << "index : "<< i << " and radius : "<< R[i] <<endl;
 
-	energy();
-	calcSysPara();
 
-	Rmax = 0.0;
-	iloop(N) {
-		if (R[i] > Rmax)
-			Rmax = R[i]; // determine the largest particle radius in the packing
-		                 // (for neighbor determination)
-	}
 
-	iloop(N) {
-		jloop(N) {
-			neighbors[j * N + i] = true; // initially all particles are concidered
-			if (j == i)
-				neighbors[i * N + i] = false; // neighbors, except if j==i
-		}
-	}
+    }
+    M[N] = M[N + 1] = M[N + 2] = N;
 
-	dtmax = dtmaxinit;
-	dofOnOff = false;
+    // rescale to fit desired fill fraction
+    iloop(2 * N + 2)
+    phelper[i] = p[i];
 
-	return;
+    energy();
+    calcSysPara();
+
+    // calculate the current fill fraction phi
+    frac = sqrt(phi / (phiinit)); // sqrt-ratio of desired fill fraction and actual
+
+    L *= frac; // scale the boxlength accordingly
+    iloop(2 * N) {
+        p[i] *= frac; // scale all the particle positions accordingly
+        v[i] = 0.0;
+    }
+    p[2 * N + 2] = L;
+
+    v[2 * N] = v[2 * N + 1] = v[2 * N + 2] = 0;
+
+    energy();
+    calcSysPara();
+
+    Rmax = 0.0;
+    iloop(N) {
+        if(R[i] > Rmax) {
+            Rmax = R[i];    // determine the largest particle radius in the packing
+        }
+
+        // (for neighbor determination)
+    }
+
+    iloop(N) {
+        jloop(N) {
+            neighbors[j * N + i] = true; // initially all particles are concidered
+
+            if(j == i) {
+                neighbors[i * N + i] = false;    // neighbors, except if j==i
+            }
+        }
+    }
+
+    dtmax = dtmaxinit;
+    dofOnOff = false;
+
+    return;
 } // end initializeSimulation()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // calcSysPara: calculate fillfracton & number of neighbors & pressure
-void calcSysPara() {
-	long double term1;
+void calcSysPara()
+{
+    long double term1;
 
-	int numberOfRattlerChanges = 1;
+    int numberOfRattlerChanges = 1;
 
-	long double Z2 = 0;
-	
-	// Rattlers check
-	long double X_3n[3], Y_3n[3]; // in case there are 3 neighbors, we have to check their positions.
-	int stable_particle;
-	
-	iloop(3){
-		X_3n[i]=0;Y_3n[i]=0;
-	}
-	int ip;
-	
-	alpha = p[2 * N];
-	delta = p[2 * N + 1];
-	L = p[2 * N + 2];
-	
-	lxx = L / (1.0 + delta);
-	lxy = L * 0.0;
-	lyx = L * alpha;
-	lyy = L * (1.0 + delta);
-	
-	
-	// reset sums
-	phi = 0.0;
-	Z = 0.0;
-	P = 0.0;
-	sxx = sxy = syx = syy = 0.0;
+    long double Z2 = 0;
 
-	// sum all contributions
-	iloop(N) {
-		phi += PI * R[i] * R[i]; // sum of particle surfaces
-		jloop(i) {
-			if (trueneighbors[j * N + i]) {
+    // Rattlers check
+    long double X_3n[3], Y_3n[3]; // in case there are 3 neighbors, we have to check their positions.
+    int stable_particle;
 
-				Z++;
+    iloop(3) {
+        X_3n[i] = 0;
+        Y_3n[i] = 0;
+    }
+    int ip;
 
-				term1 = k * dij[j * N + i] / rij[j * N + i];
-				// if overlap > 0 --> one more contact
-				P += term1 * rij[j * N + i] * rij[j * N + i]; // pressure
-				sxx += -term1 * xij[j * N + i] * xij[j * N + i]; // xx-stress
-				syy += -term1 * yij[j * N + i] * yij[j * N + i]; // yy-stress
-				sxy += -term1 * xij[j * N + i] * yij[j * N + i]; // xy-/ yx-stress
+    alpha = p[2 * N];
+    delta = p[2 * N + 1];
+    L = p[2 * N + 2];
 
-			}
-		}
-	}
-	
+    lxx = L / (1.0 + delta);
+    lxy = L * 0.0;
+    lyx = L * alpha;
+    lyy = L * (1.0 + delta);
 
 
-	if (fireconverged) {
-		
-		
-		
-		// Ncorrected : 
-		// first loop defines the matrix "trueneighbors" and symmetrizes it.
-		
-		iloop(N) {
-			isRattler[i] = false;
-			numberOfDirectNeighbors[i] = 0;
-			jloop(i)
-				trueneighbors[i * N + j] = trueneighbors[j * N + i];
-		}
-		
-		
-		// now the algorithm of rattler detections : 
-		// First no particle is a rattler, then if this particle has less than 3 contacts, it is a rattler.
-		// If at least one particle is a rattler within the loop, we have to start it again to check if this rattler did not make another rattler.
-		// In the mean time, we count the number of contacts, excluding the rattlers.
-		
-		
-		cout << " Packing number "<< currentPackingNumber <<endl;
-		while (numberOfRattlerChanges != 0) {
-			Z2=0;
-			numberOfRattlerChanges = 0;
-			iloop(N) {
-//				cout << i << endl;
-				numberOfDirectNeighbors[i] = 0;
-				if(!isRattler[i]){
-					jloop(N) {
-						if (trueneighbors[j * N + i]) {
-							if (!isRattler[j]) {
-								numberOfDirectNeighbors[i] += 1;
-								Z2 += 0.5;
-							}
+    // reset sums
+    phi = 0.0;
+    Z = 0.0;
+    P = 0.0;
+    sxx = sxy = syx = syy = 0.0;
 
-						}
-					}
-				}
-			
-				if (numberOfDirectNeighbors[i] < 3 && !isRattler[i]) {
-					isRattler[i] = true;
-					numberOfRattlerChanges++;
-				
-				}
-				
-				if (numberOfDirectNeighbors[i] == 3 && !isRattler[i]) {
-				
-					ip=0;
-					jloop(N){
-						if (trueneighbors[j * N + i] && !isRattler[j]) {
-							X_3n[ip]=p[j]+ nx[j * N + i] * lxx  + ny[j * N + i] * lyx;
-							Y_3n[ip]=p[j+N]+ nx[j * N + i] * lxy  + ny[j * N + i] * lyy;
-							ip+=1;
-							
-						}
-					}
+    // sum all contributions
+    iloop(N) {
+        phi += PI * R[i] * R[i]; // sum of particle surfaces
+        jloop(i) {
+            if(trueneighbors[j * N + i]) {
+
+                Z++;
+
+                term1 = k * dij[j * N + i] / rij[j * N + i];
+                // if overlap > 0 --> one more contact
+                P += term1 * rij[j * N + i] * rij[j * N + i]; // pressure
+                sxx += -term1 * xij[j * N + i] * xij[j * N + i]; // xx-stress
+                syy += -term1 * yij[j * N + i] * yij[j * N + i]; // yy-stress
+                sxy += -term1 * xij[j * N + i] * yij[j * N + i]; // xy-/ yx-stress
+
+            }
+        }
+    }
 
 
-					stable_particle = pnpoly(3,X_3n, Y_3n, p[i], p[i + N]);
+
+    if(fireconverged) {
 
 
-					if (!stable_particle) {
-						cout << "Particle "<<i<< " is not bounded by forces on all axes !!" <<endl;
-						isRattler[i] = true;
-					}
 
-				}
-			
-				
-				
+        // Ncorrected :
+        // first loop defines the matrix "trueneighbors" and symmetrizes it.
 
-			}
-		} // end while
-		
-		
-		Ncorrected = 0;
-		iloop(N) {
-			if (!isRattler[i])
-				Ncorrected++;
-		}		
-	} // end if(fireconverged)
-	else
-		Ncorrected = N;
-	
+        iloop(N) {
+            isRattler[i] = false;
+            numberOfDirectNeighbors[i] = 0;
+            jloop(i)
+            trueneighbors[i * N + j] = trueneighbors[j * N + i];
+        }
 
 
-	// normalize
-	phi = phi / (L * L);
+        // now the algorithm of rattler detections :
+        // First no particle is a rattler, then if this particle has less than 3 contacts, it is a rattler.
+        // If at least one particle is a rattler within the loop, we have to start it again to check if this rattler did not make another rattler.
+        // In the mean time, we count the number of contacts, excluding the rattlers.
 
 
-	Z2 = 2 * Z2 / (Ncorrected * 1.0 + 1e-16);
-	Z=Z2;	
-	P = P / (L * L) / 2.0;
-	sxx = sxx / (L * L);
-	syy = syy / (L * L);
-	sxy = sxy / (L * L);
-	syx = syx;
+        cout << " Packing number " << currentPackingNumber << endl;
 
-	return;
+        while(numberOfRattlerChanges != 0) {
+            Z2 = 0;
+            numberOfRattlerChanges = 0;
+            iloop(N) {
+//              cout << i << endl;
+                numberOfDirectNeighbors[i] = 0;
+
+                if(!isRattler[i]) {
+                    jloop(N) {
+                        if(trueneighbors[j * N + i]) {
+                            if(!isRattler[j]) {
+                                numberOfDirectNeighbors[i] += 1;
+                                Z2 += 0.5;
+                            }
+
+                        }
+                    }
+                }
+
+                if(numberOfDirectNeighbors[i] < 3 && !isRattler[i]) {
+                    isRattler[i] = true;
+                    numberOfRattlerChanges++;
+
+                }
+
+                if(numberOfDirectNeighbors[i] == 3 && !isRattler[i]) {
+
+                    ip = 0;
+                    jloop(N) {
+                        if(trueneighbors[j * N + i] && !isRattler[j]) {
+                            X_3n[ip] = p[j] + nx[j * N + i] * lxx  + ny[j * N + i] * lyx;
+                            Y_3n[ip] = p[j + N] + nx[j * N + i] * lxy  + ny[j * N + i] * lyy;
+                            ip += 1;
+
+                        }
+                    }
+
+
+                    stable_particle = pnpoly(3, X_3n, Y_3n, p[i], p[i + N]);
+
+
+                    if(!stable_particle) {
+                        cout << "Particle " << i << " is not bounded by forces on all axes !!" << endl;
+                        isRattler[i] = true;
+                    }
+
+                }
+
+
+
+
+            }
+        } // end while
+
+
+        Ncorrected = 0;
+        iloop(N) {
+            if(!isRattler[i]) {
+                Ncorrected++;
+            }
+        }
+    } // end if(fireconverged)
+
+    else {
+        Ncorrected = N;
+    }
+
+
+
+    // normalize
+    phi = phi / (L * L);
+
+
+    Z2 = 2 * Z2 / (Ncorrected * 1.0 + 1e-16);
+    Z = Z2;
+    P = P / (L * L) / 2.0;
+    sxx = sxx / (L * L);
+    syy = syy / (L * L);
+    sxy = sxy / (L * L);
+    syx = syx;
+
+    return;
 } // end calcSysPara
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2607,602 +2911,723 @@ void calcSysPara() {
 
 ////////////////////////////////////////////////////////////////////////
 // readPositionFile
-void readPositionFile() {
-	char c = 'x', clast = 'x', clastlast = 'x';
+void readPositionFile()
+{
+    char c = 'x', clast = 'x', clastlast = 'x';
 
-	int i = 0;
-	bool initializeNow = false;
+    int i = 0;
+    bool initializeNow = false;
 
-	int decimal = 0;
-	long double helperchar = 0.0;
-	bool isnegative = false;
+    int decimal = 0;
+    long double helperchar = 0.0;
+    bool isnegative = false;
 
-	bool posRead = false;
-	bool Nread = false;
-	bool L1read = false;
-	bool L2read = false;
-	bool P0read = false;
-	string filepath = nameOfWorkingDirectory + "/";
+    bool posRead = false;
+    bool Nread = false;
+    bool L1read = false;
+    bool L2read = false;
+    bool P0read = false;
+    string filepath = nameOfWorkingDirectory + "/";
 
-	long double L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
-/* jamBashbulk.cpp:2679:25: warning: variable ‘L1y’ set but not used [-Wunused-but-set-variable]
- * Weird!
- */
+    long double L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
+    /* jamBashbulk.cpp:2679:25: warning: variable ‘L1y’ set but not used [-Wunused-but-set-variable]
+     * Weird!
+     */
 
-	ifstream infile;
+    ifstream infile;
 
-	if (distributioncase != 5) {
-		if (screenOutput)
-			cout << "Creating file name." << endl;
-		createFileName();
-		filepath.append(filenameString);
-		if (screenOutput)
-			cout << "Filename: " << filepath << endl;
-		infile.open((char*) filepath.c_str());
-	} else
-		infile.open((char*) filepath.c_str());
+    if(distributioncase != 5) {
+        if(screenOutput) {
+            cout << "Creating file name." << endl;
+        }
 
-	if (!infile.is_open()) {
-		currentPackingNumber = 0;
-		if (screenOutput) {
-			cout << "Input file did NOT OPEN!" << endl;
-			cout << "Press any key + ENTER to proceed." << endl;
-			cin >> stop;
-		}
-		return;
-	} else if (screenOutput)
-		cout << "Input file is opened succesfully!" << endl;
+        createFileName();
+        filepath.append(filenameString);
 
-	while (infile.good()) {
-		clastlast = clast;
-		clast = c;
-		c = infile.get();
+        if(screenOutput) {
+            cout << "Filename: " << filepath << endl;
+        }
 
-		if (clastlast == 'N' && c == '=') {
-			Nread = true;
-			decimal = 0;
-			helperchar = 0.0;
+        infile.open((char *) filepath.c_str());
 
-		}
-		if (Nread) {
-			if (c > 47 && c < 58) {
-				helperchar = helperchar * 10 + (c - 48);
-				decimal++;
-			}
-			if (c == ',') {
-				N = helperchar;
-				helperchar = 0.0;
-				Nread = false;
-				initializeNow = true;
-			}
-		}
+    } else {
+        infile.open((char *) filepath.c_str());
+    }
 
-		if (initializeNow) {
-			initializeArrays();
-			initializeNow = false;
-		}
+    if(!infile.is_open()) {
+        currentPackingNumber = 0;
 
-		if (clastlast == 'L' && clast == '1' && c == '=') {
-			L1read = true;
-			i = 0;
-			decimal = 0;
-			helperchar = 0.0;
+        if(screenOutput) {
+            cout << "Input file did NOT OPEN!" << endl;
+            cout << "Press any key + ENTER to proceed." << endl;
+            cin >> stop;
+        }
 
-		}
-		if (L1read) {
-			if (c == '-')
-				isnegative = true;
-			if (c > 47 && c < 58) {
-				helperchar = helperchar * 10.0 + (c - 48) * 1.0;
-				decimal++;
-			}
-			if (c == '.')
-				decimal = 0;
-			if (c == ',' || c == '}') {
+        return;
 
-				for (int j = 0; j < decimal; j++) {
-					helperchar *= 0.1;
-				}
-				if (!isnegative && i == 0)
-					L1x = helperchar;
-				if (isnegative && i == 0)
-					L1x = -helperchar;
-				if (!isnegative && i == 1)
-					L1y = helperchar;
-				if (isnegative && i == 1)
-					L1y = -helperchar;
+    } else if(screenOutput) {
+        cout << "Input file is opened succesfully!" << endl;
+    }
 
-				helperchar = 0.0;
-				isnegative = false;
-				i++;
+    while(infile.good()) {
+        clastlast = clast;
+        clast = c;
+        c = infile.get();
 
-			}
-			if (i == 2) {
-				L1read = false;
-			}
-		}
+        if(clastlast == 'N' && c == '=') {
+            Nread = true;
+            decimal = 0;
+            helperchar = 0.0;
 
-		if (clastlast == 'L' && clast == '2' && c == '=') {
-			L2read = true;
-			i = 0;
-			decimal = 0;
-			helperchar = 0.0;
+        }
 
-		}
-		if (L2read) {
-			if (c == '-')
-				isnegative = true;
-			if (c > 47 && c < 58) {
-				helperchar = helperchar * 10.0 + (c - 48) * 1.0;
-				decimal++;
-			}
-			if (c == '.')
-				decimal = 0;
-			if (c == ',' || c == '}') {
+        if(Nread) {
+            if(c > 47 && c < 58) {
+                helperchar = helperchar * 10 + (c - 48);
+                decimal++;
+            }
 
-				for (int j = 0; j < decimal; j++) {
-					helperchar *= 0.1;
-				}
-				if (!isnegative && i == 0)
-					L2x = helperchar;
-				if (isnegative && i == 0)
-					L2x = -helperchar;
-				if (!isnegative && i == 1)
-					L2y = helperchar;
-				if (isnegative && i == 1)
-					L2y = -helperchar;
+            if(c == ',') {
+                N = helperchar;
+                helperchar = 0.0;
+                Nread = false;
+                initializeNow = true;
+            }
+        }
 
-				helperchar = 0.0;
-				isnegative = false;
-				i++;
-			}
-			if (i == 2) {
-				L2read = false;
-			}
-		}
+        if(initializeNow) {
+            initializeArrays();
+            initializeNow = false;
+        }
 
-		if (clastlast == 'P' && clast == '0' && c == '=') {
-			P0read = true;
-			decimal = 0;
-			helperchar = 0.0;
+        if(clastlast == 'L' && clast == '1' && c == '=') {
+            L1read = true;
+            i = 0;
+            decimal = 0;
+            helperchar = 0.0;
 
-		}
-		if (P0read) {
-			if (c > 47 && c < 58) {
-				helperchar = helperchar * 10.0 + (c - 48) * 1.0;
-				decimal++;
-			}
-			if (c == '.')
-				decimal = 0;
-			if (c == ',') {
+        }
 
-				for (int j = 0; j < decimal; j++) {
-					helperchar *= 0.1;
-				}
-				P0 = helperchar;
-				helperchar = 0.0;
-				P0read = false;
-			}
-		}
+        if(L1read) {
+            if(c == '-') {
+                isnegative = true;
+            }
 
-		if (!L1read && !L2read && c == '{') {
-			posRead = true;
-			decimal = 0;
-			helperchar = 0.0;
+            if(c > 47 && c < 58) {
+                helperchar = helperchar * 10.0 + (c - 48) * 1.0;
+                decimal++;
+            }
 
-		}
-		if (posRead) {
-			if (c == '-')
-				isnegative = true;
-			if (clastlast == '{') {
-				i = 0;
-				decimal = 0;
-			}
-			if (c > 47 && c < 58) {
-				helperchar = helperchar * 10.0 + (c - 48) * 1.0;
-				decimal++;
-			}
-			if (c == '.')
-				decimal = 0;
-			if (c == ',' || c == '}') {
+            if(c == '.') {
+                decimal = 0;
+            }
 
-				for (int j = 0; j < decimal; j++) {
-					helperchar *= 0.1;
-				}
-				if (i < 3 * N && !isnegative && i % 3 == 0)
-					p[i / 3] = helperchar;
-				if (i < 3 * N && isnegative && i % 3 == 0)
-					p[i / 3] = -helperchar;
+            if(c == ',' || c == '}') {
 
-				if (i < 3 * N && !isnegative && i % 3 == 1)
-					p[N + i / 3] = helperchar;
-				if (i < 3 * N && isnegative && i % 3 == 1)
-					p[N + i / 3] = -helperchar;
+                for(int j = 0; j < decimal; j++) {
+                    helperchar *= 0.1;
+                }
 
-				if (i < 3 * N && !isnegative && i % 3 == 2)
-					R[i / 3] = helperchar;
-				if (i < 3 * N && isnegative && i % 3 == 2)
-					R[i / 3] = -helperchar;
-				i++;
+                if(!isnegative && i == 0) {
+                    L1x = helperchar;
+                }
 
-				isnegative = false;
-				helperchar = 0.0;
-			}
+                if(isnegative && i == 0) {
+                    L1x = -helperchar;
+                }
 
-			if (c == '}') {
-				posRead = false;
-			}
+                if(!isnegative && i == 1) {
+                    L1y = helperchar;
+                }
 
-		}
-	} // end while
+                if(isnegative && i == 1) {
+                    L1y = -helperchar;
+                }
 
-	infile.close();
+                helperchar = 0.0;
+                isnegative = false;
+                i++;
 
-	Rmax = 0.0;
-	iloop(N) {
-		if (R[i] > Rmax)
-			Rmax = R[i]; // determine the largest particle radius in the packing
-		                 // (for neighbor determination)
-	}
+            }
 
-	L = p[2 * N + 2] = sqrt(L1x * L2y);
-	alpha = p[2 * N] = L2x / L;
-	delta = p[2 * N + 1] = sqrt(L2y / L1x) - 1.0;
+            if(i == 2) {
+                L1read = false;
+            }
+        }
 
-	iloop(N) {
-		jloop(N) {
-			neighbors[j * N + i] = true; // initially all particles are concidered
-			if (j == i)
-				neighbors[i * N + i] = false; // neighbors, except if j==i
-		}
-	}
+        if(clastlast == 'L' && clast == '2' && c == '=') {
+            L2read = true;
+            i = 0;
+            decimal = 0;
+            helperchar = 0.0;
 
-	if (screenOutput)
-		cout << "test0000: readPositionFile-END: " << " N = " << N << ", L = "
-				<< L << ", P0= " << P0 << endl;
+        }
 
-	alpha = p[2 * N];
-	delta = p[2 * N + 1];
+        if(L2read) {
+            if(c == '-') {
+                isnegative = true;
+            }
 
-	if (distributioncase == 4)
-		P0 = P0init;
+            if(c > 47 && c < 58) {
+                helperchar = helperchar * 10.0 + (c - 48) * 1.0;
+                decimal++;
+            }
 
-	return;
+            if(c == '.') {
+                decimal = 0;
+            }
+
+            if(c == ',' || c == '}') {
+
+                for(int j = 0; j < decimal; j++) {
+                    helperchar *= 0.1;
+                }
+
+                if(!isnegative && i == 0) {
+                    L2x = helperchar;
+                }
+
+                if(isnegative && i == 0) {
+                    L2x = -helperchar;
+                }
+
+                if(!isnegative && i == 1) {
+                    L2y = helperchar;
+                }
+
+                if(isnegative && i == 1) {
+                    L2y = -helperchar;
+                }
+
+                helperchar = 0.0;
+                isnegative = false;
+                i++;
+            }
+
+            if(i == 2) {
+                L2read = false;
+            }
+        }
+
+        if(clastlast == 'P' && clast == '0' && c == '=') {
+            P0read = true;
+            decimal = 0;
+            helperchar = 0.0;
+
+        }
+
+        if(P0read) {
+            if(c > 47 && c < 58) {
+                helperchar = helperchar * 10.0 + (c - 48) * 1.0;
+                decimal++;
+            }
+
+            if(c == '.') {
+                decimal = 0;
+            }
+
+            if(c == ',') {
+
+                for(int j = 0; j < decimal; j++) {
+                    helperchar *= 0.1;
+                }
+
+                P0 = helperchar;
+                helperchar = 0.0;
+                P0read = false;
+            }
+        }
+
+        if(!L1read && !L2read && c == '{') {
+            posRead = true;
+            decimal = 0;
+            helperchar = 0.0;
+
+        }
+
+        if(posRead) {
+            if(c == '-') {
+                isnegative = true;
+            }
+
+            if(clastlast == '{') {
+                i = 0;
+                decimal = 0;
+            }
+
+            if(c > 47 && c < 58) {
+                helperchar = helperchar * 10.0 + (c - 48) * 1.0;
+                decimal++;
+            }
+
+            if(c == '.') {
+                decimal = 0;
+            }
+
+            if(c == ',' || c == '}') {
+
+                for(int j = 0; j < decimal; j++) {
+                    helperchar *= 0.1;
+                }
+
+                if(i < 3 * N && !isnegative && i % 3 == 0) {
+                    p[i / 3] = helperchar;
+                }
+
+                if(i < 3 * N && isnegative && i % 3 == 0) {
+                    p[i / 3] = -helperchar;
+                }
+
+                if(i < 3 * N && !isnegative && i % 3 == 1) {
+                    p[N + i / 3] = helperchar;
+                }
+
+                if(i < 3 * N && isnegative && i % 3 == 1) {
+                    p[N + i / 3] = -helperchar;
+                }
+
+                if(i < 3 * N && !isnegative && i % 3 == 2) {
+                    R[i / 3] = helperchar;
+                }
+
+                if(i < 3 * N && isnegative && i % 3 == 2) {
+                    R[i / 3] = -helperchar;
+                }
+
+                i++;
+
+                isnegative = false;
+                helperchar = 0.0;
+            }
+
+            if(c == '}') {
+                posRead = false;
+            }
+
+        }
+    } // end while
+
+    infile.close();
+
+    Rmax = 0.0;
+    iloop(N) {
+        if(R[i] > Rmax) {
+            Rmax = R[i];    // determine the largest particle radius in the packing
+        }
+
+        // (for neighbor determination)
+    }
+
+    L = p[2 * N + 2] = sqrt(L1x * L2y);
+    alpha = p[2 * N] = L2x / L;
+    delta = p[2 * N + 1] = sqrt(L2y / L1x) - 1.0;
+
+    iloop(N) {
+        jloop(N) {
+            neighbors[j * N + i] = true; // initially all particles are concidered
+
+            if(j == i) {
+                neighbors[i * N + i] = false;    // neighbors, except if j==i
+            }
+        }
+    }
+
+    if(screenOutput)
+        cout << "test0000: readPositionFile-END: " << " N = " << N << ", L = "
+             << L << ", P0= " << P0 << endl;
+
+    alpha = p[2 * N];
+    delta = p[2 * N + 1];
+
+    if(distributioncase == 4) {
+        P0 = P0init;
+    }
+
+    return;
 } // end readPositionFile
 
 ////////////////////////////////////////////////////////////////////////
 // writePositionFile
-inline void writePositionFile() {
+inline void writePositionFile()
+{
 
-	time_t rawtime;
-	struct tm *timeinfo;
-	char timebuffer[80];
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+    time_t rawtime;
+    struct tm * timeinfo;
+    char timebuffer[80];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
 
-	string filepath = nameOfWorkingDirectory;
+    string filepath = nameOfWorkingDirectory;
 
-	filepath.append("/");
+    filepath.append("/");
 
-	createFileName();
+    createFileName();
 
-	filepath.append(filename);
+    filepath.append(filename);
 
-	ofstream outfile;
+    ofstream outfile;
 
-	if (programmode == 5)
-		outfile.open((char*) filepath.c_str(), ios::trunc);
+    if(programmode == 5) {
+        outfile.open((char *) filepath.c_str(), ios::trunc);
+    }
 
-	if (!outfile) {
-		if (screenOutput)
-			cout << "Cannot open output file!" << endl;
-		outfile.close();
-		ofstream outfile;
-		createFileName();
-		if (programmode == 5)
-			outfile.open(filename, ios::trunc);
+    if(!outfile) {
+        if(screenOutput) {
+            cout << "Cannot open output file!" << endl;
+        }
 
-		if (!outfile) {
-			if (screenOutput)
-				cout << "Cannot open output file!" << endl;
-			return;
-		} else if (screenOutput)
-			cout << "Output file is opened succesfully (2nd attempt)!" << endl;
-	} else if (screenOutput)
-		cout << "Output file is opened succesfully!" << endl;
-	outfile.setf(ios::fixed, ios::floatfield);
-	outfile.precision(16);
+        outfile.close();
+        ofstream outfile;
+        createFileName();
 
-	outfile  << FILE_HEADER;
+        if(programmode == 5) {
+            outfile.open(filename, ios::trunc);
+        }
 
-	alpha = p[2 * N];
-	delta = p[2 * N + 1];
-	L = p[2 * N + 2];
+        if(!outfile) {
+            if(screenOutput) {
+                cout << "Cannot open output file!" << endl;
+            }
 
-	lxx = L / (1.0 + delta);
-	lxy = L * 0.0;
-	lyx = L * alpha;
-	lyy = L * (1.0 + delta);
+            return;
 
-	outfile << "N = " << N << " ,L = " << L << " ,L1= { " << lxx << " , " << lxy
-			<< " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
-			<< Phelper << " ,P0= " << P0 << " ," << endl;
+        } else if(screenOutput) {
+            cout << "Output file is opened succesfully (2nd attempt)!" << endl;
+        }
 
-	outfile << "{" << endl;
-	iloop(N) {
-		outfile << p[i] << " ,	" << p[N + i] << " ,	" << R[i] << " ,	" << endl;
-	}
-	outfile << "}" << endl;
-	outfile << endl << endl;
+    } else if(screenOutput) {
+        cout << "Output file is opened succesfully!" << endl;
+    }
 
-	outfile.close();
-	outfile.close();
+    outfile.setf(ios::fixed, ios::floatfield);
+    outfile.precision(16);
 
-	string logFileNamePackings;
+    outfile  << FILE_HEADER;
 
-	logFileNamePackings = filenameString;
+    alpha = p[2 * N];
+    delta = p[2 * N + 1];
+    L = p[2 * N + 2];
 
-	logFileNamePackings.insert(0, "log");
+    lxx = L / (1.0 + delta);
+    lxy = L * 0.0;
+    lyx = L * alpha;
+    lyy = L * (1.0 + delta);
 
-	logFileNamePackings.insert(0, nameOfWorkingDirectory + "/");
+    outfile << "N = " << N << " ,L = " << L << " ,L1= { " << lxx << " , " << lxy
+            << " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
+            << Phelper << " ,P0= " << P0 << " ," << endl;
 
-	ofstream logfile;
+    outfile << "{" << endl;
+    iloop(N) {
+        outfile << p[i] << " ,	" << p[N + i] << " ,	" << R[i] << " ,	" << endl;
+    }
+    outfile << "}" << endl;
+    outfile << endl << endl;
 
-	long double maxGrad = 0;
-	iloop(2*N) {
-		if (fabs(xihelper[i]) > maxGrad)
-			maxGrad = fabs(xihelper[i]);
-	}
+    outfile.close();
+    outfile.close();
 
-	logfile.open((char*) logFileNamePackings.c_str(), ios::app);
+    string logFileNamePackings;
 
-	logfile << currentPackingNumber << "	" << N << "	" << P0 << "	" << P << "	"
-			<< alpha << "	" << delta;
-	logfile << "	" << L << "	" << phi << "	" << Z << "	" << N - Ncorrected
-			<< "	" << sxx << "	" << syy;
-	logfile << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	"
-			<< dH << "	" << timediff1;
-	logfile << "	" << iterationcountfire << "	"
-			<< iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	"
-			<< timediff1 << "       " << timebuffer << endl;
+    logFileNamePackings = filenameString;
 
-	logfile.close();
+    logFileNamePackings.insert(0, "log");
 
-	return;
+    logFileNamePackings.insert(0, nameOfWorkingDirectory + "/");
+
+    ofstream logfile;
+
+    long double maxGrad = 0;
+    iloop(2 * N) {
+        if(fabs(xihelper[i]) > maxGrad) {
+            maxGrad = fabs(xihelper[i]);
+        }
+    }
+
+    logfile.open((char *) logFileNamePackings.c_str(), ios::app);
+
+    logfile << currentPackingNumber << "	" << N << "	" << P0 << "	" << P << "	"
+            << alpha << "	" << delta;
+    logfile << "	" << L << "	" << phi << "	" << Z << "	" << N - Ncorrected
+            << "	" << sxx << "	" << syy;
+    logfile << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	"
+            << dH << "	" << timediff1;
+    logfile << "	" << iterationcountfire << "	"
+            << iterationcountfrprmnCUMULATIVE << "	" << maxGrad << "	"
+            << timediff1 << "       " << timebuffer << endl;
+
+    logfile.close();
+
+    return;
 }
 
 // end writePositionFile
 
 ////////////////////////////////////////////////////////////////////////
 // writeMultiplePackings
-inline void writeMultiplePackings(string name) {
-	time_t rawtime;
-	struct tm *timeinfo;
-	char timebuffer[80];
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+inline void writeMultiplePackings(string name)
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    char timebuffer[80];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
 
-	ofstream outfile;
+    ofstream outfile;
 
-	outfile.open((char*) name.c_str(), ios::app);
+    outfile.open((char *) name.c_str(), ios::app);
 
-	if (!outfile) {
-		if (screenOutput)
-			cout << "Cannot open output file!" << endl;
-		outfile.close();
-		ofstream outfile;
-		createFileName();
-		if (programmode == 5)
-			outfile.open((char*) name.c_str(), ios::app);
-		if (!outfile) {
-			if (screenOutput)
-				cout << "Cannot open output file!" << endl;
-			return;
-		} else if (screenOutput)
-			cout << "Output file is opened succesfully (2nd attempt)!" << endl;
-	} else if (screenOutput)
-		cout << "Output file is opened succesfully!" << endl;
-	outfile.setf(ios::fixed, ios::floatfield);
-	outfile.precision(16);
+    if(!outfile) {
+        if(screenOutput) {
+            cout << "Cannot open output file!" << endl;
+        }
 
-	alpha = p[2 * N];
-	delta = p[2 * N + 1];
-	L = p[2 * N + 2];
+        outfile.close();
+        ofstream outfile;
+        createFileName();
 
-	lxx = L / (1.0 + delta);
-	lxy = L * 0.0;
-	lyx = L * alpha;
-	lyy = L * (1.0 + delta);
+        if(programmode == 5) {
+            outfile.open((char *) name.c_str(), ios::app);
+        }
 
-	outfile << "N = " << N << " ,L = " << L << " ,L1= { " << lxx << " , " << lxy
-			<< " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
-			<< Phelper << " ,P0= " << P0 << " ," << endl;
+        if(!outfile) {
+            if(screenOutput) {
+                cout << "Cannot open output file!" << endl;
+            }
 
-	outfile << "{" << endl;
-	iloop(N) {
-		outfile << p[i] << " ,	" << p[N + i] << " ,	" << R[i] << " ,	" << endl;
-	}
-	outfile << "}" << endl;
-	outfile << endl << endl;
+            return;
 
-	outfile.close();
+        } else if(screenOutput) {
+            cout << "Output file is opened succesfully (2nd attempt)!" << endl;
+        }
 
-	return;
+    } else if(screenOutput) {
+        cout << "Output file is opened succesfully!" << endl;
+    }
+
+    outfile.setf(ios::fixed, ios::floatfield);
+    outfile.precision(16);
+
+    alpha = p[2 * N];
+    delta = p[2 * N + 1];
+    L = p[2 * N + 2];
+
+    lxx = L / (1.0 + delta);
+    lxy = L * 0.0;
+    lyx = L * alpha;
+    lyy = L * (1.0 + delta);
+
+    outfile << "N = " << N << " ,L = " << L << " ,L1= { " << lxx << " , " << lxy
+            << " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
+            << Phelper << " ,P0= " << P0 << " ," << endl;
+
+    outfile << "{" << endl;
+    iloop(N) {
+        outfile << p[i] << " ,	" << p[N + i] << " ,	" << R[i] << " ,	" << endl;
+    }
+    outfile << "}" << endl;
+    outfile << endl << endl;
+
+    outfile.close();
+
+    return;
 }
 // end writeMultiplePackings
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 /// void packIntoBoundaries()
-void packIntoBoundaries() {
-	iloop(N) {
-		while (p[N + i] < (0)) {
-			p[N + i] += lyy;
-		}
-		while (p[N + i] > (lyy)) {
-			p[N + i] -= lyy;
-		}
+void packIntoBoundaries()
+{
+    iloop(N) {
+        while(p[N + i] < (0)) {
+            p[N + i] += lyy;
+        }
 
-		while (p[i] < (0 + p[N + i] * lyx / lyy))
-			p[i] += lxx;
-		while (p[i] > (lxx + p[N + i] * lyx / lyy))
-			p[i] -= lxx;
+        while(p[N + i] > (lyy)) {
+            p[N + i] -= lyy;
+        }
 
-	}
+        while(p[i] < (0 + p[N + i] * lyx / lyy)) {
+            p[i] += lxx;
+        }
 
-	energy();
+        while(p[i] > (lxx + p[N + i] * lyx / lyy)) {
+            p[i] -= lxx;
+        }
+
+    }
+
+    energy();
 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // createFileName
-inline void createFileName() {
-	char namebuffer[4];
-	filenameString = "";
+inline void createFileName()
+{
+    char namebuffer[4];
+    filenameString = "";
 
-	namebuffer[0] = 48 + (((currentPackingNumber) / 1000) % 10);
-	namebuffer[1] = 48 + (((currentPackingNumber) / 100) % 10);
-	namebuffer[2] = 48 + (((currentPackingNumber) / 10) % 10);
-	namebuffer[3] = 48 + ((currentPackingNumber) % 10);
+    namebuffer[0] = 48 + (((currentPackingNumber) / 1000) % 10);
+    namebuffer[1] = 48 + (((currentPackingNumber) / 100) % 10);
+    namebuffer[2] = 48 + (((currentPackingNumber) / 10) % 10);
+    namebuffer[3] = 48 + ((currentPackingNumber) % 10);
 
-	if (screenOutput)
-		cout << "FilenameString: " << filenameString << endl;
+    if(screenOutput) {
+        cout << "FilenameString: " << filenameString << endl;
+    }
 
-	unsigned int i = 0;
+    unsigned int i = 0;
 
-	string filebase = nameOfWorkingDirectory;
+    string filebase = nameOfWorkingDirectory;
 
-	while (nameOfWorkingDirectory[i] != 'N') {
-		i++;
-		filebase = nameOfWorkingDirectory.substr(i);
+    while(nameOfWorkingDirectory[i] != 'N') {
+        i++;
+        filebase = nameOfWorkingDirectory.substr(i);
 
-		if (i > nameOfWorkingDirectory.size()) {
-			cout << "Unexpected filename ERROR 2!" << endl;
-			return;
-		}
-	}
+        if(i > nameOfWorkingDirectory.size()) {
+            cout << "Unexpected filename ERROR 2!" << endl;
+            return;
+        }
+    }
 
-	filenameString.append(filebase);
-	filenameString.append("~");
-
-
-	filenameString.push_back(namebuffer[0]);
-	filenameString.push_back(namebuffer[1]);
-	filenameString.push_back(namebuffer[2]);
-	filenameString.push_back(namebuffer[3]);
+    filenameString.append(filebase);
+    filenameString.append("~");
 
 
-	filenameString.append(".txt");
+    filenameString.push_back(namebuffer[0]);
+    filenameString.push_back(namebuffer[1]);
+    filenameString.push_back(namebuffer[2]);
+    filenameString.push_back(namebuffer[3]);
 
-	filename = (char*) filenameString.c_str();
-	if (screenOutput)
-		cout << filename << endl;
 
-	return;
+    filenameString.append(".txt");
+
+    filename = (char *) filenameString.c_str();
+
+    if(screenOutput) {
+        cout << filename << endl;
+    }
+
+    return;
 }
 // end createFileName
 
-void initializeArrays() {
+void initializeArrays()
+{
 
-	// size all the dynamic 'vector' arrays according to the particle number N
-	if (screenOutput)
-		cout << "test0002: N = " << N << endl;
-	dij.reserve(N * N);
-	rij.reserve(N * N);
-	xij.reserve(N * N);
-	yij.reserve(N * N);
-	nx.reserve(N * N);
-	ny.reserve(N * N);
-	neighbors.reserve(N * N);
-	trueneighbors.reserve(N * N);
-	trueneighborsOld.reserve(N * N);
-	trueneighborsLast.reserve(N * N);
-	trueneighborChanges.reserve(N * N);
+    // size all the dynamic 'vector' arrays according to the particle number N
+    if(screenOutput) {
+        cout << "test0002: N = " << N << endl;
+    }
 
-	p.reserve(2 * N + 3);
-	phelper.reserve(2 * N + 3);
-	pcom.reserve(2 * N + 3);
-	pLast.reserve(2 * N + 3);
-	xi.reserve(2 * N + 3);
-	xihelper.reserve(2 * N + 3);
-	xicom.reserve(2 * N + 3);
-	g.reserve(2 * N + 3);
-	h.reserve(2 * N + 3);
-	v.reserve(2 * N + 3);
-	R.reserve(N);
-	M.reserve(N + 3);
+    dij.reserve(N * N);
+    rij.reserve(N * N);
+    xij.reserve(N * N);
+    yij.reserve(N * N);
+    nx.reserve(N * N);
+    ny.reserve(N * N);
+    neighbors.reserve(N * N);
+    trueneighbors.reserve(N * N);
+    trueneighborsOld.reserve(N * N);
+    trueneighborsLast.reserve(N * N);
+    trueneighborChanges.reserve(N * N);
 
-	numberOfDirectNeighbors.reserve(N);
-	isRattler.reserve(N);
-	wasRattler.reserve(N);
+    p.reserve(2 * N + 3);
+    phelper.reserve(2 * N + 3);
+    pcom.reserve(2 * N + 3);
+    pLast.reserve(2 * N + 3);
+    xi.reserve(2 * N + 3);
+    xihelper.reserve(2 * N + 3);
+    xicom.reserve(2 * N + 3);
+    g.reserve(2 * N + 3);
+    h.reserve(2 * N + 3);
+    v.reserve(2 * N + 3);
+    R.reserve(N);
+    M.reserve(N + 3);
 
-	// set initial particle positions and properties
-	iloop(N) {
-		M[i] = 1.0; // set particle 'masses' for FIRE-algorithm
-		M[N] = M[N + 1] = M[N + 2] = N;
-	}
+    numberOfDirectNeighbors.reserve(N);
+    isRattler.reserve(N);
+    wasRattler.reserve(N);
 
-	iloop(2*N) {
-		v[i] = 0.0;
-	}
-	v[2 * N] = v[2 * N + 1] = v[2 * N + 2] = 0;
+    // set initial particle positions and properties
+    iloop(N) {
+        M[i] = 1.0; // set particle 'masses' for FIRE-algorithm
+        M[N] = M[N + 1] = M[N + 2] = N;
+    }
 
-	ITMAXBRENT = max(100, 2 * N); // maximum of iterations in brent
-	ITMAX = 5; // maximum of iterations in frprmn
+    iloop(2 * N) {
+        v[i] = 0.0;
+    }
+    v[2 * N] = v[2 * N + 1] = v[2 * N + 2] = 0;
 
-	dtmax = dtmaxinit;
-	dofOnOff = false;
+    ITMAXBRENT = max(100, 2 * N); // maximum of iterations in brent
+    ITMAX = 5; // maximum of iterations in frprmn
 
-	if (screenOutput)
-		cout << "test0003: initializeArrays-END" << endl;
-	return;
+    dtmax = dtmaxinit;
+    dofOnOff = false;
+
+    if(screenOutput) {
+        cout << "test0003: initializeArrays-END" << endl;
+    }
+
+    return;
 }
 
-void checkFolderName(string foldername) {
+void checkFolderName(string foldername)
+{
 
-	string filename = "/runLog.txt";
-	;
-	bool folderexists = false;
+    string filename = "/runLog.txt";
+    ;
+    bool folderexists = false;
 
-	ofstream testFolderName;
-	filename.insert(0, foldername);
-	testFolderName.open((char*) filename.c_str(), ios::app);
+    ofstream testFolderName;
+    filename.insert(0, foldername);
+    testFolderName.open((char *) filename.c_str(), ios::app);
 
-	if (testFolderName.is_open())
-		folderexists = true;
-	else
-		cout << "ERROR" << endl;
-	if (folderexists)
-		testFolderName.close();
+    if(testFolderName.is_open()) {
+        folderexists = true;
 
-	return;
+    } else {
+        cout << "ERROR" << endl;
+    }
+
+    if(folderexists) {
+        testFolderName.close();
+    }
+
+    return;
 }
 
 
 
 //! Point Inclusion in Polygon Test
 //! http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-//! 
+//!
 //! @param nvert         Number of vertices in polygon.
-//! @param vertx, verty  Arrays containing nvert (x,y) coordinates of the 
+//! @param vertx, verty  Arrays containing nvert (x,y) coordinates of the
 //!                      vertices of the polygons.
 //! @param testx, testy  (x,y) coordinates of the test point
 //!
 //! @return true for strictly interior points
 //!         false for strictly exterior points
 //!         true or false for points on the vertices
-bool pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy)
+bool pnpoly(int nvert, long double * vertx, long double * verty, long double testx, long double testy)
 {
-	int i, j;
-	bool c = false;
-	for (i = 0, j = nvert-1; i < nvert; j = i++) {
-		
-		if ( ((verty[i]>testy) != (verty[j]>testy)) &&
-			(testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]) )
-			c = !c;
-	}
-	return c;
+    int i, j;
+    bool c = false;
+
+    for(i = 0, j = nvert - 1; i < nvert; j = i++) {
+
+        if(((verty[i] > testy) != (verty[j] > testy)) &&
+           (testx < (vertx[j] - vertx[i]) * (testy - verty[i]) / (verty[j] - verty[i]) + vertx[i])) {
+            c = !c;
+        }
+    }
+
+    return c;
 }
