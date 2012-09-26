@@ -263,7 +263,7 @@ static void checkNeighborChanges(int& addedcontacts, int& removedcontacts,
 		int& neighborChanges, int& neighborChangesLast);
 static void extractNandP(string foldername);
 static void checkFolderName(string foldername);
-static int pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy);
+static bool pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2461,7 +2461,7 @@ void calcSysPara() {
 	
 	// Rattlers check
 	long double X_3n[3], Y_3n[3]; // in case there are 3 neighbors, we have to check their positions.
-	int test;
+	int stable_particle;
 	
 	iloop(3){
 		X_3n[i]=0;Y_3n[i]=0;
@@ -2564,11 +2564,11 @@ void calcSysPara() {
 					}
 
 
-					test=pnpoly(3,X_3n, Y_3n, p[i], p[i + N]);
+					stable_particle = pnpoly(3,X_3n, Y_3n, p[i], p[i + N]);
 
 
-					if (!test) {
-						cout << "Particle "<<i<< " is not in the triangle !!" <<endl;
+					if (!stable_particle) {
+						cout << "Particle "<<i<< " is not bounded by forces on all axes !!" <<endl;
 						isRattler[i] = true;
 					}
 
@@ -3188,10 +3188,21 @@ void checkFolderName(string foldername) {
 
 
 
-
-int pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy)
+//! Point Inclusion in Polygon Test
+//! http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+//! 
+//! @param nvert         Number of vertices in polygon.
+//! @param vertx, verty  Arrays containing nvert (x,y) coordinates of the 
+//!                      vertices of the polygons.
+//! @param testx, testy  (x,y) coordinates of the test point
+//!
+//! @return true for strictly interior points
+//!         false for strictly exterior points
+//!         true or false for points on the vertices
+bool pnpoly(int nvert, long double *vertx, long double *verty, long double testx, long double testy)
 {
-	int i, j, c = 0;
+	int i, j;
+	bool c = false;
 	for (i = 0, j = nvert-1; i < nvert; j = i++) {
 		
 		if ( ((verty[i]>testy) != (verty[j]>testy)) &&
