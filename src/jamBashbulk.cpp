@@ -34,11 +34,6 @@ static bool screenOutput = false;
 static char stop; // this variable waits for user input and halts the
 // computation.
 
-static const bool test = true; // if true debugging output is shown
-// if(test) cout << "test0000" << endl;
-
-// graphics and output
-
 // degrees of freedom of the periodic boundary unit cell in
 static long double alpha = 0.0; // lattice vector angle (simple shear)
 static long double delta = 0.0; // lattice vector aspect-ratio (pure shear)
@@ -2862,7 +2857,7 @@ void readPositionFile() {
 		}
 	}
 
-	if (test)
+	if (screenOutput)
 		cout << "test0000: readPositionFile-END: " << " N = " << N << ", L = "
 				<< L << ", P0= " << P0 << endl;
 
@@ -3113,7 +3108,7 @@ inline void createFileName() {
 void initializeArrays() {
 
 	// size all the dynamic 'vector' arrays according to the particle number N
-	if (test)
+	if (screenOutput)
 		cout << "test0002: N = " << N << endl;
 	dij.reserve(N * N);
 	rij.reserve(N * N);
@@ -3161,7 +3156,7 @@ void initializeArrays() {
 	dtmax = dtmaxinit;
 	dofOnOff = false;
 
-	if (test)
+	if (screenOutput)
 		cout << "test0003: initializeArrays-END" << endl;
 	return;
 }
