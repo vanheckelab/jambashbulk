@@ -74,7 +74,6 @@ static int countPressFlip = 0;
 static bool doSimpleShear = false; // switches on/off forced simple shear
 static bool doCompression = false;
 static bool fixedStepSize = false;
-static long double alphaBeforeDeformation; // the shear angle of the relaxed packing
 
 static int goalNumberOfContactChanges = 10; // the total number of contact changes we are interested in
 static long double goalStrain = 0.1; // the strain range we are interested in
@@ -567,7 +566,7 @@ void calcShearModulus()
     outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
     outLog.close();
 
-    alphaBeforeDeformation = p[2 * N];
+    long double alphaBeforeDeformation = p[2 * N];
     iloop(N) {
         jloop(N) {
             trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
@@ -918,7 +917,7 @@ void calcBulkModulus()
     outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
     outLog.close();
 
-    alphaBeforeDeformation = p[2 * N + 2];
+    long double alphaBeforeDeformation = p[2 * N + 2];
     iloop(N) {
         jloop(N) {
             trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
