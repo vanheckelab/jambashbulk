@@ -1,9 +1,10 @@
 src = src
 bin = bin
 
-opts = -Wall -Wextra -Wconversion
+opts = 
+warnopts = -Wall -Wextra -Wconversion -Wno-sign-conversion
 o3opts = $(opts) -O3
-dopts = $(opts) -g
+dopts = $(warnopts) $(opts) -g
 
 srcfiles = $(src)/jamBashbulk.cpp
 headers = $(src)/fheader.h
@@ -21,7 +22,7 @@ clean: | $(bin)
 
 # normal binaries (-O3 and debug)
 
-$(binary): $(srcfiles) $(allheaders) | $(bin)
+$(binary): $(srcfiles) $(allheaders) $(binary_d) | $(bin)
 	g++ $(o3opts) -o $(bin)/jam2D $(srcfiles)
 
 $(binary_d):  $(srcfiles) $(allheaders) | $(bin)
