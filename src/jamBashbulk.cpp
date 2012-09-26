@@ -85,9 +85,6 @@ static int iterationcountSimStep = 0;
 static int iterationcountfire = 0;
 static const int maxIterationCountFire = 2e9;
 
-static int iterationcountmnbrak = 0;
-static int iterationcountbrent = 0;
-static int iterationcountfrprmn = 0;
 static int iterationcountfrprmnCUMULATIVE = 0;
 static bool frprmnconverged = false;
 static bool fireconverged = false;
@@ -108,19 +105,15 @@ static bool redo = false;
 static long double Rneighbor = 100.0;
 static long double RneighborFrprmnLast;
 
-static long double energyDiffStep = 1e10;
-
 static long double UhelperLastFunctionCall = 1e20;
-static long double Uold = 1e10;
 
 static long double H = 1e9;
-static long double Hold = 1e10;
 static long double HLastFunctionCall = 1e11;
 
 static long double phi; // fill fraction
 static long double Z; // average number of neighbors
 static long double P; // pressure
-static long double sxx, sxy, syx, syy; // stress components
+static long double sxx, sxy, syy; // stress components
 
 // overlap and distances
 static vector<long double> dij; // NxN matrix of particle overlap
@@ -137,10 +130,7 @@ static vector<int> numberOfDirectNeighbors;
 static vector<bool> isRattler;
 static vector<bool> wasRattler;
 
-static int consideredNeighborNumber = 0;
 static int trueneighborNumber = 0;
-static int trueneighborNumberOld = 0;
-static int cumulativeNeighborchanges;
 
 //generalized coordinates and gradients
 static vector<long double> p; // Positions of particles
@@ -200,8 +190,7 @@ static int ITMAX = 12; // maximum of iterations in frprmn
 static const long double TOL = 1e-7; // tolerance passed to brent by linmin
 static const long double AMIN = 1e-7; // starting step in linmin
 
-static long double ftol = 1e-17; // tolerance passed to frprmn()
-static const long double ftolFrprmnBeforeFIRE = 1e-2;
+static const long double ftol = 1e-2; // tolerance passed to frprmn()
 static const long double ftolFIRE = 1e-17; // tolerance passed to fire()
 static int endcount = 0;
 
@@ -586,8 +575,6 @@ void calcShearModulus()
 
     programmode = 3; // program-mode for shearing
 
-    cumulativeNeighborchanges = 0;
-
     jloop(2 * N + 3) {
         pLast[j] = p[j];
     } // backup the particle position before the shear step
@@ -652,11 +639,8 @@ void calcShearModulus()
             p[2 * N] = alphaBeforeDeformation + shear; // ... and added to the shear of the relaxed packing
 
             iterationcountSimStep = 0;
-            iterationcountfrprmn = 0;
             iterationcountfire = 0;
             iterationcountfrprmnCUMULATIVE = 0;
-
-            cumulativeNeighborchanges = 0;
 
             shearconverged = false;
             converged = false;
@@ -942,8 +926,6 @@ void calcBulkModulus()
 
     programmode = 3; // program-mode for shearing
 
-    cumulativeNeighborchanges = 0;
-
     jloop(2 * N + 3) {
         pLast[j] = p[j];
     } // backup the particle position before the shear step
@@ -1000,11 +982,8 @@ void calcBulkModulus()
             p[2 * N + 2] = alphaBeforeDeformation * (1 + shear); // ... and added to the shear of the relaxed packing
 
             iterationcountSimStep = 0;
-            iterationcountfrprmn = 0;
             iterationcountfire = 0;
             iterationcountfrprmnCUMULATIVE = 0;
-
-            cumulativeNeighborchanges = 0;
 
             shearconverged = false;
             converged = false;
@@ -1198,9 +1177,7 @@ void checkNeighborChanges(int & addedContacts, int & removedContacts,
 
 void calculate_neighbors()
 {
-    trueneighborNumberOld = trueneighborNumber;
     trueneighborNumber = 0;
-    consideredNeighborNumber = 0;
     iloop(N) {
         jloop(i) {
             neighbors[j * N + i] = true;
@@ -1217,7 +1194,6 @@ void calculate_neighbors()
         jloop(i) {
             if(rij[j * N + i] < Rneighbor) {
                 neighbors[j * N + i] = true;
-                consideredNeighborNumber++;
 
             } else {
                 neighbors[j * N + i] = false;
@@ -1248,10 +1224,6 @@ void simulationstep()
     lyy = L * (1.0 + delta);
 
     packIntoBoundaries();
-
-    if(programmode == 3 && iterationcountfire == 0) {
-        cumulativeNeighborchanges = 0;
-    }
 
     if((programmode == 5) && frprmnconverged && Rneighbor / Rmax < 2.41) {
         if((iterationcountfire % 10000) == 0) {
@@ -1294,9 +1266,6 @@ void simulationstep()
     if(programmode == 3) {
         Rneighbor = 3.5 * Rmax;
     }
-
-    cumulativeNeighborchanges += fabs(
-                                     trueneighborNumber - trueneighborNumberOld);
 
     if(programmode == 1 && programmode == 2) {
         frprmn(N, &fret, energy);
@@ -1486,7 +1455,6 @@ void simulationstep()
     countDeltaFlip = 0;
     countPressFlip = 0;
 
-    iterationcountmnbrak = iterationcountbrent = iterationcountfrprmn = 0;
     iterationcountSimStep++;
 
     dU = Uhelper - UhelperLastFunctionCall;
@@ -1505,7 +1473,6 @@ void menu()
 {
 
     iterationcountSimStep = 0;
-    iterationcountfrprmn = 0;
     iterationcountfire = 0;
 
     char answer;
@@ -1547,7 +1514,6 @@ void menu()
 
     case 1:
         programmode = 5;
-        ftol = ftolFrprmnBeforeFIRE;
         alphaOnOff = false;
         deltaOnOff = false;
 
@@ -1567,7 +1533,6 @@ void menu()
 
     case 2:
         programmode = 5;
-        ftol = ftolFrprmnBeforeFIRE;
 
         if(screenOutput) {
             cout << "Is simple shear (alpha) a degree of freedom? Y/N :";
@@ -1629,7 +1594,6 @@ void menu()
         programmode = 5;
         doSimpleShear = true;
         fixedStepSize = false;
-        ftol = ftolFrprmnBeforeFIRE;
         alphaOnOff = false;
         deltaOnOff = false;
 
@@ -1658,7 +1622,6 @@ void menu()
         programmode = 5;
         doSimpleShear = true;
         fixedStepSize = true;
-        ftol = ftolFrprmnBeforeFIRE;
         alphaOnOff = false;
         deltaOnOff = false;
 
@@ -1692,7 +1655,6 @@ void menu()
         programmode = 5;
         doCompression = true;
         fixedStepSize = false;
-        ftol = ftolFrprmnBeforeFIRE;
         alphaOnOff = false;
         deltaOnOff = false;
 
@@ -1724,7 +1686,6 @@ void menu()
         programmode = 5;
         doCompression = true;
         fixedStepSize = true;
-        ftol = ftolFrprmnBeforeFIRE;
         alphaOnOff = false;
         deltaOnOff = false;
 
@@ -1872,9 +1833,6 @@ void fire()
     FIRE_alpha = FIRE_alpha_start;
 
     while(itercount < 1000) {
-        Uold = Uhelper;
-        Hold = Uhelper + P0 * Lhelper * Lhelper;
-
         energy(); // calculate overlaps of new configuration
         gradientcalc(); // calulate the gradient for the new configuration
 
@@ -2026,8 +1984,6 @@ void fire()
 
         ////////////
 
-        energyDiffStep = (Uhelper - Uold);
-
         iterPosPower++;
         iterationcountfire++;
         itercount++;
@@ -2074,7 +2030,6 @@ void mnbrak(long double * ax, long double * bx, long double * cx, long double * 
 
     while(*fb > *fc) {
         numberOfIterations++;
-        iterationcountmnbrak++;
 
         r = (*bx - *ax) * (*fb - *fc);
         q = (*bx - *cx) * (*fb - *fa);
@@ -2158,8 +2113,6 @@ long double brent(long double ax, long double bx, long double cx,
     fw = fv = fx = (*f)(x);
 
     for(iter = 1; iter <= ITMAXBRENT; iter++) {
-        iterationcountbrent++;
-        //cout<< iterationcountbrent <<endl;
         xm = 0.5 * (a + b);
         tol2 = 2.0 * (tol1 = tol * fabs(x) + ZEPS);
 
@@ -2325,12 +2278,9 @@ void frprmn(int n, long double * fret, long double(*func)())
 
     for(its = 1; its <= ITMAX; its++) {
         packIntoBoundaries();
-        iterationcountfrprmn++;
         iterationcountfrprmnCUMULATIVE++;
 
         linmin(n, fret, func);
-        energyDiffStep = (*fret - fp);
-
 
         if(2.0 * fabs(*fret - fp) <= ftol * (fabs(*fret) + fabs(fp) + ZEPS)) {
             endcount++;
@@ -2699,7 +2649,7 @@ void calcSysPara()
     phi = 0.0;
     Z = 0.0;
     P = 0.0;
-    sxx = sxy = syx = syy = 0.0;
+    sxx = sxy = syy = 0.0;
 
     // sum all contributions
     iloop(N) {
@@ -2824,7 +2774,6 @@ void calcSysPara()
     sxx = sxx / (L * L);
     syy = syy / (L * L);
     sxy = sxy / (L * L);
-    syx = syx;
 
     return;
 } // end calcSysPara
