@@ -36,9 +36,6 @@ static const long double k = 1.0; // spring const. with respect to particle over
 
 static bool screenOutput = false;
 
-static char stop; // this variable waits for user input and halts the
-// computation.
-
 // degrees of freedom of the periodic boundary unit cell in
 static long double alpha = 0.0; // lattice vector angle (simple shear)
 static long double delta = 0.0; // lattice vector aspect-ratio (pure shear)
@@ -92,7 +89,6 @@ static int iterationcountmnbrak = 0;
 static int iterationcountbrent = 0;
 static int iterationcountfrprmn = 0;
 static int iterationcountfrprmnCUMULATIVE = 0;
-static int totaliterationcount = 0;
 static bool frprmnconverged = false;
 static bool fireconverged = false;
 static bool shearconverged = false;
@@ -109,25 +105,13 @@ static int numPackingsToProcess = 0;
 static int firstPackingNumber = 0;
 
 static bool redo = false;
-static long double distanceCalcs = 0.0;
 static long double Rneighbor = 100.0;
 static long double RneighborFrprmnLast;
-static bool onlydisplay = false;
 
 static long double energyDiffStep = 1e10;
-static long double energyDiffStepOld = 1e10;
-
-static long double enthalpieDiffStep = 1e10;
 
 static long double UhelperLastFunctionCall = 1e20;
 static long double Uold = 1e10;
-static long double energyBeforeDeformation = 0.0;
-static long double sxxBeforeDeformation, sxyBeforeDeformation, syxBeforeDeformation,
-       syyBeforeDeformation; // stress components
-
-static long double energywrite[50000];
-static long double enthalpiewrite[50000];
-static long double sxywrite[50000];
 
 static long double H = 1e9;
 static long double Hold = 1e10;
@@ -136,10 +120,7 @@ static long double HLastFunctionCall = 1e11;
 static long double phi; // fill fraction
 static long double Z; // average number of neighbors
 static long double P; // pressure
-static long double Pold;
 static long double sxx, sxy, syx, syy; // stress components
-static long double G;
-static long double sxyOld;
 
 // overlap and distances
 static vector<long double> dij; // NxN matrix of particle overlap
@@ -219,16 +200,13 @@ static int ITMAX = 12; // maximum of iterations in frprmn
 static const long double TOL = 1e-7; // tolerance passed to brent by linmin
 static const long double AMIN = 1e-7; // starting step in linmin
 
-static vector<long double> pcom, xicom; // positions and gradient
-static long double(*nrfunc)();  // function place-holder
-static int iterfrprmn; // number of iterations performed in frprmn
 static long double ftol = 1e-17; // tolerance passed to frprmn()
 static const long double ftolFrprmnBeforeFIRE = 1e-2;
 static const long double ftolFIRE = 1e-17; // tolerance passed to fire()
 static int endcount = 0;
 
 static time_t starttime, endtime;
-static long double timediff1 = 0, timediff2 = 0;
+static long double timediff1 = 0;
 
 static long double dU, dH;
 
@@ -398,7 +376,6 @@ void execute()
 
                 iterationcountSimStep = 0;
                 iterationcountfire = 0;
-                totaliterationcount = 0;
                 iterationcountfrprmnCUMULATIVE = 0;
 
                 if(goodfile) {
@@ -615,12 +592,6 @@ void calcShearModulus()
         pLast[j] = p[j];
     } // backup the particle position before the shear step
 
-    energyBeforeDeformation = Uhelper;
-    sxxBeforeDeformation = sxx;
-    sxyBeforeDeformation = sxy;
-    syxBeforeDeformation = syx;
-    syyBeforeDeformation = syy;
-
     packIntoBoundaries();
 
     eraseFile.open((char *) GpositionFile.c_str(), ios::trunc);
@@ -685,8 +656,6 @@ void calcShearModulus()
             iterationcountfire = 0;
             iterationcountfrprmnCUMULATIVE = 0;
 
-            G = 0.0;
-
             cumulativeNeighborchanges = 0;
 
             shearconverged = false;
@@ -743,8 +712,7 @@ void calcShearModulus()
             numberOfDataPoints++;
             energy();
             calcSysPara();
-            G = (sxy - sxyLast) / (shear - shearLast);
-
+            
             saveShearSystemState(logFileName, numberOfDataPoints,
                                  dataFileName, neighborChangesLastCumulative,
                                  neighborChangesLast, addedContacts, removedContacts,
@@ -980,12 +948,6 @@ void calcBulkModulus()
         pLast[j] = p[j];
     } // backup the particle position before the shear step
 
-    energyBeforeDeformation = Uhelper;
-    sxxBeforeDeformation = sxx;
-    sxyBeforeDeformation = sxy;
-    syxBeforeDeformation = syx;
-    syyBeforeDeformation = syy;
-
     packIntoBoundaries();
 
     eraseFile.open((char *) GpositionFile.c_str(), ios::trunc);
@@ -1041,8 +1003,6 @@ void calcBulkModulus()
             iterationcountfrprmn = 0;
             iterationcountfire = 0;
             iterationcountfrprmnCUMULATIVE = 0;
-
-            G = 0.0;
 
             cumulativeNeighborchanges = 0;
 
@@ -1115,8 +1075,6 @@ void calcBulkModulus()
                     maxGrad = fabs(xihelper[i]);
                 }
             }
-
-            G = (sxy - sxyLast) / (shear - shearLast);
 
             time(&rawtime);
             timeinfo = localtime(&rawtime);
@@ -1280,9 +1238,6 @@ void simulationstep()
 
     time_t rawtime1;
 
-    timediff2 = time(NULL);
-    distanceCalcs = 0.0;
-
     alpha = p[2 * N];
     delta = p[2 * N + 1];
     L = p[2 * N + 2];
@@ -1361,8 +1316,6 @@ void simulationstep()
 
         } else {
             dofOnOff = true;
-
-            Pold = Phelper;
 
             if(dofOnOff) {
 
@@ -1446,12 +1399,6 @@ void simulationstep()
     } // end if
 
     time(&rawtime1);
-
-    if(programmode != 3) {
-        energywrite[iterationcountSimStep] = Uhelper;
-        enthalpiewrite[iterationcountSimStep] = Uhelper + P0 * L * L;
-        sxywrite[iterationcountSimStep] = sxy;
-    }
 
     if(dofOnOff) {
         int lowerswitch = 10;
@@ -1812,7 +1759,6 @@ void menu()
         break;
 
     case 7:
-        onlydisplay = true;
         break;
 
     case 9:
@@ -1894,11 +1840,6 @@ void menu()
 
     if(programmode == 3) {
         energy();
-        energyBeforeDeformation = Uhelper;
-        sxxBeforeDeformation = sxx;
-        sxyBeforeDeformation = sxy;
-        syxBeforeDeformation = syx;
-        syyBeforeDeformation = syy;
     }
 
     return;
@@ -1931,13 +1872,8 @@ void fire()
     FIRE_alpha = FIRE_alpha_start;
 
     while(itercount < 1000) {
-
-        totaliterationcount++;
-
         Uold = Uhelper;
         Hold = Uhelper + P0 * Lhelper * Lhelper;
-
-        sxyOld = sxy;
 
         energy(); // calculate overlaps of new configuration
         gradientcalc(); // calulate the gradient for the new configuration
@@ -2090,7 +2026,6 @@ void fire()
 
         ////////////
 
-        enthalpieDiffStep = (H - Hold);
         energyDiffStep = (Uhelper - Uold);
 
         iterPosPower++;
@@ -2328,9 +2263,6 @@ void linmin(int n, long double * fret, long double(*func)())
 {
     long double xx, xmin, fx, fb, fa, bx, ax;
 
-    // pcom, xicom are global row-matrices
-    nrfunc = func;
-
     ax = 0.0;
     xx = AMIN;
     mnbrak(&ax, &xx, &bx, &fa, &fx, &fb, f1dim);
@@ -2395,12 +2327,8 @@ void frprmn(int n, long double * fret, long double(*func)())
         packIntoBoundaries();
         iterationcountfrprmn++;
         iterationcountfrprmnCUMULATIVE++;
-        totaliterationcount++;
-
-        iterfrprmn = its;
 
         linmin(n, fret, func);
-        energyDiffStepOld = energyDiffStep;
         energyDiffStep = (*fret - fp);
 
 
@@ -2531,9 +2459,6 @@ long double energy()
                     trueneighbors[j * N + i] = false;
                     dij[j * N + i] = 0.0;
                 }
-
-                distanceCalcs += 1.0;
-
             } //end if
         } // end jloop
         trueneighbors[i * N + i] = false;
@@ -2633,11 +2558,9 @@ void initializeSimulation()
 
         p.reserve(2 * N + 3);
         phelper.reserve(2 * N + 3);
-        pcom.reserve(2 * N + 3);
         pLast.reserve(2 * N + 3);
         xi.reserve(2 * N + 3);
         xihelper.reserve(2 * N + 3);
-        xicom.reserve(2 * N + 3);
         g.reserve(2 * N + 3);
         h.reserve(2 * N + 3);
         v.reserve(2 * N + 3);
@@ -2960,6 +2883,7 @@ void readPositionFile()
         if(screenOutput) {
             cout << "Input file did NOT OPEN!" << endl;
             cout << "Press any key + ENTER to proceed." << endl;
+            char stop;
             cin >> stop;
         }
 
@@ -3539,11 +3463,9 @@ void initializeArrays()
 
     p.reserve(2 * N + 3);
     phelper.reserve(2 * N + 3);
-    pcom.reserve(2 * N + 3);
     pLast.reserve(2 * N + 3);
     xi.reserve(2 * N + 3);
     xihelper.reserve(2 * N + 3);
-    xicom.reserve(2 * N + 3);
     g.reserve(2 * N + 3);
     h.reserve(2 * N + 3);
     v.reserve(2 * N + 3);
