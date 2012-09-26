@@ -58,8 +58,8 @@ static string nameOfWorkingDirectory = "";
 static int particleNumberLength = 0;
 
 // start values:
-static long double alphainit = 0.0; // the user's choice for the initial shear angle
-static long double deltainit = 0.0; // the initial aspect-ratio
+static const long double alphainit = 0.0; // the user's choice for the initial shear angle
+static const long double deltainit = 0.0; // the initial aspect-ratio
 static long double P0init = 0.0;
 static long double P0 = 0.0; // the target pressure
 static long double phiinit = 0.8; // the initial fill fraction (0.869 ^= P~0.01)
@@ -81,7 +81,7 @@ static int fixedStepNumber; // number of fixed size strain steps;
 // iteration counters in various algorithms:
 static int iterationcountSimStep = 0;
 static int iterationcountfire = 0;
-static int maxIterationCountFire = 2e9;
+static const int maxIterationCountFire = 2e9;
 
 static int iterationcountmnbrak = 0;
 static int iterationcountbrent = 0;
@@ -176,14 +176,13 @@ static const long double fdec = 0.5;
 static const long double FIRE_alpha_start = 0.1; // called alpha_{start} in Jo's thesis
 static const long double f_FIRE_alpha = 0.99;    // called f_{alpha} in Jo's thesis
 static long double dt = 1e-1;
-static long double dtmaxinit = 1e-1;
+static const long double dtmaxinit = 1e-1;
 static long double dtmax = dtmaxinit;
-static long double dtmin = 0.0;
+static const long double dtmin = 0.0;
 static long double damp = 1.0;
 static long double dampalpha = 0.9;
 static long double dampdelta = 0.9;
 static long double damppress = 0.999;
-static long double CG_step = 1;
 
 //unit cell properties
 static long double lxx, lxy; // x-/y- component of L_x (1st unit cell vector)
@@ -210,6 +209,7 @@ static const long double glimit = 100.0; // maximum magnification for parabolic-
 static const long double CGOLD = 0.3819660; // golden ratio for brent
 static const long double ZEPS = 1e-25; // for brent
 static int ITMAXBRENT = 50; // maximum of iterations in brent
+
 static int ITMAX = 12; // maximum of iterations in frprmn
 static const long double TOL = 1e-7; // tolerance passed to brent by linmin
 static const long double AMIN = 1e-7; // starting step in linmin
@@ -218,8 +218,8 @@ static vector<long double> pcom, xicom; // positions and gradient
 static long double (*nrfunc)(); // function place-holder
 static int iterfrprmn; // number of iterations performed in frprmn
 static long double ftol = 1e-17; // tolerance passed to frprmn()
-static long double ftolFrprmnBeforeFIRE = 1e-2;
-static long double ftolFIRE = 1e-17; // tolerance passed to fire()
+static const long double ftolFrprmnBeforeFIRE = 1e-2;
+static const long double ftolFIRE = 1e-17; // tolerance passed to fire()
 static int endcount = 0;
 
 static time_t starttime, endtime;
@@ -1965,6 +1965,7 @@ void mnbrak(long double *ax, long double *bx, long double *cx, long double *fa,
 #define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
 long double brent(long double ax, long double bx, long double cx,
 		long double (*f)(long double), long double tol, long double *xmin) {
+
 	int iter;
 	long double a, b, d, etemp, fu, fv, fw, fx, s, q, r, tol1, tol2, u, v, w, x,
 			xm;
@@ -2068,7 +2069,6 @@ void linmin(int n, long double *fret, long double (*func)()) {
 	iloop(2*N+3) {
 		p[i] += xi[i] * xmin;
 	} // move by gradient*xmin to the 1D-minimum
-	CG_step = xmin;
 	return;
 } // end linmin
 
