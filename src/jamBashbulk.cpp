@@ -567,7 +567,7 @@ void calcShearModulus()
     outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
     outLog.close();
 
-    long double alphaBeforeDeformation = p[2 * N];
+    long double alphaBeforeDeformation = ALPHA;
     iloop(N) {
         jloop(N) {
             trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
@@ -640,7 +640,7 @@ void calcShearModulus()
             jloop(2 * N + 3) {
                 pLast[j] = p[j];
             } // backup the particle position before the shear step
-            p[2 * N] = alphaBeforeDeformation + shear; // ... and added to the shear of the relaxed packing
+            ALPHA = alphaBeforeDeformation + shear; // ... and added to the shear of the relaxed packing
 
             iterationcountSimStep = 0;
             iterationcountfire = 0;
@@ -918,7 +918,7 @@ void calcBulkModulus()
     outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
     outLog.close();
 
-    long double alphaBeforeDeformation = p[2 * N + 2];
+    long double alphaBeforeDeformation = p[2 * N + 2]; // NOT ALPHA but length!
     iloop(N) {
         jloop(N) {
             trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
@@ -1867,8 +1867,8 @@ void fire()
                 v[2 * N] = -radiusFraction / Lhelper / dt;
             }
 
-            phelper[2 * N] = p[2 * N] = p[2 * N] + v[2 * N] * dt;
-            fracAlpha = p[2 * N] - alphahelper;
+            phelper[2 * N] = ALPHA = ALPHA + v[2 * N] * dt;
+            fracAlpha = ALPHA - alphahelper;
 
         } else {
             fracAlpha = 0.0;
@@ -1886,9 +1886,8 @@ void fire()
                 v[2 * N + 1] = -radiusFraction / Lhelper / dt;
             }
 
-            phelper[2 * N + 1] = p[2 * N + 1] = p[2 * N + 1]
-                                                + v[2 * N + 1] * dt;
-            fracDelta = (1 + p[2 * N + 1]) / (1 + deltahelper);
+            phelper[2 * N + 1] = DELTA = DELTA + v[2 * N + 1] * dt;
+            fracDelta = (1 + DELTA) / (1 + deltahelper);
 
         } else {
             fracDelta = 1.0;
@@ -2446,7 +2445,7 @@ void gradientcalc()
     // normalize
     Phelper = Phelper / (Lhelper * Lhelper) / 4.0;
 
-    if(fabs(p[2 * N + 1] - deltainit) > 0.2) {
+    if(fabs(DELTA - deltainit) > 0.2) {
         deltaOnOff = false;
     }
 
