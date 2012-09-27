@@ -13,8 +13,12 @@ allheaders = $(headers) $(gitversion)
 
 binary = $(bin)/jam2D
 binary_d = $(binary)_d
+dllname = jamBashbulk.so
+dll = $(bin)/$(dllname)
 
-all: $(binary) $(binary_d)
+dll: $(dll)
+
+all: $(binary) $(binary_d) $(dll)
 
 clean: | $(bin)
 	rm -rf $(bin)
@@ -47,5 +51,5 @@ $(binary_exe): $(srcfiles) $(allheaders) | $(bin)
 	i586-mingw32msvc-g++ $(o3opts) -o $(bin)/jam2D.exe $(srcfiles)
 
 # dll to work from python
-dll: $(src)/j2d_dll.cpp $(srcfiles) $(allheaders) | $(bin)
-	g++ -shared -Wl,-soname,j2d_dll.so -o $(bin)/j2d_dll.so $(src)/j2d_dll.cpp
+$(dll): $(srcfiles) $(allheaders) | $(bin)
+	g++ -fPIC -shared -Wl,-soname,$(dllname) $(o3pts) -o $(dll) $(srcfiles)

@@ -3458,3 +3458,82 @@ bool pnpoly(int nvert, long double * vertx, long double * verty, long double tes
 
     return c;
 }
+
+extern "C" {
+    struct packingparams {
+        long double P;
+        long double phi;
+        long double Z;
+        int Ncorrected;
+        long double sxx;
+        long double sxy;
+        long double syy;
+        long double U;
+        long double H;
+        long double gg;
+    };
+
+    // determine packingparams for a given packing
+    //
+    // @param[in]  _N      Number of particles = len(x) = len(y) = len(r)
+    // @param[in]  _P0     Base pressure (required to calculate entropy H)
+    // @param[in]  _x[_N]  x coordinates of particles
+    // @param[in]  _y[_N]  y coordinates of particles
+    // @param[in]  _r[_N]  radii of particles
+    // @param[in]  _alpha  alpha shear parameter (simple shear)
+    // @param[in]  _delta  delta shear parameter (pure shear)
+    // @param[in]  _L      length of box
+    // @param[out] out     packingparams struct containing the calculated values
+    void get_packing_data(int _N, long double _P0,
+                          long double *_x, long double *_y, long double *_r,
+                          long double _alpha, long double _delta, long double _L,
+                          packingparams *out) {
+        // load packing
+        N = _N;
+        P = P0 = _P0;
+        Rmax = 0;
+        
+        initializeArrays();
+        initializeSimulation();
+
+        iloop(N) {
+            p[i] = _x[i];
+            p[i+N] = _y[i];
+            R[i] = _r[i];
+            Rmax = max(Rmax, _r[i]);
+        }
+
+        Rneighbor = 3.5 * Rmax;
+
+        ALPHA = _alpha;
+        DELTA = _delta;
+        LENGTH = _L;
+
+        // calculate all system parameters
+        calculate_neighbors(); // already calls energy() and gradientcalc()
+
+        fireconverged = true; // to trigger the correct part of calcSysPara()...
+        calcSysPara();
+
+        // manually calculate H and gg (otherwise done in fire())
+        out->H = Uhelper + P0 * Lhelper * Lhelper;
+
+        long double gg_squared;
+        gg_squared = 0;
+        iloop(N) {
+            gg_squared += (xihelper[i] * xihelper[i]) + (xihelper[N+i] * xihelper[N+i]);
+        }
+        out->gg = sqrt(gg_squared);
+
+        // fill in the other parameters
+
+        out->P = P;
+        out->phi = phi;
+        out->Z = Z;
+        out->Ncorrected = Ncorrected;
+        out->sxx = sxx;
+        out->sxy = sxy;
+        out->syy = syy;
+        out->U = Uhelper;
+    }
+}

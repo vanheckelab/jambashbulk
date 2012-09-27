@@ -34,3 +34,4 @@ std::string header() {
 }
 
 std::string FILE_HEADER = header();
+const char * FILE_HEADER_C = FILE_HEADER.c_str();
