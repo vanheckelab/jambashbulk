@@ -29,7 +29,7 @@ using namespace std;
 
 #define ALPHA (p[2 * N])
 #define DELTA (p[2 * N + 1])
-
+#define LENGTH (p[2 * N + 2])
 // global variables and constants:
 
 // simulation parameters
@@ -40,7 +40,6 @@ static const long double k = 1.0; // spring const. with respect to particle over
 static bool screenOutput = false;
 
 // degrees of freedom of the periodic boundary unit cell in
-static long double L = 5.0; // lattice vector length
 static long double shear = 0.0;
 
 static bool alphaOnOff = false, deltaOnOff = false, pressOnOff = false;
@@ -63,6 +62,7 @@ static int particleNumberLength = 0;
 // start values:
 static const long double alphainit = 0.0; // the user's choice for the initial shear angle
 static const long double deltainit = 0.0; // the initial aspect-ratio
+static const long double Linit = 5.0;
 static long double P0init = 0.0;
 static long double P0 = 0.0; // the target pressure
 static long double phiinit = 0.8; // the initial fill fraction (0.869 ^= P~0.01)
@@ -438,7 +438,7 @@ void saveShearSystemState(string logFileName, int numberOfDataPoints,
     outLog.open((char *)(logFileName.c_str()), ios::app);
     outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P << "	"
            << ALPHA << "	" << DELTA;
-    outLog << "	" << L << "	" << phi << "	" << Z << "	" << N - Ncorrected << "	"
+    outLog << "	" << LENGTH << "	" << phi << "	" << Z << "	" << N - Ncorrected << "	"
            << sxx << "	" << syy;
     outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	" << dH
            << "	" << timediff1;
@@ -1067,7 +1067,7 @@ void calcBulkModulus()
 
             outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P
                    << "	" << ALPHA << "	" << DELTA;
-            outLog << "	" << L << "	" << phi << "	" << Z << "	"
+            outLog << "	" << LENGTH << "	" << phi << "	" << Z << "	"
                    << N - Ncorrected << "	" << sxx << "	" << syy;
             outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H
                    << "	" << dH << "	" << timediff1;
@@ -1218,12 +1218,10 @@ void simulationstep()
 
     time_t rawtime1;
 
-    L = p[2 * N + 2];
-
-    lxx = L / (1.0 + DELTA);
-    lxy = L * 0.0;
-    lyx = L * ALPHA;
-    lyy = L * (1.0 + DELTA);
+    lxx = LENGTH / (1.0 + DELTA);
+    lxy = LENGTH * 0.0;
+    lyx = LENGTH * ALPHA;
+    lyy = LENGTH * (1.0 + DELTA);
 
     packIntoBoundaries();
 
@@ -1245,7 +1243,7 @@ void simulationstep()
     if(programmode == PROGRAMMODE_CREATE_PACKING) {
         if(!frprmnconverged) {
             Rneighbor = 3.5 * Rmax
-                        + 0.3 * L / pow(2.0, iterationcountSimStep * 0.1);
+                        + 0.3 * LENGTH / pow(2.0, iterationcountSimStep * 0.1);
             RneighborFrprmnLast = Rneighbor;
 
         } else {
@@ -2351,7 +2349,6 @@ void resethelpervars()
     alphahelper = phelper[2 * N];
     deltahelper = phelper[2 * N + 1];
     Lhelper = phelper[2 * N + 2];
-    L = p[2 * N + 2];
     lxxhelper = Lhelper / (1.0 + deltahelper);
     lxyhelper = Lhelper * 0.0;
     lyxhelper = Lhelper * alphahelper;
@@ -2506,12 +2503,12 @@ void initializeSimulation()
     dampalpha = dampdelta = 0.9;
     damppress = 0.9;
 
-    p[2 * N + 2] = L;
+    LENGTH = Linit;
 
-    lxx = L / (1.0 + DELTA);
-    lxy = L * 0.0;
-    lyx = L * ALPHA;
-    lyy = L * (1.0 + DELTA);
+    lxx = LENGTH / (1.0 + DELTA);
+    lxy = LENGTH * 0.0;
+    lyx = LENGTH * ALPHA;
+    lyy = LENGTH * (1.0 + DELTA);
 
     srand(currentPackingNumber + 1);
 
@@ -2552,12 +2549,11 @@ void initializeSimulation()
     // calculate the current fill fraction phi
     frac = sqrt(phi / (phiinit)); // sqrt-ratio of desired fill fraction and actual
 
-    L *= frac; // scale the boxlength accordingly
+    LENGTH *= frac; // scale the boxlength accordingly
     iloop(2 * N) {
         p[i] *= frac; // scale all the particle positions accordingly
         v[i] = 0.0;
     }
-    p[2 * N + 2] = L;
 
     v[2 * N] = v[2 * N + 1] = v[2 * N + 2] = 0;
 
@@ -2610,12 +2606,10 @@ void calcSysPara()
     }
     int ip;
 
-    L = p[2 * N + 2];
-
-    lxx = L / (1.0 + DELTA);
-    lxy = L * 0.0;
-    lyx = L * ALPHA;
-    lyy = L * (1.0 + DELTA);
+    lxx = LENGTH / (1.0 + DELTA);
+    lxy = LENGTH * 0.0;
+    lyx = LENGTH * ALPHA;
+    lyy = LENGTH * (1.0 + DELTA);
 
 
     // reset sums
@@ -2738,15 +2732,15 @@ void calcSysPara()
 
 
     // normalize
-    phi = phi / (L * L);
+    phi = phi / (LENGTH * LENGTH);
 
 
     Z2 = 2 * Z2 / (Ncorrected * 1.0 + 1e-16);
     Z = Z2;
-    P = P / (L * L) / 2.0;
-    sxx = sxx / (L * L);
-    syy = syy / (L * L);
-    sxy = sxy / (L * L);
+    P = P / (LENGTH * LENGTH) / 2.0;
+    sxx = sxx / (LENGTH * LENGTH);
+    syy = syy / (LENGTH * LENGTH);
+    sxy = sxy / (LENGTH * LENGTH);
 
     return;
 } // end calcSysPara
@@ -3064,8 +3058,8 @@ void readPositionFile()
         // (for neighbor determination)
     }
 
-    L = p[2 * N + 2] = sqrt(L1x * L2y);
-    ALPHA = L2x / L;
+    LENGTH = sqrt(L1x * L2y);
+    ALPHA = L2x / LENGTH;
     DELTA = sqrt(L2y / L1x) - 1.0;
 
     iloop(N) {
@@ -3080,7 +3074,7 @@ void readPositionFile()
 
     if(screenOutput)
         cout << "test0000: readPositionFile-END: " << " N = " << N << ", L = "
-             << L << ", P0= " << P0 << endl;
+             << LENGTH << ", P0= " << P0 << endl;
 
     if(distributioncase == 4) {
         P0 = P0init;
@@ -3148,14 +3142,12 @@ inline void writePositionFile()
 
     outfile  << FILE_HEADER;
 
-    L = p[2 * N + 2];
+    lxx = LENGTH / (1.0 + DELTA);
+    lxy = LENGTH * 0.0;
+    lyx = LENGTH * ALPHA;
+    lyy = LENGTH * (1.0 + DELTA);
 
-    lxx = L / (1.0 + DELTA);
-    lxy = L * 0.0;
-    lyx = L * ALPHA;
-    lyy = L * (1.0 + DELTA);
-
-    outfile << "N = " << N << " ,L = " << L << " ,L1= { " << lxx << " , " << lxy
+    outfile << "N = " << N << " ,L = " << LENGTH << " ,L1= { " << lxx << " , " << lxy
             << " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
             << Phelper << " ,P0= " << P0 << " ," << endl;
 
@@ -3190,7 +3182,7 @@ inline void writePositionFile()
 
     logfile << currentPackingNumber << "	" << N << "	" << P0 << "	" << P << "	"
             << ALPHA << "	" << DELTA;
-    logfile << "	" << L << "	" << phi << "	" << Z << "	" << N - Ncorrected
+    logfile << "	" << LENGTH << "	" << phi << "	" << Z << "	" << N - Ncorrected
             << "	" << sxx << "	" << syy;
     logfile << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	"
             << dH << "	" << timediff1;
@@ -3251,14 +3243,12 @@ inline void writeMultiplePackings(string name)
     outfile.setf(ios::fixed, ios::floatfield);
     outfile.precision(16);
 
-    L = p[2 * N + 2];
+    lxx = LENGTH / (1.0 + DELTA);
+    lxy = LENGTH * 0.0;
+    lyx = LENGTH * ALPHA;
+    lyy = LENGTH * (1.0 + DELTA);
 
-    lxx = L / (1.0 + DELTA);
-    lxy = L * 0.0;
-    lyx = L * ALPHA;
-    lyy = L * (1.0 + DELTA);
-
-    outfile << "N = " << N << " ,L = " << L << " ,L1= { " << lxx << " , " << lxy
+    outfile << "N = " << N << " ,L = " << LENGTH << " ,L1= { " << lxx << " , " << lxy
             << " } " << " ,L2= { " << lyx << " , " << lyy << " } " << " ,P = "
             << Phelper << " ,P0= " << P0 << " ," << endl;
 
