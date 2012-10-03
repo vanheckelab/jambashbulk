@@ -16,9 +16,8 @@ binary_d = $(binary)_d
 dllname = jamBashbulk.so
 dll = $(bin)/$(dllname)
 
-dll: $(dll)
-
 all: $(binary) $(binary_d) $(dll)
+dll: $(dll)
 
 clean: | $(bin)
 	rm -rf $(bin)
@@ -44,11 +43,17 @@ $(src)/gitversion.h: .git $(srcfiles) $(headers)
 
 # win32
 
-binary_exe = $(binary).exe
-win32: $(binary_exe)
+binary_win32 = $(binary).exe
+dllname_win32 = jamBashbulk.dll
+dll_win32 = $(bin)/$(dllname_win32)
+win32: $(binary_win32) $(dll_win32)
 
-$(binary_exe): $(srcfiles) $(allheaders) | $(bin)
+$(binary_win32): $(srcfiles) $(allheaders) | $(bin)
 	i586-mingw32msvc-g++ $(o3opts) -o $(bin)/jam2D.exe $(srcfiles)
+
+$(dll_win32): $(srcfiles) $(allheaders) | $(bin)
+	i586-mingw32msvc-g++ -shared -Wl,-soname,$(dllname_win32) $(o3pts) -o $(dll_win32) $(srcfiles)
+	
 
 # dll to work from python
 $(dll): $(srcfiles) $(allheaders) | $(bin)
