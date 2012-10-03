@@ -3494,6 +3494,7 @@ extern "C" {
                           long double *_x, long double *_y, long double *_r,
                           long double _alpha, long double _delta, long double _L,
                           packingparams *out) {
+        bool dosim=false;
         fireconverged = false;
         // load packing
         N = _N;
@@ -3517,8 +3518,20 @@ extern "C" {
         LENGTH = _L;
 
         // calculate all system parameters
-        calculate_neighbors(); // already calls energy() and gradientcalc()
-
+        if (dosim) {
+            screenOutput = true;
+            calculate_neighbors(); // already calls energy() and gradientcalc()
+            calcSysPara();
+     
+            converged = frprmnconverged = fireconverged = false;
+            programmode = PROGRAMMODE_CREATE_PACKING;
+            while(!converged) { // && !frprmnconverged) {
+                cout << converged << ", " << frprmnconverged << ", " << fireconverged << endl;
+                simulationstep();
+            }
+        }
+            
+        calculate_neighbors();
         fireconverged = true; // to trigger the correct part of calcSysPara()...
         calcSysPara();
 
