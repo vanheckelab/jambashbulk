@@ -30,6 +30,8 @@ using namespace std;
 #define ALPHA (p[2 * N])
 #define DELTA (p[2 * N + 1])
 #define LENGTH (p[2 * N + 2])
+
+#define PRECISION (19)
 // global variables and constants:
 
 // simulation parameters
@@ -448,7 +450,7 @@ void saveShearSystemState(string logFileName, int numberOfDataPoints,
 
     outG.open((char *)(dataFileName.c_str()), ios::app);
     outG.setf(ios::scientific, ios::floatfield);
-    outG.precision(16);
+    outG.precision(PRECISION);
     outG << shear << "	" << sxy << "	" << trueneighborNumber << "	"
          << (neighborChangesLastCumulative + neighborChangesLast) << "	"
          << addedContacts << "	" << removedContacts << "	" << Phelper << "	"
@@ -552,14 +554,14 @@ void calcShearModulus()
 
     outG.open((char *) dataFileName.c_str(), ios::trunc);
     outG.setf(ios::scientific, ios::floatfield);
-    outG.precision(16);
+    outG.precision(PRECISION);
     outG << FILE_HEADER;
     outG << "gamma_alpha	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
     outG.close();
 
     outLog.open((char *) logFileName.c_str(), ios::trunc);
     outLog.setf(ios::scientific, ios::floatfield);
-    outLog.precision(16);
+    outLog.precision(PRECISION);
     outLog << FILE_HEADER;
     outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
     outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
@@ -903,14 +905,14 @@ void calcBulkModulus()
 
     outG.open((char *) dataFileName.c_str(), ios::trunc);
     outG.setf(ios::scientific, ios::floatfield);
-    outG.precision(16);
+    outG.precision(PRECISION);
     outG  << FILE_HEADER;
     outG << "gamma_V	s_xy	Ncontacts	Nchanges	N+	N-	P	Z" << endl;
     outG.close();
 
     outLog.open((char *) logFileName.c_str(), ios::trunc);
     outLog.setf(ios::scientific, ios::floatfield);
-    outLog.precision(16);
+    outLog.precision(PRECISION);
     outLog  << FILE_HEADER;
     outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
     outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
@@ -1079,7 +1081,7 @@ void calcBulkModulus()
 
             outG.open((char *) dataFileName.c_str(), ios::app);
             outG.setf(ios::scientific, ios::floatfield);
-            outG.precision(16);
+            outG.precision(PRECISION);
             outG << ((1.0 + shear) * (1.0 + shear) - 1.0) << "	" << sxy << "	"
                  << trueneighborNumber << "	"
                  << (neighborChangesLastCumulative + neighborChangesLast)
@@ -3138,7 +3140,7 @@ inline void writePositionFile()
     }
 
     outfile.setf(ios::fixed, ios::floatfield);
-    outfile.precision(16);
+    outfile.precision(PRECISION);
 
     outfile  << FILE_HEADER;
 
@@ -3241,7 +3243,7 @@ inline void writeMultiplePackings(string name)
     }
 
     outfile.setf(ios::fixed, ios::floatfield);
-    outfile.precision(16);
+    outfile.precision(PRECISION);
 
     lxx = LENGTH / (1.0 + DELTA);
     lxy = LENGTH * 0.0;
