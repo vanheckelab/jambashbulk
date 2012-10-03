@@ -1143,6 +1143,9 @@ void calcBulkModulus()
 
 ////////////////////////////////////////////////////////////////////////
 // checkNeighborChanges()
+
+// NB calcSysPara() needs to be called before this, and fireconverged must 
+// be true to correctly count rattlers!
 void checkNeighborChanges(int & addedContacts, int & removedContacts,
                           int & neighborChanges, int & neighborChangesLast)
 {
@@ -1347,7 +1350,8 @@ void simulationstep()
 
         if(fireconverged) {
             converged = true;
-            shearconverged = true;
+            shearconverged = true; // NB fireconverged MUST be true before setting shearconverged=true
+                                   // or contact counting will not work correctly
         }
     }
 
@@ -3490,6 +3494,7 @@ extern "C" {
                           long double *_x, long double *_y, long double *_r,
                           long double _alpha, long double _delta, long double _L,
                           packingparams *out) {
+        fireconverged = false;
         // load packing
         N = _N;
         P = P0 = _P0;
@@ -3520,12 +3525,13 @@ extern "C" {
         // manually calculate H and gg (otherwise done in fire())
         out->H = Uhelper + P0 * Lhelper * Lhelper;
 
-        long double gg_squared;
-        gg_squared = 0;
+        long double gg_max=0;
+        gg_max = 0;
         iloop(N) {
-            gg_squared += (xihelper[i] * xihelper[i]) + (xihelper[N+i] * xihelper[N+i]);
+            gg_max = max(gg_max, xihelper[i]);
+            gg_max = max(gg_max, xihelper[i+N]);
         }
-        out->gg = sqrt(gg_squared);
+        out->gg = gg_max;
 
         // fill in the other parameters
 
