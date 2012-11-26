@@ -482,8 +482,8 @@ void calcShearModulus()
     bool sufficientAccuracy = false;
     int numberOfDataPoints = 0;
 
-    vector<long double> extraPositionArray;
-    extraPositionArray.reserve(2 * N + 3);
+    vector<long double> pAfterChange;
+    pAfterChange.reserve(2 * N + 3);
 
     long double shearLast = 0.0, sxyLast = sxy;
 
@@ -621,7 +621,7 @@ void calcShearModulus()
                     num++;
 
                     jloop(2 * N + 3) {
-                        extraPositionArray[j] = p[j];
+                        pAfterChange[j] = p[j];
                     } // save positions just after rearrangement
                     jloop(2 * N + 3) {
                         p[j] = pLast[j];
@@ -728,9 +728,9 @@ void calcShearModulus()
             }
         } // end while(!sufficientAccuracy)
 
-        // extraPositionArray is saved... some 100 lines above here
+        // pAfterChange is saved... some 100 lines above here
         jloop(2 * N + 3) {
-            p[j] = extraPositionArray[j];
+            p[j] = pAfterChange[j];
         }
 
         if(!fixedStepSize) {
@@ -779,8 +779,8 @@ void calcBulkModulus()
     bool sufficientAccuracy = false;
     int numberOfDataPoints = 0;
 
-    vector<long double> extraPositionArray;
-    extraPositionArray.reserve(2 * N + 3);
+    vector<long double> pAfterChange;
+    pAfterChange.reserve(2 * N + 3);
 
     long double shearLast = 0.0, sxyLast = sxy;
 
@@ -964,7 +964,7 @@ void calcBulkModulus()
                     num++;
 
                     jloop(2 * N + 3) {
-                        extraPositionArray[j] = p[j];
+                        pAfterChange[j] = p[j];
                     } // save positions just after rearrangement
                     jloop(2 * N + 3) {
                         p[j] = pLast[j];
@@ -1116,7 +1116,7 @@ void calcBulkModulus()
         writeMultiplePackings(GpositionFile);
 
         jloop(2 * N + 3) {
-            p[j] = extraPositionArray[j];
+            p[j] = pAfterChange[j];
         }
         writeMultiplePackings(GpositionFile);
 
