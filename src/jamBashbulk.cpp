@@ -40,6 +40,7 @@ static int Ncorrected;
 static const long double k = 1.0; // spring const. with respect to particle overlap
 
 static bool screenOutput = false;
+static bool debug = false;
 
 // degrees of freedom of the periodic boundary unit cell in
 static long double shear = 0.0;
@@ -245,13 +246,20 @@ static PROGRAMMODE programmode;
 
 int main(int argc, char ** argv)
 {
-    if((argc == 2) and(strcmp(argv[1], "-screen") == 0)) {
-        screenOutput = true;
-    }
+    screenOutput = false;
+    debug = false;
 
-    if((argc == 2) and(strcmp(argv[1], "-v") == 0)) {
-        cout << FILE_HEADER;
-        return 0;
+    for (int i=1; i<argc; i++) {
+        if (strcmp(argv[i], "-screen") == 0) {
+            screenOutput = true;
+        }
+        else if (strcmp(argv[i], "-v") == 0) {
+            cout << FILE_HEADER;
+            return 0;
+        }
+        else if (strcmp(argv[i], "-debug") == 0) {
+            debug = true;
+        }
     }
 
     starttime = time(NULL);
@@ -342,7 +350,9 @@ void execute()
     if(!endprogram) {
         if(!converged) {
             simulationstep();
-
+            if (debug) {
+                saveDebugState();
+            }
         } else {
 
             if((iterationcountfire > maxIterationCountFire)
