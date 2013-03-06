@@ -3,7 +3,7 @@ bin = bin
 
 opts = 
 warnopts = -Wall -Wextra -Wconversion -Wno-sign-conversion
-o3opts = $(opts) -O3
+o3opts = $(opts) -O2
 dopts = $(warnopts) $(opts) -g
 
 srcfiles = $(src)/jamBashbulk.cpp
