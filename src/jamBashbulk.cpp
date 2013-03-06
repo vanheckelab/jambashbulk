@@ -690,8 +690,15 @@ void calcShearModulus()
             fireconverged = false;
 
             while(!shearconverged) {
+                if (debug) {
+                    saveDebugState();
+                }
                 simulationstep();
             }
+            if (debug) {
+                saveDebugState();
+            }
+ 
 
             calcSysPara();
 
@@ -1022,7 +1029,13 @@ void calcBulkModulus()
             fireconverged = false;
 
             while(!shearconverged) {
+                if (debug) {
+                    saveDebugState();
+                }
                 simulationstep();
+            }
+            if (debug) {
+                saveDebugState();
             }
 
             calcSysPara();
