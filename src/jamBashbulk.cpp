@@ -221,6 +221,7 @@ static void menu();
 static void readPositionFile();
 static void writePositionFile();
 static void writeMultiplePackings(string name);
+static void saveDebugState();
 static void packIntoBoundaries();
 static void createFileName();
 static void fire();
@@ -457,6 +458,15 @@ void saveShearSystemState(string logFileName, int numberOfDataPoints,
          << Z << endl;
     outG.close();
     writeMultiplePackings(GpositionFile);
+}
+
+void saveDebugState() {
+    // Save the system state to {debug.log, debug.data, debug.positions} in the current
+    // directory. This uses the Shear output routines, so it may include some bogus data
+    // (e.g. number of rearrangements)
+    static int counter = 0;
+    counter += 1;
+    saveShearSystemState("debug.log", counter, "debug.data", 0, 0, 0, 0, "debug.positions");
 }
 
 ////////////////////////////////////////////////////////////////////////
