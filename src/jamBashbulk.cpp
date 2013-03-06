@@ -626,8 +626,24 @@ void calcShearModulus()
                     jloop(2 * N + 3) {
                         p[j] = pLast[j];
                     } // go back to last particle positions
-                    shear = shear / shearfactor; // go back to previous shear
-                    shearfactor = sqrt(shearfactor);
+
+                    if (numberOfDataPoints == 1) {
+                        // if this is the first contact change, we have to manually go back to
+                        // a very low shear value - or the smallest contact change shear we can
+                        // detect is shear/shearfactor!
+                        // instead, we reset the shear to a low value and reset the simulation
+                        shear = 1e-16;
+                        num = 0;
+                        numberOfContactChanges = addedContacts = removedContacts = 0;
+                        neighborChanges = neighborChangesOld = neighborChangesLast = neighborChangesLastCumulative = 0;
+                        pastContactChange = false;
+                        shearLast = 0.0;
+                        sxyLast = sxy;
+                        continue;
+                    } else {
+                        shear = shear / shearfactor; // go back to previous shear
+                        shearfactor = sqrt(shearfactor);
+                    }
 
                 } else if(num > 0) {
                     shearfactor = sqrt(shearfactor);
@@ -687,18 +703,6 @@ void calcShearModulus()
             timediff1 = endtime - starttime;
             starttime = endtime;
 
-            // fast finding of 1st contact change:
-            if((numberOfDataPoints < 1
-                && (neighborChangesLastCumulative + neighborChangesLast)
-                != 0) && !fixedStepSize) {
-                numberOfContactChanges = 0;
-                shear = 1e-16;
-                sufficientAccuracy = false;
-                shearfactor = 10;
-                num = 0;
-                pastContactChange = false;
-            } //////////////////////////////////////////
-
             numberOfDataPoints++;
             energy();
             calcSysPara();
@@ -707,6 +711,7 @@ void calcShearModulus()
                                  dataFileName, neighborChangesLastCumulative,
                                  neighborChangesLast, addedContacts, removedContacts,
                                  GpositionFile);
+
 
             shearLast = shear;
             sxyLast = sxy;
