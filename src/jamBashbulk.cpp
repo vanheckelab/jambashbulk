@@ -251,6 +251,7 @@ int main(int argc, char ** argv)
 
     for (int i=1; i<argc; i++) {
         if (strcmp(argv[i], "-screen") == 0) {
+            cout << "> screen output activated \n";
             screenOutput = true;
         }
         else if (strcmp(argv[i], "-v") == 0) {
@@ -258,6 +259,7 @@ int main(int argc, char ** argv)
             return 0;
         }
         else if (strcmp(argv[i], "-debug") == 0) {
+            cout << "> debug output activated \n";
             debug = true;
         }
     }
