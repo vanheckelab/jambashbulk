@@ -262,7 +262,7 @@ int main(int argc, char ** argv)
             cout << "> debug output activated \n";
             debug = true;
         }
-    }
+   }
 
     starttime = time(NULL);
 
@@ -340,6 +340,10 @@ void extractNandP(string foldername)
                  * pow(10, +1.0 * (-power + foldername[j + 2] - 48));
         }
 
+        if (screenOutput) {
+            cout << "N=" << N << "; P0=" << P0;
+        }
+
     }
 } // extractNandP
 
@@ -356,6 +360,9 @@ void execute()
 
         if(!converged) {
             simulationstep();
+            if (debug) {
+                saveDebugState();
+            }
         } else {
             if((iterationcountfire > maxIterationCountFire)
                || fabs((Phelper - P0) / P0) > 0.1 || Z < 3.5 || Z > 10) {
