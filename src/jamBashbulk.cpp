@@ -337,7 +337,7 @@ void extractNandP(string foldername)
 
         } else if(foldername[j + 1] == '+') {
             P0 = digit * 1.0
-                 * pow(10, +1.0 * (-power + foldername[j + 2] - 48));
+                 * pow(10, +1.0 * (power + foldername[j + 2] - 48));
         }
 
         if (screenOutput) {
