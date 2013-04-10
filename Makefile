@@ -3,7 +3,10 @@ bin = bin
 
 opts = 
 warnopts = -Wall -Wextra -Wconversion -Wno-sign-conversion
-o3opts = $(opts) -O2 -march=native
+ifndef ARCH
+	ARCH = native
+endif
+o3opts = $(opts) -O2 -march=$(ARCH)
 dopts = $(warnopts) $(opts) -g
 
 srcfiles = $(src)/jamBashbulk.cpp
