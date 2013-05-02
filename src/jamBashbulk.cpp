@@ -1479,6 +1479,7 @@ void simulationstep()
 
     if(iterationcountfire > maxIterationCountFire) {
         fireconverged = true;
+        shearconverged = true;
 
         ofstream errorLog;
         errorLog.open((char *) filepath.c_str(), ios::app);
