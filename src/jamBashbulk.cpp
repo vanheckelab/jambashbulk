@@ -2850,15 +2850,8 @@ void readPositionFile()
     if(!infile.is_open()) {
         currentPackingNumber = 0;
 
-        if(screenOutput) {
-            cout << "Input file did NOT OPEN!" << endl;
-            cout << "Press any key + ENTER to proceed." << endl;
-            char stop;
-            cin >> stop;
-        }
-
-        return;
-
+        cout << "Input file did NOT OPEN!" << endl;
+        exit(1);
     } else if(screenOutput) {
         cout << "Input file is opened succesfully!" << endl;
     }
