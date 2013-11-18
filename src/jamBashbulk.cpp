@@ -86,7 +86,7 @@ static int fixedStepNumber; // number of fixed size strain steps;
 // iteration counters in various algorithms:
 static int iterationcountSimStep = 0;
 static int iterationcountfire = 0;
-static const int maxIterationCountFire = 2e9;
+static int maxIterationCountFire = 2e9;
 
 static int iterationcountfrprmnCUMULATIVE = 0;
 static bool frprmnconverged = false;
@@ -395,7 +395,10 @@ void execute()
                 if(goodfile) {
                     if(doSimpleShear)
                         if(!redo) {
+                            float olditercount = maxIterationCountFire;
+                            maxIterationCountFire = 1e6;
                             calcShearModulus();
+                            maxIterationCountFire = olditercount;
                         }
 
                     if(doCompression)
