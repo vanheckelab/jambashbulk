@@ -488,6 +488,31 @@ void saveDebugState() {
     saveShearSystemState("debug.log", counter, "debug.data", 0, 0, 0, 0, "debug.positions");
 }
 
+void gotoAlphaShear(long double targetAlpha) {
+    ALPHA = targetAlpha;
+
+    iterationcountSimStep = 0;
+    iterationcountfire = 0;
+    iterationcountfrprmnCUMULATIVE = 0;
+
+    shearconverged = false;
+    converged = false;
+    frprmnconverged = false;
+    fireconverged = false;
+
+    while(!shearconverged) {
+        if (debug) {
+            saveDebugState();
+        }
+        simulationstep();
+    }
+    if (debug) {
+        saveDebugState();
+    }
+
+    calcSysPara();
+}
+
 ////////////////////////////////////////////////////////////////////////
 // calcShearModulus()
 void calcShearModulus()
@@ -515,8 +540,6 @@ void calcShearModulus()
     pAfterChange.reserve(2 * N + 3);
 
     long double shearLast = 0.0, sxyLast = sxy;
-
-
 
     ofstream outG;
     ofstream outLog;
@@ -687,30 +710,9 @@ void calcShearModulus()
             jloop(2 * N + 3) {
                 pLast[j] = p[j];
             } // backup the particle position before the shear step
-            ALPHA = alphaBeforeDeformation + shear; // ... and added to the shear of the relaxed packing
-
-            iterationcountSimStep = 0;
-            iterationcountfire = 0;
-            iterationcountfrprmnCUMULATIVE = 0;
-
-            shearconverged = false;
-            converged = false;
-            frprmnconverged = false;
-            fireconverged = false;
-
-            while(!shearconverged) {
-                if (debug) {
-                    saveDebugState();
-                }
-                simulationstep();
-            }
-            if (debug) {
-                saveDebugState();
-            }
- 
-
-            calcSysPara();
-
+            
+            gotoAlphaShear(alphaBeforeDeformation + shear); // ... and added to the shear of the relaxed packing
+            
             if(iterationcountfire > maxIterationCountFire) {
                 programmode = programmodeOld;
                 return;
