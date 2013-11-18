@@ -777,6 +777,14 @@ void calcShearModulus()
         }
 
         if(!fixedStepSize) {
+            // make sure system is *after* the contact change
+            while (neighborChangesLast == 0) {
+                cout << "Not at post-contact change strain; stepping forward";
+                shear = shear * shearfactor;
+                gotoAlphaShear(alphaBeforeDeformation + shear);
+                checkNeighborChanges(addedContacts, removedContacts,
+                                     neighborChanges, neighborChangesLast);
+            }
             pastContactChange = false;
             sufficientAccuracy = false;
             num = 0;
