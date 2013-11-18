@@ -777,7 +777,7 @@ void calcShearModulus()
         if(!fixedStepSize) {
             // make sure system is *after* the contact change
             while (neighborChangesLast == 0) {
-                cout << "Not at post-contact change strain; stepping forward";
+                cout << "\nNot at post-contact change strain; stepping forward";
                 shear = shear * shearfactor;
                 gotoAlphaShear(alphaBeforeDeformation + shear);
                 checkNeighborChanges(addedContacts, removedContacts,
@@ -791,6 +791,7 @@ void calcShearModulus()
         }
 
         if(!fixedStepSize) {
+            cout << "\nConverged to CC #" << numberOfContactChanges << "/" << goalNumberOfContactChanges << " (step #" << numberOfDataPoints << ")";
             if(numberOfContactChanges < goalNumberOfContactChanges) {
                 reachedGoal = false;
 
@@ -967,11 +968,6 @@ void simulationstep()
             if(2.0 * fabs(H - HLastFunctionCall)
                < ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
                 if(fabs(sxy) < 1e-15) {
-
-                    if(screenOutput) {
-                        cout << "FIRE algorithm converged!" << endl;
-                    }
-
                     fireconverged = true;
                 }
 
@@ -1003,11 +999,6 @@ void simulationstep()
 
         if(2.0 * fabs(H - HLastFunctionCall)
            < 1e-13 * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) {
-
-            if(screenOutput) {
-                cout << "FIRE algorithm converged!" << endl;
-            }
-
             fireconverged = true;
         }
 
@@ -2329,9 +2320,6 @@ void calcSysPara()
         // If at least one particle is a rattler within the loop, we have to start it again to check if this rattler did not make another rattler.
         // In the mean time, we count the number of contacts, excluding the rattlers.
 
-
-        cout << " Packing number " << currentPackingNumber << endl;
-
         while(numberOfRattlerChanges != 0) {
             Z2 = 0;
             numberOfRattlerChanges = 0;
@@ -2795,9 +2783,6 @@ inline void writePositionFile()
         } else if(screenOutput) {
             cout << "Output file is opened succesfully (2nd attempt)!" << endl;
         }
-
-    } else if(screenOutput) {
-        cout << "Output file is opened succesfully!" << endl;
     }
 
     outfile.setf(ios::fixed, ios::floatfield);
@@ -2898,9 +2883,6 @@ inline void writeMultiplePackings(string name)
         } else if(screenOutput) {
             cout << "Output file is opened succesfully (2nd attempt)!" << endl;
         }
-
-    } else if(screenOutput) {
-        cout << "Output file is opened succesfully!" << endl;
     }
 
     outfile.setf(ios::fixed, ios::floatfield);
