@@ -403,7 +403,7 @@ void execute()
 
                     if(doCompression) {
                         cout << "NOT IMPLEMENTED";
-                        exit(1);
+                        exit(2);
                     }
                 }
 
@@ -1449,7 +1449,7 @@ void menu()
 
     default:
         cout << "No value given; aborting";
-        exit(1);
+        exit(3);
 
     }
 
@@ -2471,7 +2471,7 @@ void readPositionFile()
         currentPackingNumber = 0;
 
         cout << "Input file did NOT OPEN!" << endl;
-        exit(1);
+        exit(4);
     } else if(screenOutput) {
         cout << "Input file is opened succesfully!" << endl;
     }
