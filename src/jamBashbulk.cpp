@@ -401,9 +401,10 @@ void execute()
                             maxIterationCountFire = olditercount;
                         }
 
-                    if(doCompression)
+                    if(doCompression) {
                         cout << "NOT IMPLEMENTED";
                         exit(1);
+                    }
                 }
 
                 if(currentPackingNumber
