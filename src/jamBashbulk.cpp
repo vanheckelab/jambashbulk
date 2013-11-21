@@ -802,18 +802,13 @@ void calcShearModulus()
         }
 
         if(!fixedStepSize) {
-            cout << "\n>> Converged to CC #" << numberOfContactChanges << "/" << goalNumberOfContactChanges << " (step #" << numberOfDataPoints << ")";
+            cout << "\nConverged to CC #" << numberOfContactChanges << "/" << goalNumberOfContactChanges << " (step #" << numberOfDataPoints << ")";
             if(numberOfContactChanges < goalNumberOfContactChanges) {
                 reachedGoal = false;
+
             } else {
                 reachedGoal = true;
             }
-        }
-
-        cout << "\nPressure is now: " << P << "\n";
-        if (P == 0) {
-            cout << "\nPressure is 0; giving up.";
-            reachedGoal = true;
         }
     } // end while
 
