@@ -440,7 +440,7 @@ void execute()
 void saveShearSystemState(string logFileName, int numberOfDataPoints,
                           string dataFileName, int neighborChangesLastCumulative,
                           int neighborChangesLast, int addedContacts, int removedContacts,
-                          string GpositionFile)
+                          string GpositionFile, int numberOfContactChanges)
 {
 
     char timebuffer[80];
@@ -467,7 +467,7 @@ void saveShearSystemState(string logFileName, int numberOfDataPoints,
     outLog << "	" << sxy << "	" << Uhelper << "	" << dU << "	" << H << "	" << dH
            << "	" << timediff1;
     outLog << "	" << iterationcountfire << "	" << iterationcountfrprmnCUMULATIVE
-           << "	" << maxGrad << "	" << timebuffer << endl;
+           << "	" << maxGrad << "	" << timebuffer << " " << numberOfContactChanges << endl;
     outLog.close();
 
     outG.open((char *)(dataFileName.c_str()), ios::app);
@@ -487,7 +487,7 @@ void saveDebugState() {
     // (e.g. number of rearrangements)
     static int counter = 0;
     counter += 1;
-    saveShearSystemState("debug.log", counter, "debug.data", 0, 0, 0, 0, "debug.positions");
+    saveShearSystemState("debug.log", counter, "debug.data", 0, 0, 0, 0, "debug.positions", 0);
 }
 
 void gotoAlphaShear(LDBL targetAlpha) {
@@ -620,7 +620,7 @@ void calcShearModulus()
     outLog << "step#" << "	N" << "	P0" << "	P" << "	alpha" << "	delta";
     outLog << "	L" << "	phi" << "	Z" << "	#rattler" << "	s_xx" << "	s_yy";
     outLog << "	s_xy" << "	U" << "	dU" << "	H" << "	dH" << "	t_run";
-    outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
+    outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << " ccnum" << endl;
     outLog.close();
 
     LDBL alphaBeforeDeformation = ALPHA;
@@ -648,7 +648,7 @@ void calcShearModulus()
     saveShearSystemState(logFileName, 0,
                          dataFileName, 0,
                          0, 0, 0,
-                         GpositionFile);
+                         GpositionFile, numberOfContactChanges);
 
     if(!fixedStepSize) {
         // set shear to an initial (small) value > 0, or multiplication will yield 0.
@@ -750,7 +750,7 @@ void calcShearModulus()
             saveShearSystemState(logFileName, numberOfDataPoints,
                                  dataFileName, neighborChangesLastCumulative,
                                  neighborChangesLast, addedContacts, removedContacts,
-                                 GpositionFile);
+                                 GpositionFile, numberOfContactChanges);
 
 
             shearLast = shear;
