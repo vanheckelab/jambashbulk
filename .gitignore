@@ -6,3 +6,5 @@ bin
 src/gitversion.h
 *.err
 *.dat
+*.swp
+*.pyc
