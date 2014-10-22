@@ -1,17 +1,20 @@
 import subprocess, sys
 
 usage_error = False
+allservers = ["maris%03i" % i for i in range(2, 68)]
 if len(sys.argv) == 2:
     if sys.argv[1].lower() == "default":
         servers = ["maris%03i" % i for i in range(25,33) + range(61,68)]
     elif sys.argv[1].lower() == "all":
-        servers = ["maris%03i" % i for i in range(2, 68)]
+        servers = allservers
     else:
         usage_error = True
 
 if len(sys.argv) == 1 or usage_error:
     print "Usage: %s [DEFAULT|ALL]" % sys.argv[0]
-    sys.exit(1)
+    print "Assuming ALL"
+    print ""
+    servers = allservers
 
 
 processes = [subprocess.Popen(["ssh", server, "cat /proc/cpuinfo | grep processor | wc -l && uptime"], stdout=subprocess.PIPE, stderr=open("/dev/null", "w")) for server in servers]

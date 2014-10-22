@@ -10,7 +10,7 @@ template = """mkdir -p %(path)s && argvtolines.sh %(path)s 1 1 %(num)i 2 | bin/j
 #pressures = ["P%se%i" % (s,i) for s in ["1468", "2154", "4642", "6813"] for i in [-7,-6,-5,-4,-3]]
 #nums = ["N%i" % i for i in [16,22,32,64,128,256,512,1024]]
 
-pressures = ["P%02i0e-1" % i for i in [1,3,5,7,9,13,15,17,19]]
+pressures = ["P%03ie-1" % i for i in [1]] #, 15,20,25,35,40,45,55,60,65,75,80,85]]
 #pressures = ["P3162e%i" % x for x in [-7, -6, -5, -4, -3]]
 nums = ["N128"]
 
