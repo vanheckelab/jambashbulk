@@ -4,3 +4,5 @@ bin
 .cproject
 .pydevproject
 src/gitversion.h
+*.err
+*.dat
