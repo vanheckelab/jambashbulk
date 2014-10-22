@@ -6,12 +6,15 @@
 
 #ifdef _WIN32
 #define PLATFORM "win32"
+typedef double LDBL;
 #endif
 #ifdef _WIN64
 #define PLATFORM "win64"
+typedef double LDBL;
 #endif
 #ifdef __unix__
 #define PLATFORM "unix"
+typedef long double LDBL;
 #endif
 
 std::string header() {

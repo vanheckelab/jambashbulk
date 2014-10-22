@@ -37,13 +37,13 @@ using namespace std;
 // simulation parameters
 static int N = -1; // number of particles (per unit cell) in the packing
 static int Ncorrected;
-static const long double k = 1.0; // spring const. with respect to particle overlap
+static const LDBL k = 1.0; // spring const. with respect to particle overlap
 
 static bool screenOutput = false;
 static bool debug = false;
 
 // degrees of freedom of the periodic boundary unit cell in
-static long double shear = 0.0;
+static LDBL shear = 0.0;
 
 static bool alphaOnOff = false, deltaOnOff = false, pressOnOff = false;
 static bool dofOnOff = false;
@@ -63,12 +63,12 @@ static string nameOfWorkingDirectory = "";
 static int particleNumberLength = 0;
 
 // start values:
-static const long double alphainit = 0.0; // the user's choice for the initial shear angle
-static const long double deltainit = 0.0; // the initial aspect-ratio
-static const long double Linit = 5.0;
-static long double P0init = 0.0;
-static long double P0 = 0.0; // the target pressure
-static long double phiinit = 0.8; // the initial fill fraction (0.869 ^= P~0.01)
+static const LDBL alphainit = 0.0; // the user's choice for the initial shear angle
+static const LDBL deltainit = 0.0; // the initial aspect-ratio
+static const LDBL Linit = 5.0;
+static LDBL P0init = 0.0;
+static LDBL P0 = 0.0; // the target pressure
+static LDBL phiinit = 0.8; // the initial fill fraction (0.869 ^= P~0.01)
 
 static int countAlphaFlip = 0;
 static int countDeltaFlip = 0;
@@ -80,7 +80,7 @@ static bool doCompression = false;
 static bool fixedStepSize = false;
 
 static int goalNumberOfContactChanges = 10; // the total number of contact changes we are interested in
-static long double goalStrain = 0.1; // the strain range we are interested in
+static LDBL goalStrain = 0.1; // the strain range we are interested in
 static int fixedStepNumber; // number of fixed size strain steps;
 
 // iteration counters in various algorithms:
@@ -104,24 +104,24 @@ static int numPackingsToProcess = 0;
 static int firstPackingNumber = 0;
 
 static bool redo = false;
-static long double Rneighbor = 100.0;
-static long double RneighborFrprmnLast;
+static LDBL Rneighbor = 100.0;
+static LDBL RneighborFrprmnLast;
 
-static long double UhelperLastFunctionCall = 1e20;
+static LDBL UhelperLastFunctionCall = 1e20;
 
-static long double H = 1e9;
-static long double HLastFunctionCall = 1e11;
+static LDBL H = 1e9;
+static LDBL HLastFunctionCall = 1e11;
 
-static long double phi; // fill fraction
-static long double Z; // average number of neighbors
-static long double P; // pressure
-static long double sxx, sxy, syy; // stress components
+static LDBL phi; // fill fraction
+static LDBL Z; // average number of neighbors
+static LDBL P; // pressure
+static LDBL sxx, sxy, syy; // stress components
 
 // overlap and distances
-static vector<long double> dij; // NxN matrix of particle overlap
-static vector<long double> rij; // NxN matrix of particle center distance
-static vector<long double> xij; // NxN matrix of particle x-position difference
-static vector<long double> yij; // NxN matrix of particle y-position difference
+static vector<LDBL> dij; // NxN matrix of particle overlap
+static vector<LDBL> rij; // NxN matrix of particle center distance
+static vector<LDBL> xij; // NxN matrix of particle x-position difference
+static vector<LDBL> yij; // NxN matrix of particle y-position difference
 
 static vector<bool> neighbors;
 static vector<bool> trueneighbors;
@@ -135,70 +135,70 @@ static vector<bool> wasRattler;
 static int trueneighborNumber = 0;
 
 //generalized coordinates and gradients
-static vector<long double> p; // Positions of particles
-static vector<long double> pLast; // Positions at end of last simulationstep()
-static vector<long double> xi; // Potential gradient
-static vector<long double> g; // gradient helper
-static vector<long double> h; // gradient helper
-static vector<long double> R; // Radii of particles
-static long double Rmax; // Maximum particle radius
+static vector<LDBL> p; // Positions of particles
+static vector<LDBL> pLast; // Positions at end of last simulationstep()
+static vector<LDBL> xi; // Potential gradient
+static vector<LDBL> g; // gradient helper
+static vector<LDBL> h; // gradient helper
+static vector<LDBL> R; // Radii of particles
+static LDBL Rmax; // Maximum particle radius
 
 // fire algorithm variables
-static vector<long double> v; // Effective velocity
-static vector<long double> M; // Effective masses
-static long double FIRE_alpha;
-static long double power;
+static vector<LDBL> v; // Effective velocity
+static vector<LDBL> M; // Effective masses
+static LDBL FIRE_alpha;
+static LDBL power;
 static const int Nmin = 5;
-static const long double finc = 1.1;
-static const long double fdec = 0.5;
-static const long double FIRE_alpha_start = 0.1; // called alpha_{start} in Jo's thesis
-static const long double f_FIRE_alpha = 0.99;    // called f_{alpha} in Jo's thesis
-static long double dt = 1e-1;
-static const long double dtmaxinit = 1e-1;
-static long double dtmax = dtmaxinit;
-static const long double dtmin = 0.0;
-static const long double damp = 1.0;
-static long double dampalpha = 0.9;
-static long double dampdelta = 0.9;
-static long double damppress = 0.999;
+static const LDBL finc = 1.1;
+static const LDBL fdec = 0.5;
+static const LDBL FIRE_alpha_start = 0.1; // called alpha_{start} in Jo's thesis
+static const LDBL f_FIRE_alpha = 0.99;    // called f_{alpha} in Jo's thesis
+static LDBL dt = 1e-1;
+static const LDBL dtmaxinit = 1e-1;
+static LDBL dtmax = dtmaxinit;
+static const LDBL dtmin = 0.0;
+static const LDBL damp = 1.0;
+static LDBL dampalpha = 0.9;
+static LDBL dampdelta = 0.9;
+static LDBL damppress = 0.999;
 
 //unit cell properties
-static long double lxx, lxy; // x-/y- component of L_x (1st unit cell vector)
-static long double lyx, lyy; // x-/y- component of L_y (2nd unit cell vector)
+static LDBL lxx, lxy; // x-/y- component of L_x (1st unit cell vector)
+static LDBL lyx, lyy; // x-/y- component of L_y (2nd unit cell vector)
 static vector<int> nx; // NxN matrix for periodicity calculation
 static vector<int> ny; // NxN matrix for periodicity calculation
 
 //helper variables for energy and gradient calculation of 'hypothetical' configuration
-static long double Uhelper; // energy
-static vector<long double> phelper; // particle positions (x_i,y_i)
-static vector<long double> xihelper; // potential gradient (dU/dx_i,dU/dy_i)
-static long double alphahelper, deltahelper, Lhelper, Phelper;
-static long double lxxhelper, lxyhelper;
-static long double lyxhelper, lyyhelper;
+static LDBL Uhelper; // energy
+static vector<LDBL> phelper; // particle positions (x_i,y_i)
+static vector<LDBL> xihelper; // potential gradient (dU/dx_i,dU/dy_i)
+static LDBL alphahelper, deltahelper, Lhelper, Phelper;
+static LDBL lxxhelper, lxyhelper;
+static LDBL lyxhelper, lyyhelper;
 
-//long double gg; // gradient squared
-static long double gg, vv;
+//LDBL gg; // gradient squared
+static LDBL gg, vv;
 
 // mathematical and program constants
-static const long double PI = 3.141592653589793;
-static const long double gold = 0.5 * (1.0 + sqrt(5.0)); // golden ratio = 1.618033988749894885
-static const long double glimit = 100.0; // maximum magnification for parabolic-fit step in function mbrak
+static const LDBL PI = 3.141592653589793;
+static const LDBL gold = 0.5 * (1.0 + sqrt(5.0)); // golden ratio = 1.618033988749894885
+static const LDBL glimit = 100.0; // maximum magnification for parabolic-fit step in function mbrak
 
-static const long double CGOLD = 0.3819660; // golden ratio for brent
-static const long double ZEPS = 1e-25; // for brent
+static const LDBL CGOLD = 0.3819660; // golden ratio for brent
+static const LDBL ZEPS = 1e-25; // for brent
 static int ITMAXBRENT = 50; // maximum of iterations in brent
 
 static int ITMAX = 12; // maximum of iterations in frprmn
-static const long double TOL = 1e-7; // tolerance passed to brent by linmin
+static const LDBL TOL = 1e-7; // tolerance passed to brent by linmin
 
-static const long double ftol = 1e-2; // tolerance passed to frprmn()
-static const long double ftolFIRE = 1e-17; // tolerance passed to fire()
+static const LDBL ftol = 1e-2; // tolerance passed to frprmn()
+static const LDBL ftolFIRE = 1e-17; // tolerance passed to fire()
 static int endcount = 0;
 
 static time_t starttime, endtime;
-static long double timediff1 = 0;
+static LDBL timediff1 = 0;
 
-static long double dU, dH;
+static LDBL dU, dH;
 
 // function declarations:
 static void execute();
@@ -207,16 +207,16 @@ static void initializeArrays();
 static void simulationstep(); // this is where the simulation is performed
 static void particledistance(int i, int j);
 static void resethelpervars();
-static long double energy();
+static LDBL energy();
 static void gradientcalc();
-static void mnbrak(long double * ax, long double * bx, long double * cx, long double * fa,
-                   long double * fb, long double * fc, long double(*func)(long double));
-static long double brent(long double ax, long double bx, long double cx,
-                         long double(*f)(long double), long double tol, long double * xmin);
-static long double SIGN(long double a, long double b);
-static void linmin(int n, long double * fret, long double(*func)());
-static long double f1dim(long double x);
-static void frprmn(int n, long double * fret, long double(*func)());
+static void mnbrak(LDBL * ax, LDBL * bx, LDBL * cx, LDBL * fa,
+                   LDBL * fb, LDBL * fc, LDBL(*func)(LDBL));
+static LDBL brent(LDBL ax, LDBL bx, LDBL cx,
+                         LDBL(*f)(LDBL), LDBL tol, LDBL * xmin);
+static LDBL SIGN(LDBL a, LDBL b);
+static void linmin(int n, LDBL * fret, LDBL(*func)());
+static LDBL f1dim(LDBL x);
+static void frprmn(int n, LDBL * fret, LDBL(*func)());
 static void calcSysPara();
 static void menu();
 static void readPositionFile();
@@ -231,7 +231,7 @@ static void checkNeighborChanges(int & addedcontacts, int & removedcontacts,
                                  int & neighborChanges, int & neighborChangesLast);
 static void extractNandP(string foldername);
 static void checkFolderName(string foldername);
-static bool pnpoly(int nvert, long double * vertx, long double * verty, long double testx, long double testy);
+static bool pnpoly(int nvert, LDBL * vertx, LDBL * verty, LDBL testx, LDBL testy);
 
 enum PROGRAMMODE {
     PROGRAMMODE_DEFORM_PACKING = 3,
@@ -448,7 +448,7 @@ void saveShearSystemState(string logFileName, int numberOfDataPoints,
     struct tm * timeinfo;
     ofstream outG;
     ofstream outLog;
-    long double maxGrad = 0;
+    LDBL maxGrad = 0;
 
     iloop(2 * N) {
         if(fabs(xihelper[i]) > maxGrad) {
@@ -490,7 +490,7 @@ void saveDebugState() {
     saveShearSystemState("debug.log", counter, "debug.data", 0, 0, 0, 0, "debug.positions");
 }
 
-void gotoAlphaShear(long double targetAlpha) {
+void gotoAlphaShear(LDBL targetAlpha) {
     ALPHA = targetAlpha;
 
     iterationcountSimStep = 0;
@@ -522,8 +522,8 @@ void calcShearModulus()
     PROGRAMMODE programmodeOld = programmode;
     int num = 0;
 
-    long double shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
-    long double dstrain = goalStrain / fixedStepNumber;
+    LDBL shearfactor = 10; //= sqrt(10); // for fast calculation = 10 else = sqrt(10)
+    LDBL dstrain = goalStrain / fixedStepNumber;
     int numberOfContactChanges = 0; // the number of contact changes at a given moment
     bool reachedGoal = false;
 
@@ -538,10 +538,10 @@ void calcShearModulus()
     bool sufficientAccuracy = false;
     int numberOfDataPoints = 0;
 
-    vector<long double> pAfterChange;
+    vector<LDBL> pAfterChange;
     pAfterChange.reserve(2 * N + 3);
 
-    long double shearLast = 0.0, sxyLast = sxy;
+    LDBL shearLast = 0.0, sxyLast = sxy;
 
     ofstream outG;
     ofstream outLog;
@@ -552,7 +552,7 @@ void calcShearModulus()
     string GpositionFile = filenameString;
     string Appendix = "";
 
-    long double goalStrainHelper = goalStrain;
+    LDBL goalStrainHelper = goalStrain;
     int goalStrainExponent = 0, goalStraindigit = 0;
     string goalStrainString = "";
 
@@ -623,7 +623,7 @@ void calcShearModulus()
     outLog << "	#FIRE" << "	#CG" << "	gg" << " creation-date" << endl;
     outLog.close();
 
-    long double alphaBeforeDeformation = ALPHA;
+    LDBL alphaBeforeDeformation = ALPHA;
     iloop(N) {
         jloop(N) {
             trueneighborsLast[j * N + i] = trueneighborsOld[j * N + i] =
@@ -894,7 +894,7 @@ void calculate_neighbors()
 // Simulation step
 void simulationstep()
 {
-    long double fret;
+    LDBL fret;
 
     time_t rawtime1;
 
@@ -1469,15 +1469,15 @@ void fire()
     //v += a*dt
     //p += v*dt
 
-    long double iterPosPower = 0;
+    LDBL iterPosPower = 0;
     int countAlpha = 0;
     int countDelta = 0;
     int countPress = 0;
     int itercount = 0;
 
-    long double frac;
-    long double fracAlpha;
-    long double fracDelta;
+    LDBL frac;
+    LDBL fracAlpha;
+    LDBL fracDelta;
 
     FIRE_alpha = FIRE_alpha_start;
 
@@ -1647,22 +1647,22 @@ void fire()
 // Returns (ax, bx, cx) such that ax < bx < cx   and  f(ax) > f(bx) < f(cx)
 // Returns (fa, fb, fc) = f(ax), f(bx), f(cx)
 //
-// IN: long double *ax, *bx               two initial points
-//     long double (*func)(long double)  (i.e. a pointer to a function that takes
-//                                          one long double argument and returns
-//                                          one long double value)
-// OUT: long double *ax, *bx, *cx
-//      long double *fa, *fb, *fc
+// IN: LDBL *ax, *bx               two initial points
+//     LDBL (*func)(LDBL)  (i.e. a pointer to a function that takes
+//                                          one LDBL argument and returns
+//                                          one LDBL value)
+// OUT: LDBL *ax, *bx, *cx
+//      LDBL *fa, *fb, *fc
 //
 
 #define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
 
-void mnbrak(long double * ax, long double * bx, long double * cx, long double * fa,
-            long double * fb, long double * fc, long double(*func)(long double))
+void mnbrak(LDBL * ax, LDBL * bx, LDBL * cx, LDBL * fa,
+            LDBL * fb, LDBL * fc, LDBL(*func)(LDBL))
 {
 
     //permutation procedure
-    long double ulim, u, r, q, fu, dum;
+    LDBL ulim, u, r, q, fu, dum;
     int numberOfIterations = 0;
 
     *fa = (*func)(*ax);
@@ -1746,14 +1746,14 @@ void mnbrak(long double * ax, long double * bx, long double * cx, long double * 
 // Brent's method (see http://en.wikipedia.org/wiki/Brent's_method )
 
 #define SHFT(a,b,c,d) (a)=(b); (b)=(c); (c)=(d);
-long double brent(long double ax, long double bx, long double cx,
-                  long double(*f)(long double), long double tol, long double * xmin)
+LDBL brent(LDBL ax, LDBL bx, LDBL cx,
+                  LDBL(*f)(LDBL), LDBL tol, LDBL * xmin)
 {
 
     int iter;
-    long double a, b, d, etemp, fu, fv, fw, fx, s, q, r, tol1, tol2, u, v, w, x,
+    LDBL a, b, d, etemp, fu, fv, fw, fx, s, q, r, tol1, tol2, u, v, w, x,
          xm;
-    long double e = 0.0;
+    LDBL e = 0.0;
 
     a = (ax < cx ? ax : cx);
     b = (ax > cx ? ax : cx);
@@ -1847,7 +1847,7 @@ long double brent(long double ax, long double bx, long double cx,
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-long double SIGN(long double a, long double b)
+LDBL SIGN(LDBL a, LDBL b)
 {
     if(b < 0.0) {
         return -a;
@@ -1860,10 +1860,10 @@ long double SIGN(long double a, long double b)
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // linmin
-void linmin(int n, long double * fret, long double(*func)())
+void linmin(int n, LDBL * fret, LDBL(*func)())
 {
-    static const long double AMIN = 1e-7; // starting step in linmin
-    long double xx, xmin, fx, fb, fa, bx, ax;
+    static const LDBL AMIN = 1e-7; // starting step in linmin
+    LDBL xx, xmin, fx, fb, fa, bx, ax;
 
     ax = 0.0;
     xx = AMIN;
@@ -1879,9 +1879,9 @@ void linmin(int n, long double * fret, long double(*func)())
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // f1dim
-long double f1dim(long double x)
+LDBL f1dim(LDBL x)
 {
-    long double Uloc;
+    LDBL Uloc;
 
     iloop(2 * N + 3) {
         phelper[i] = p[i] + x * xi[i];
@@ -1901,12 +1901,12 @@ long double f1dim(long double x)
 // frprmn
 // Fletcher-Reeves-Polak-Ribiere minimization
 // see http://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method
-void frprmn(int n, long double * fret, long double(*func)())
+void frprmn(int n, LDBL * fret, LDBL(*func)())
 {
     // most input variable are global, dfunc is done in gradienU
     int its;
     int endcount = 0;
-    long double gam, fp, dgg;
+    LDBL gam, fp, dgg;
 
     iloop(2 * N + 3) {
         phelper[i] = p[i];
@@ -2033,7 +2033,7 @@ void resethelpervars()
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // energy
-long double energy()
+LDBL energy()
 {
     resethelpervars();
 
@@ -2067,8 +2067,8 @@ long double energy()
 // gradientcalc
 void gradientcalc()
 {
-    long double component;
-    long double term1;
+    LDBL component;
+    LDBL term1;
     // calculate gradient and energy
 
     Phelper = 0.0;
@@ -2132,8 +2132,8 @@ void gradientcalc()
 void initializeSimulation()
 {
 
-    long double randLx, randLy;
-    long double frac;
+    LDBL randLx, randLy;
+    LDBL frac;
 
     dtmax = 0.1;
     dt = dtmax;
@@ -2262,14 +2262,14 @@ void initializeSimulation()
 // calcSysPara: calculate fillfracton & number of neighbors & pressure
 void calcSysPara()
 {
-    long double term1;
+    LDBL term1;
 
     int numberOfRattlerChanges = 1;
 
-    long double Z2 = 0;
+    LDBL Z2 = 0;
 
     // Rattlers check
-    long double X_3n[3], Y_3n[3]; // in case there are 3 neighbors, we have to check their positions.
+    LDBL X_3n[3], Y_3n[3]; // in case there are 3 neighbors, we have to check their positions.
     int stable_particle;
 
     iloop(3) {
@@ -2427,7 +2427,7 @@ void readPositionFile()
     bool initializeNow = false;
 
     int decimal = 0;
-    long double helperchar = 0.0;
+    LDBL helperchar = 0.0;
     bool isnegative = false;
 
     bool posRead = false;
@@ -2437,7 +2437,7 @@ void readPositionFile()
     bool P0read = false;
     string filepath = nameOfWorkingDirectory + "/";
 
-    long double L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
+    LDBL L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
     /* jamBashbulk.cpp:2679:25: warning: variable ‘L1y’ set but not used [-Wunused-but-set-variable]
      * Weird!
      */
@@ -2830,7 +2830,7 @@ inline void writePositionFile()
 
     ofstream logfile;
 
-    long double maxGrad = 0;
+    LDBL maxGrad = 0;
     iloop(2 * N) {
         if(fabs(xihelper[i]) > maxGrad) {
             maxGrad = fabs(xihelper[i]);
@@ -3099,7 +3099,7 @@ void checkFolderName(string foldername)
 //! @return true for strictly interior points
 //!         false for strictly exterior points
 //!         true or false for points on the vertices
-bool pnpoly(int nvert, long double * vertx, long double * verty, long double testx, long double testy)
+bool pnpoly(int nvert, LDBL * vertx, LDBL * verty, LDBL testx, LDBL testy)
 {
     int i, j;
     bool c = false;
@@ -3117,19 +3117,37 @@ bool pnpoly(int nvert, long double * vertx, long double * verty, long double tes
 
 extern "C" {
     struct packingparams {
-        long double P;
-        long double phi;
-        long double Z;
+        LDBL P;
+        LDBL phi;
+        LDBL Z;
         int Ncorrected;
-        long double sxx;
-        long double sxy;
-        long double syy;
-        long double U;
-        long double H;
-        long double gg;
+        LDBL sxx;
+        LDBL sxy;
+        LDBL syy;
+        LDBL U;
+        LDBL H;
+        LDBL gg;
     };
 
-    // determine packingparams for a given packing
+    void relax_packing(bool alphaFree, bool deltaFree, bool LFree) {
+        screenOutput = true;
+        
+        alphaOnOffInit = alphaFree;
+        deltaOnOffInit = deltaFree;
+        pressOnOffInit = LFree;
+        
+        calculate_neighbors(); // already calls energy() and gradientcalc()
+        calcSysPara();
+ 
+        converged = frprmnconverged = fireconverged = false;
+        programmode = PROGRAMMODE_CREATE_PACKING;
+        while(!converged) { // && !frprmnconverged) {
+            cout << converged << ", " << frprmnconverged << ", " << fireconverged << endl;
+            simulationstep();
+        }
+    }
+    
+    // import packing
     //
     // @param[in]  _N      Number of particles = len(x) = len(y) = len(r)
     // @param[in]  _P0     Base pressure (required to calculate entropy H)
@@ -3139,12 +3157,9 @@ extern "C" {
     // @param[in]  _alpha  alpha shear parameter (simple shear)
     // @param[in]  _delta  delta shear parameter (pure shear)
     // @param[in]  _L      length of box
-    // @param[out] out     packingparams struct containing the calculated values
-    void get_packing_data(int _N, long double _P0,
-                          long double *_x, long double *_y, long double *_r,
-                          long double _alpha, long double _delta, long double _L,
-                          packingparams *out) {
-        bool dosim=false;
+    void import_packing(int _N, LDBL _P0,
+                          LDBL *_x, LDBL *_y, LDBL *_r,
+                          LDBL _alpha, LDBL _delta, LDBL _L) {
         fireconverged = false;
         // load packing
         N = _N;
@@ -3167,28 +3182,56 @@ extern "C" {
         DELTA = _delta;
         LENGTH = _L;
 
-        // calculate all system parameters
-        if (dosim) {
-            screenOutput = true;
-            calculate_neighbors(); // already calls energy() and gradientcalc()
-            calcSysPara();
-     
-            converged = frprmnconverged = fireconverged = false;
-            programmode = PROGRAMMODE_CREATE_PACKING;
-            while(!converged) { // && !frprmnconverged) {
-                cout << converged << ", " << frprmnconverged << ", " << fireconverged << endl;
-                simulationstep();
-            }
-        }
-            
         calculate_neighbors();
         fireconverged = true; // to trigger the correct part of calcSysPara()...
         calcSysPara();
+    }
+    
+    // import packing
+    //
+    // @param[in]  _N      Number of particles = len(x) = len(y) = len(r)
+    // @param[out]  _P0     Base pressure (required to calculate entropy H)
+    // @param[out]  _x[_N]  x coordinates of particles
+    // @param[out]  _y[_N]  y coordinates of particles
+    // @param[out]  _r[_N]  radii of particles
+    // @param[out]  _alpha  alpha shear parameter (simple shear)
+    // @param[out]  _delta  delta shear parameter (pure shear)
+    // @param[out]  _L      length of box
+    
+    void export_packing(int _N, LDBL * _P0,
+                          LDBL *_x, LDBL *_y, LDBL *_r,
+                          LDBL *_alpha, LDBL *_delta, LDBL *_L) {
+        // write packing
+        if(N != _N) {
+            cout << "ERROR: N is not equal to the packing N. ABORTING.";
+            return;
+        }
+        *_P0 = P0;
 
+        iloop(N) {
+            _x[i] = p[i];
+            _y[i] = p[i+N];
+            _r[i] = R[i];
+        }
+
+        *_alpha = ALPHA;
+        *_delta = DELTA;
+        *_L = LENGTH;
+    }
+
+    
+    // @returns number of particles N
+    int get_packing_size() {
+        return N;
+    }
+    
+    // calculate packing params for the packing that has been imported
+    // @param[out] out     packingparams struct containing the calculated values
+    void get_packing_data(packingparams *out) {
         // manually calculate H and gg (otherwise done in fire())
         out->H = Uhelper + P0 * Lhelper * Lhelper;
 
-        long double gg_max=0;
+        LDBL gg_max=0;
         gg_max = 0;
         iloop(N) {
             gg_max = max(gg_max, xihelper[i]);
@@ -3207,4 +3250,5 @@ extern "C" {
         out->syy = syy;
         out->U = Uhelper;
     }
+    
 }
