@@ -460,6 +460,9 @@ void saveShearSystemState(string logFileName, int numberOfDataPoints,
     timeinfo = localtime(&rawtime);
     strftime(timebuffer, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
     outLog.open((char *)(logFileName.c_str()), ios::app);
+    outLog.setf(ios::scientific, ios::floatfield);
+    outLog.precision(PRECISION);
+
     outLog << numberOfDataPoints << "	" << N << "	" << P0 << "	" << P << "	"
            << ALPHA << "	" << DELTA;
     outLog << "	" << LENGTH << "	" << phi << "	" << Z << "	" << N - Ncorrected << "	"
@@ -2838,6 +2841,8 @@ inline void writePositionFile()
     }
 
     logfile.open((char *) logFileNamePackings.c_str(), ios::app);
+    logfile.setf(ios::scientific, ios::floatfield);
+    logfile.precision(PRECISION);
 
     logfile << currentPackingNumber << "	" << N << "	" << P0 << "	" << P << "	"
             << ALPHA << "	" << DELTA;
