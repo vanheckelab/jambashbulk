@@ -2932,20 +2932,27 @@ inline void writeMultiplePackings(string name)
 void packIntoBoundaries()
 {
     iloop(N) {
+        // up/down boundaries
         while(p[N + i] < (0)) {
+            p[i] += lyx;
             p[N + i] += lyy;
         }
 
         while(p[N + i] > (lyy)) {
+            p[i] -= lyx;
             p[N + i] -= lyy;
         }
 
+        // left/right boundaries
+        // why is this a slanted boundary instead of a straight??
         while(p[i] < (0 + p[N + i] * lyx / lyy)) {
             p[i] += lxx;
+            p[N+i] += lxy; // 0
         }
 
         while(p[i] > (lxx + p[N + i] * lyx / lyy)) {
             p[i] -= lxx;
+            p[N+i] -= lxy; // 0
         }
 
     }
