@@ -1,5 +1,6 @@
 import os, sys, csv
 sys.path.append("/home/merlijn/phd-library")
+sys.path.append("../phd-library")
 sys.path.append(os.path.join(os.path.split(__file__)[0], "src"))
 
 sys.path.append('fakepackages')
