@@ -2,7 +2,7 @@ src = src
 bin = bin
 
 opts = 
-warnopts = -Wall -Wextra -Wconversion -Wno-sign-conversion
+warnopts = -Wall -Wextra -Wconversion -Wno-sign-conversion -Werror
 ifndef ARCH
 	ARCH = native
 endif

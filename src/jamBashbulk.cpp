@@ -395,7 +395,7 @@ void execute()
                 if(goodfile) {
                     if(doSimpleShear)
                         if(!redo) {
-                            float olditercount = maxIterationCountFire;
+                            int olditercount = maxIterationCountFire;
                             maxIterationCountFire = 1e6;
                             calcShearModulus();
                             maxIterationCountFire = olditercount;
@@ -544,8 +544,6 @@ void calcShearModulus()
     vector<LDBL> pAfterChange;
     pAfterChange.reserve(2 * N + 3);
 
-    LDBL shearLast = 0.0, sxyLast = sxy;
-
     ofstream outG;
     ofstream outLog;
     ofstream outFirst;
@@ -567,34 +565,34 @@ void calcShearModulus()
         goalStrainHelper *= 10.0;
     }
 
-    goalStraindigit = goalStrainHelper / 1;
+    goalStraindigit = (int)goalStrainHelper;
 
-    goalStrainString.push_back(goalStraindigit + 48);
+    goalStrainString.push_back((char)(goalStraindigit + 48));
     goalStrainString.append("e-");
-    goalStrainString.push_back(goalStrainExponent + 48);
+    goalStrainString.push_back((char)(goalStrainExponent + 48));
 
     if(!fixedStepSize) {
         Appendix = "~SR";
-        Appendix.push_back(((goalNumberOfContactChanges / 100) % 10) + 48);
-        Appendix.push_back(((goalNumberOfContactChanges / 10) % 10) + 48);
-        Appendix.push_back(((goalNumberOfContactChanges / 1) % 10) + 48);
+        Appendix.push_back((char)(((goalNumberOfContactChanges / 100) % 10) + 48));
+        Appendix.push_back((char)(((goalNumberOfContactChanges / 10) % 10) + 48));
+        Appendix.push_back((char)(((goalNumberOfContactChanges / 1) % 10) + 48));
         Appendix.append("~step");
-        Appendix.push_back(
-            (((2 * goalNumberOfContactChanges + 1) / 100) % 10) + 48);
-        Appendix.push_back(
-            (((2 * goalNumberOfContactChanges + 1) / 10) % 10) + 48);
-        Appendix.push_back(
-            (((2 * goalNumberOfContactChanges + 1) / 1) % 10) + 48);
+        Appendix.push_back((char)(
+            (((2 * goalNumberOfContactChanges + 1) / 100) % 10) + 48));
+        Appendix.push_back((char)(
+            (((2 * goalNumberOfContactChanges + 1) / 10) % 10) + 48));
+        Appendix.push_back((char)(
+            (((2 * goalNumberOfContactChanges + 1) / 1) % 10) + 48));
 
     } else {
 
         Appendix = "~SS";
         Appendix.append(goalStrainString);
         Appendix.append("~step");
-        Appendix.push_back((((fixedStepNumber) / 1000) % 10) + 48);
-        Appendix.push_back((((fixedStepNumber) / 100) % 10) + 48);
-        Appendix.push_back((((fixedStepNumber) / 10) % 10) + 48);
-        Appendix.push_back((((fixedStepNumber) / 1) % 10) + 48);
+        Appendix.push_back((char)((((fixedStepNumber) / 1000) % 10) + 48));
+        Appendix.push_back((char)((((fixedStepNumber) / 100) % 10) + 48));
+        Appendix.push_back((char)((((fixedStepNumber) / 10) % 10) + 48));
+        Appendix.push_back((char)((((fixedStepNumber) / 1) % 10) + 48));
     }
 
     GpositionFile.insert(particleNumberLength + 6, Appendix);
@@ -694,8 +692,6 @@ void calcShearModulus()
                         numberOfContactChanges = addedContacts = removedContacts = 0;
                         neighborChanges = neighborChangesOld = neighborChangesLast = neighborChangesLastCumulative = 0;
                         pastContactChange = false;
-                        shearLast = 0.0;
-                        sxyLast = sxy;
                         continue;
                     } else {
                         shear = shear / shearfactor; // go back to previous shear
@@ -756,8 +752,6 @@ void calcShearModulus()
                                  GpositionFile, numberOfContactChanges);
 
 
-            shearLast = shear;
-            sxyLast = sxy;
 
             if(fixedStepSize) {
                 if(numberOfDataPoints < fixedStepNumber) {
@@ -1871,6 +1865,8 @@ LDBL SIGN(LDBL a, LDBL b)
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // linmin
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void linmin(int n, LDBL * fret, LDBL(*func)())
 {
     static const LDBL AMIN = 1e-7; // starting step in linmin
@@ -1886,7 +1882,7 @@ void linmin(int n, LDBL * fret, LDBL(*func)())
     } // move by gradient*xmin to the 1D-minimum
     return;
 } // end linmin
-
+#pragma GCC diagnostic pop
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // f1dim
@@ -2002,14 +1998,14 @@ void particledistance(int i, int j)
     xij[j * N + i] = phelper[j] - phelper[i];
     yij[j * N + i] = phelper[N + j] - phelper[N + i];
 
-    ny[j * N + i] = -floor((yij[j * N + i] + lyyhelper * 0.5) / lyyhelper);
+    ny[j * N + i] = -(int)floor((yij[j * N + i] + lyyhelper * 0.5) / lyyhelper);
     ny[i * N + j] = -ny[j * N + i];
 
     xij[j * N + i] = phelper[j] - phelper[i] + ny[j * N + i] * lyxhelper;
     yij[j * N + i] = phelper[N + j] - phelper[N + i]
                      + ny[j * N + i] * lyyhelper;
 
-    nx[j * N + i] = -floor((xij[j * N + i] + lxxhelper * 0.5) / lxxhelper);
+    nx[j * N + i] = -(int)floor((xij[j * N + i] + lxxhelper * 0.5) / lxxhelper);
     nx[i * N + j] = -nx[j * N + i];
 
     xij[j * N + i] = phelper[j] - phelper[i] + nx[j * N + i] * lxxhelper
@@ -2448,10 +2444,10 @@ void readPositionFile()
     bool P0read = false;
     string filepath = nameOfWorkingDirectory + "/";
 
+    
     LDBL L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
-    /* jamBashbulk.cpp:2679:25: warning: variable ‘L1y’ set but not used [-Wunused-but-set-variable]
-     * Weird!
-     */
+    // L1y is not used currently; suppress warning about this
+    L1y = L1y;
 
     ifstream infile;
 
@@ -2485,7 +2481,7 @@ void readPositionFile()
     while(infile.good()) {
         clastlast = clast;
         clast = c;
-        c = infile.get();
+        c = (char)infile.get();
 
         if(clastlast == 'N' && c == '=') {
             Nread = true;
@@ -2501,7 +2497,7 @@ void readPositionFile()
             }
 
             if(c == ',') {
-                N = helperchar;
+                N = (int)helperchar;
                 helperchar = 0.0;
                 Nread = false;
                 initializeNow = true;
@@ -2734,6 +2730,7 @@ void readPositionFile()
     LENGTH = sqrt(L1x * L2y);
     ALPHA = L2x / LENGTH;
     DELTA = sqrt(L2y / L1x) - 1.0;
+    
 
     iloop(N) {
         jloop(N) {
@@ -2977,10 +2974,10 @@ inline void createFileName()
     char namebuffer[4];
     filenameString = "";
 
-    namebuffer[0] = 48 + (((currentPackingNumber) / 1000) % 10);
-    namebuffer[1] = 48 + (((currentPackingNumber) / 100) % 10);
-    namebuffer[2] = 48 + (((currentPackingNumber) / 10) % 10);
-    namebuffer[3] = 48 + ((currentPackingNumber) % 10);
+    namebuffer[0] = (char)(48 + (((currentPackingNumber) / 1000) % 10));
+    namebuffer[1] = (char)(48 + (((currentPackingNumber) / 100) % 10));
+    namebuffer[2] = (char)(48 + (((currentPackingNumber) / 10) % 10));
+    namebuffer[3] = (char)(48 + ((currentPackingNumber) % 10));
 
     if(screenOutput) {
         cout << "FilenameString: " << filenameString << endl;
