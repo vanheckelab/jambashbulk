@@ -3150,8 +3150,6 @@ extern "C" {
     };
 
     void relax_packing(bool alphaFree, bool deltaFree, bool LFree) {
-        LDBL oldP0 = P0;
-        
         screenOutput = true;
         
         alphaOnOffInit = alphaFree;
