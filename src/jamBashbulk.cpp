@@ -1530,7 +1530,15 @@ void fire()
 
         double radiusFraction = 1e-5;
 
-        if(alphaOnOff && (fabs(Phelper - P0) / P0 < 5e-1)) {
+        // only vary alpha and delta IF
+        bool varyAlphaDelta = 
+        // L has converged far enough OR 
+            (fabs(Phelper - P0) / P0 < 5e-1) ||
+        // L cannot change
+            (!pressOnOff);
+                              
+        
+        if(alphaOnOff && varyAlphaDelta) {
             v[2 * N] = v[2 * N] * dampalpha - xihelper[2 * N] / M[N] * dt; // damping prevents too large changes
 
             if(v[2 * N] * Lhelper * dt > radiusFraction) {
@@ -1548,7 +1556,7 @@ void fire()
             v[2 * N] = 0.0;
         }
 
-        if(deltaOnOff && (fabs(Phelper - P0) / P0 < 5e-1)) {
+        if(deltaOnOff && varyAlphaDelta) {
             v[2 * N + 1] = v[2 * N + 1] * dampdelta
                            - xihelper[2 * N + 1] / M[N + 1] * dt;
 
@@ -3142,19 +3150,28 @@ extern "C" {
     };
 
     void relax_packing(bool alphaFree, bool deltaFree, bool LFree) {
+        LDBL oldP0 = P0;
+        
         screenOutput = true;
         
         alphaOnOffInit = alphaFree;
         deltaOnOffInit = deltaFree;
         pressOnOffInit = LFree;
         
+        converged = frprmnconverged = fireconverged = false;
+        
         calculate_neighbors(); // already calls energy() and gradientcalc()
         calcSysPara();
  
-        converged = frprmnconverged = fireconverged = false;
+        
         programmode = PROGRAMMODE_CREATE_PACKING;
         while(!converged) { // && !frprmnconverged) {
-            cout << converged << ", " << frprmnconverged << ", " << fireconverged << endl;
+            cout << ".";
+        /*
+            cout << converged << ", " << frprmnconverged << ", " << fireconverged << ", " << 
+            2.0 * fabs(H - HLastFunctionCall) / (ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) << ", " <<
+            ALPHA << ", " << fabs(Phelper - P0) / P0 << ", " << sxy << ", " << fabs(sxy) / 1e-15 << endl;
+        */
             simulationstep();
         }
     }
