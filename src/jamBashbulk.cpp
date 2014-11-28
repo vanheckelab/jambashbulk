@@ -245,6 +245,7 @@ static PROGRAMMODE programmode;
 
 int main(int argc, char ** argv)
 {
+    cout.precision(PRECISION);
     screenOutput = false;
     debug = false;
 
@@ -770,27 +771,47 @@ void calcShearModulus()
             }
         } // end while(!sufficientAccuracy)
 
-        // pAfterChange is saved... some 100 lines above here
-        jloop(2 * N + 3) {
-            p[j] = pAfterChange[j];
-        }
+
+
+
 
         if(!fixedStepSize) {
-            // make sure system is *after* the contact change
-            int attempts = 0;
-            while (neighborChangesLast == 0) {
-                cout << "\nNot at post-contact change strain; stepping forward";
-                shear = shear * shearfactor;
-                gotoAlphaShear(alphaBeforeDeformation + shear);
-                checkNeighborChanges(addedContacts, removedContacts,
-                                     neighborChanges, neighborChangesLast);
-                attempts++;
-                if(attempts > 10) {
-                    cout << "\nStill not at post-contact change strain; giving up.";
-                    reachedGoal = true;
-                    return;
+            // IF we end BEFORE the CC, we need to reset to the POST-CC state
+            // WE CANNOT DO THIS OTHERWISE, as pAfterChange is set in the BEGINNING of the loop
+            // but I'm afraid moving will break other stuff...
+
+            // also, we must NOT relax the packing further, as that might throw us into a different
+            // state... (if the original state was not as far relaxed as it could have been)
+            bool moved_to_after_cc = false;
+            if (!pastContactChange) {
+                moved_to_after_cc = true;
+                // pAfterChange is saved... some 100 lines above here
+                jloop(2 * N + 3) {
+                    p[j] = pAfterChange[j];
+                    phelper[j] = pAfterChange[j];
                 }
+
+                shear = ALPHA - alphaBeforeDeformation;
+                fireconverged = true;
+                energy();
+                calcSysPara();
+                checkNeighborChanges(addedContacts, removedContacts,
+                                    neighborChanges, neighborChangesLast);
             }
+
+            cout << "\nConverged to CC #" << numberOfContactChanges
+                 << " (step #" << numberOfDataPoints << ")"
+                 << " with " << neighborChangesLast << " changed contact" << (neighborChangesLast == 1 ? "" : "s")
+                 << " at strain " << shear
+                 << (moved_to_after_cc ? " [Jump]" : " [Direct]");
+
+            // we should now be post contact change!
+            if (neighborChangesLast == 0) {
+                cout << "\n\nERROR: Not post contact change. Giving up.";
+                reachedGoal = true;
+                return;
+            }
+
             pastContactChange = false;
             sufficientAccuracy = false;
             num = 0;
@@ -799,7 +820,6 @@ void calcShearModulus()
         }
 
         if(!fixedStepSize) {
-            cout << "\nConverged to CC #" << numberOfContactChanges << "/" << goalNumberOfContactChanges << " (step #" << numberOfDataPoints << ")";
             if(numberOfContactChanges < goalNumberOfContactChanges) {
                 reachedGoal = false;
 
