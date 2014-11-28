@@ -712,9 +712,9 @@ void calcShearModulus()
             jloop(2 * N + 3) {
                 pLast[j] = p[j];
             } // backup the particle position before the shear step
-            
+
             gotoAlphaShear(alphaBeforeDeformation + shear); // ... and added to the shear of the relaxed packing
-            
+
             if(iterationcountfire > maxIterationCountFire) {
                 programmode = programmodeOld;
                 return;
@@ -746,7 +746,7 @@ void calcShearModulus()
             numberOfDataPoints++;
             energy();
             calcSysPara();
-            
+
             saveShearSystemState(logFileName, numberOfDataPoints,
                                  dataFileName, neighborChangesLastCumulative,
                                  neighborChangesLast, addedContacts, removedContacts,
@@ -836,7 +836,7 @@ void calcShearModulus()
 ////////////////////////////////////////////////////////////////////////
 // checkNeighborChanges()
 
-// NB calcSysPara() needs to be called before this, and fireconverged must 
+// NB calcSysPara() needs to be called before this, and fireconverged must
 // be true to correctly count rattlers!
 void checkNeighborChanges(int & addedContacts, int & removedContacts,
                           int & neighborChanges, int & neighborChangesLast)
@@ -1545,13 +1545,13 @@ void fire()
         double radiusFraction = 1e-5;
 
         // only vary alpha and delta IF
-        bool varyAlphaDelta = 
-        // L has converged far enough OR 
+        bool varyAlphaDelta =
+        // L has converged far enough OR
             (fabs(Phelper - P0) / P0 < 5e-1) ||
         // L cannot change
             (!pressOnOff);
-                              
-        
+
+
         if(alphaOnOff && varyAlphaDelta) {
             v[2 * N] = v[2 * N] * dampalpha - xihelper[2 * N] / M[N] * dt; // damping prevents too large changes
 
@@ -2464,7 +2464,7 @@ void readPositionFile()
     bool P0read = false;
     string filepath = nameOfWorkingDirectory + "/";
 
-    
+
     LDBL L1x = 0.0, L1y = 0.0, L2x = 0.0, L2y = 0.0;
     // L1y is not used currently; suppress warning about this
     L1y = L1y;
@@ -2750,7 +2750,7 @@ void readPositionFile()
     LENGTH = sqrt(L1x * L2y);
     ALPHA = L2x / LENGTH;
     DELTA = sqrt(L2y / L1x) - 1.0;
-    
+
 
     iloop(N) {
         jloop(N) {
@@ -3168,29 +3168,29 @@ extern "C" {
 
     void relax_packing(bool alphaFree, bool deltaFree, bool LFree) {
         screenOutput = true;
-        
+
         alphaOnOffInit = alphaFree;
         deltaOnOffInit = deltaFree;
         pressOnOffInit = LFree;
-        
+
         converged = frprmnconverged = fireconverged = false;
-        
+
         calculate_neighbors(); // already calls energy() and gradientcalc()
         calcSysPara();
- 
-        
+
+
         programmode = PROGRAMMODE_CREATE_PACKING;
         while(!converged) { // && !frprmnconverged) {
             cout << ".";
         /*
-            cout << converged << ", " << frprmnconverged << ", " << fireconverged << ", " << 
+            cout << converged << ", " << frprmnconverged << ", " << fireconverged << ", " <<
             2.0 * fabs(H - HLastFunctionCall) / (ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) << ", " <<
             ALPHA << ", " << fabs(Phelper - P0) / P0 << ", " << sxy << ", " << fabs(sxy) / 1e-15 << endl;
         */
             simulationstep();
         }
     }
-    
+
     // import packing
     //
     // @param[in]  _N      Number of particles = len(x) = len(y) = len(r)
@@ -3209,7 +3209,7 @@ extern "C" {
         N = _N;
         P = P0 = _P0;
         Rmax = 0;
-        
+
         initializeArrays();
         initializeSimulation();
 
@@ -3230,7 +3230,7 @@ extern "C" {
         fireconverged = true; // to trigger the correct part of calcSysPara()...
         calcSysPara();
     }
-    
+
     // import packing
     //
     // @param[in]  _N      Number of particles = len(x) = len(y) = len(r)
@@ -3241,7 +3241,7 @@ extern "C" {
     // @param[out]  _alpha  alpha shear parameter (simple shear)
     // @param[out]  _delta  delta shear parameter (pure shear)
     // @param[out]  _L      length of box
-    
+
     void export_packing(int _N, LDBL * _P0,
                           LDBL *_x, LDBL *_y, LDBL *_r,
                           LDBL *_alpha, LDBL *_delta, LDBL *_L) {
@@ -3263,12 +3263,12 @@ extern "C" {
         *_L = LENGTH;
     }
 
-    
+
     // @returns number of particles N
     int get_packing_size() {
         return N;
     }
-    
+
     // calculate packing params for the packing that has been imported
     // @param[out] out     packingparams struct containing the calculated values
     void get_packing_data(packingparams *out) {
@@ -3294,5 +3294,5 @@ extern "C" {
         out->syy = syy;
         out->U = Uhelper;
     }
-    
+
 }
