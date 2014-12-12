@@ -373,7 +373,7 @@ void execute()
             }
 
             endtime = time(NULL); // clock function runtime
-            timediff1 = endtime - starttime;
+            timediff1 = (LDBL)(endtime - starttime);
             starttime = endtime;
 
             if(screenOutput) {
@@ -740,7 +740,7 @@ void calcShearModulus()
             }
 
             endtime = time(NULL); // clock function runtime
-            timediff1 = endtime - starttime;
+            timediff1 = (LDBL)(endtime - starttime);
             starttime = endtime;
 
             numberOfDataPoints++;
