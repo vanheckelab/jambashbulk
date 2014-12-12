@@ -3179,15 +3179,17 @@ extern "C" {
         calcSysPara();
 
 
-        programmode = PROGRAMMODE_CREATE_PACKING;
+		programmode = PROGRAMMODE_DEFORM_PACKING;
         while(!converged) { // && !frprmnconverged) {
             cout << ".";
-        /*
-            cout << converged << ", " << frprmnconverged << ", " << fireconverged << ", " <<
-            2.0 * fabs(H - HLastFunctionCall) / (ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) << ", " <<
-            ALPHA << ", " << fabs(Phelper - P0) / P0 << ", " << sxy << ", " << fabs(sxy) / 1e-15 << endl;
-        */
+        
             simulationstep();
+
+            /*
+            cout << converged << ", " << frprmnconverged << ", " << fireconverged << ", " <<
+            2.0 * fabs(H - HLastFunctionCall) << (ftolFIRE * (fabs(H) + fabs(HLastFunctionCall) + ZEPS)) << ", " <<
+            ALPHA << ", " << fabs(Phelper - P0) / P0 << ", " << sxy << ", " << fabs(sxy) / 1e-15 << endl;
+            */
         }
     }
 
