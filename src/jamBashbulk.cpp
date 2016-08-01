@@ -289,7 +289,7 @@ void extractNandP(string foldername)
 
     string comp2 = foldername.substr(i, 2);
 
-    size_t pos = foldername.rfind("Packings"); // Name of the folder containing all the other folders with packings
+    int pos = (int)foldername.rfind("Packings"); // Name of the folder containing all the other folders with packings
 
     i = pos + 9;
 
