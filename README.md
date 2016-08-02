@@ -104,7 +104,109 @@ To simplify automation, `argvtolines.sh` is provided. Simply pass each line of i
 to create a packing as in the first example above.
 
 
+### C/DLL interface
+The simulation code can be used from other code by using the C/DLL interface. (jamBashBulk.cpp, in the
+extern "C" block). Provided are:
+
+ * `void import_packing(...)`, to load a packing in the simulation,
+ * `void relax_packing(...)`, to relax the packing with given boundary conditions,
+ * `void export_packing(...)`, to read out the packing
+ 
+and the convenience methods
+ * `int get_packing_size` to get the number of particles `N`, and
+ * `void get_packing_data(packingparams *out)` to read out information on the current state.
+are provided
+
+#### import_packing
+```C
+void import_packing(int _N, LDBL _P0,
+                    LDBL *_x, LDBL *_y, LDBL *_r,
+                    LDBL _alpha, LDBL _delta, LDBL _L)
+```
+`import_packing` loads a packing (particle positions and boundary conditions) into the simulation. Parameters are:
+* system size `_N`,
+* external pressure `_P0`,
+* particle positions and radii `_x`, `_y` and `_r` (`LDBL` is `double` on win32/64, `long double` on linux)
+* simple shear and pure shear parameters `_alpha` and `_delta`,
+* square root of area `_L`.
+
+#### relax_packing
+```C
+void relax_packing(bool alphaFree, bool deltaFree, bool LFree)
+```
+Relaxes the currently loaded packing until converged (|∆H| < 10<sup>−13</sup> · H)). Parameters are:
+* alphaFree (is the simple shear boundary condition free to change?),
+* deltaFree (same, for pure shear), and
+* LFree (same, for the area)
+
+#### export_packing
+```C
+void export_packing(int _N, LDBL * _P0,
+                    LDBL *_x, LDBL *_y, LDBL *_r,
+                    LDBL *_alpha, LDBL *_delta, LDBL *_L)
+```
+Exports the current packing into _user-provided_ arrays. This function _writes_ to all parameter except for `_N`; the parameters are the same as for `import_packing`. To get the correct value of `_N` (and to pre-allocate arrays), call `int get_packing_size()`.
+
+#### get_packing_size
+```C
+int get_packing_size()
+```
+Returns the current number of particles `N`.
+
+#### get_packing_data
+```C
+struct packingparams {
+    LDBL P;          // internal pressure
+    LDBL phi;        // packing fraction
+    LDBL Z;          // contact number
+    int Ncorrected;  // effective number of particles (=#particles-#rattlers)
+    LDBL sxx;        // stress on xx-boundary
+    LDBL sxy;        // simple shear stress
+    LDBL syy;        // stress on yy-boundary
+    LDBL U;          // energy
+    LDBL H;          // enthalpy
+    LDBL gg;         // maximum gradient
+};
+
+void get_packing_data(packingparams *out)
+```
+Fills a _user-provded_ `packingparams` struct with the current simulation state. 
+
 ### Python interface
+A Python interface which wraps the C interface is provided. This interface takes care of allocating numpy arrays and calls the relevant C interface functions.
+
+The Python interface provides:
+  * direct `ctypes` based wrapping functions (jamBashBulk.DLL.*)
+  * Python wrapping functions: `def import_packing`, `def export_packing`, `def relax_packing`,
+                               `def get_packing_size`, `def get_packing_data`
+
+#### import_packing
+`import_packing` takes a single parameter; a dictionary containing:
+```
+{'L': 26.21776889062624,                       # square root of area,
+ 'L1': array([ 25.77606417,   0.        ]),    # Lxx, Lxy
+ 'L2': array([ -0.12999204,  26.66704277]),    # Lyx, Lyy
+ 'N': 128,                                     # number of particles
+ 'P': 0.01000000000000001,                     # internal pressure (not required for import)
+ 'P0': 0.01000000000000001,                    # external pressure
+ 'particles': array([(9.349917925369324, 0.0, 12.224353792603848, 0.0, 1.000000000000001),
+       ...], 
+      dtype=[('x', '<f8'), ('x_err', '<f8'), ('y', '<f8'), ('y_err', '<f8'), ('r', '<f8')])}
+```
+`particles` can also be a dictionary `{'x': [x0, x1, ...], 'y': [y0, y1, ...], 'r': [r0, r1, ...]}`.
+
+#### relax_packing
+See `relax_packing` of the C API.
+
+#### export_packing
+Exports the current packing in the same format as `import_packing`.
+
+#### get_packing_size
+Returns the number of particles `N`.
+
+#### get_packing_data
+See `get_packing_data`; converts the struct into a dict with keys P, phi, etc.
+
 
 
 File format (creating a packing)
