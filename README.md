@@ -139,6 +139,14 @@ Relaxes the currently loaded packing until converged (|∆H| < 10<sup>−13</sup
 * deltaFree (same, for pure shear), and
 * LFree (same, for the area)
 
+To apply a given deformation, call `import_packing` with the _new_ boundary conditions, then call `relax_packing`. For example:
+```C
+import_packing(_N, _P0, _x, _y, _r, _alpha + 0.01, _delta, _L);
+relax_packing(false, false, false);
+export_packing(_N, &_P0, _x, _y, _r, &_alpha, &_delta, &_L);
+```
+Will apply a simple shear γ=0.01, and read out the new system state.
+
 #### export_packing
 ```C
 void export_packing(int _N, LDBL * _P0,
