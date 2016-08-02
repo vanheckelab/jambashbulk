@@ -47,7 +47,7 @@ This will build:
 
 
 
-     Usage from the command line
+Usage from the command line
 ---------------------------
 Interactive usage is supported by passing the `-screen` flag:
 ```bash
@@ -106,7 +106,8 @@ tools/argvtolines.sh Packings/N16~P1e-3 1 1 1 2 | bin/jam2D -screen
 to create a packing as in the first example above.
 
 
-### C/DLL interface
+C/DLL interface
+---------------
 The simulation code can be used from other code by using the C/DLL interface. (jamBashBulk.cpp, in the
 extern "C" block). Provided are:
 
@@ -182,7 +183,8 @@ void get_packing_data(packingparams *out)
 ```
 Fills a _user-provded_ `packingparams` struct with the current simulation state. 
 
-### Python interface
+Python interface
+----------------
 A Python interface which wraps the C interface is provided. This interface takes care of allocating numpy arrays and calls the relevant C interface functions.
 
 The Python interface provides:
@@ -217,7 +219,13 @@ Returns the number of particles `N`.
 #### get_packing_data
 See `get_packing_data`; converts the struct into a dict with keys P, phi, etc.
 
+tools/
+------
+The `tools` subdirectory contains a set of tools used to run this code on a cluster. The most useful tools are:
+* `argvtolines.sh`, discussed above,
+* `generate.py`, to generate a list of commands for creating and shearing packings,
 
+Other scripts are mainly for internal use.
 
 File format (creating a packing)
 --------------------------------
