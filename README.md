@@ -46,7 +46,8 @@ This will build:
  * `bin/jamBashbulk.so`, the shared library.
 
 
-Usage from the command line
+
+     Usage from the command line
 ---------------------------
 Interactive usage is supported by passing the `-screen` flag:
 ```bash
@@ -97,9 +98,10 @@ Packings/N16~P1e-3
 finds the first three contact changes for the packing created above.
 
 ### argvtolines.sh
-To simplify automation, `argvtolines.sh` is provided. Simply pass each line of input as parameter. Example usage:
+To simplify automation, `argvtolines.sh` is provided in the `tools` directory. 
+Simply pass each line of input as parameter. Example usage:
 ```
-./argvtolines.sh Packings/N16~P1e-3 1 1 1 2 | bin/jam2D -screen
+tools/argvtolines.sh Packings/N16~P1e-3 1 1 1 2 | bin/jam2D -screen
 ```
 to create a packing as in the first example above.
 
